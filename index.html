@@ -1030,9 +1030,15 @@
 
         clientConn.on("data", data => handlePlayerData(data));
 
-        clientConn.on("error", () => {
-          status.textContent = "❌ Could not connect. Check the Room Code!";
+        clientConn.on("error", (e) => {
+          status.textContent = "❌ Could not connect (" + (e && e.type ? e.type : "error") + "). Check the Room Code!";
         });
+        clientConn.on("close", () => { if (!myPlayerId) status.textContent = "❌ Connection closed before joining. Network blocks direct connection (try the same Wi-Fi as the host)."; });
+        // Diagnostic: show the WebRTC state on screen
+        const watchIce = setInterval(() => {
+          const pc = clientConn.peerConnection;
+          if (pc) { pc.oniceconnectionstatechange = () => { if (!myPlayerId) status.textContent = "🔌 Network state: " + pc.iceConnectionState + (pc.iceConnectionState === "failed" ? " — direct/relay connection blocked." : ""); }; clearInterval(watchIce); }
+        }, 200);
       });
     }
 

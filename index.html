@@ -404,6 +404,10 @@
         <button class="small" onclick="playerRequestDraw()">🃏 Draw 1 Card from Pile</button>
       </div>
 
+      <div id="p-turn-banner" class="panel" style="margin-bottom:0.8rem; text-align:center; border:2px solid var(--accent);">
+        <strong id="p-turn-title">Waiting for the game to start...</strong>
+        <div id="p-turn-hint" style="font-size:0.82rem; margin-top:0.25rem;">Your turn will appear here.</div>
+      </div>
       <div id="p-notification" class="banner info hidden"></div>
       <div id="p-happy-banner" class="banner ok hidden"></div>
 
@@ -527,6 +531,13 @@
     let hostConnections = []; // { conn, id, name }
     let hostPile = [];
     let hostCompleted = [];
+    let currentTurnIndex = 0;
+    let pendingMythPlayerId = null;
+    let skipNextTurnIds = [];
+    let shieldPlayerIds = [];
+    let isMyTurn = false;
+    let mythAnswerSent = false;
+    let pendingMythLocal = false;
     let clientConn = null;
     let myPlayerId = "";
     let myName = "";
@@ -690,35 +701,67 @@
       for (let id = 1; id <= mythCount; id++) deck.push(`M-${id}`);
       hostPile = shuffle(deck);
       hostCompleted = [];
+      currentTurnIndex = 0;
+      pendingMythPlayerId = null;
+      skipNextTurnIds = [];
+      shieldPlayerIds = [];
 
       document.getElementById("host-board-active").classList.remove("hidden");
       document.getElementById("host-pile-count").textContent = hostPile.length;
       document.getElementById("host-table-log").textContent = "✅ 6 secret cards dealt to every player's phone!";
+      broadcastTurn();
+    }
+
+    function broadcastTurn() {
+      if (!hostConnections.length) return;
+      const current = hostConnections[currentTurnIndex];
+      if (!current) return;
+      const roster = hostConnections.map(p => ({ id: p.id, name: p.name }));
+      hostConnections.forEach(p => p.conn.send({
+        type: "TURN_UPDATE", currentPlayerId: current.id, currentPlayerName: current.name,
+        players: roster, pileCount: hostPile.length
+      }));
+      document.getElementById("host-table-log").textContent = `🎯 It is ${current.name}'s turn: draw a card or give one card.`;
+    }
+
+    function advanceTurn(keepCurrent = false) {
+      if (!hostConnections.length) return;
+      if (!keepCurrent) currentTurnIndex = (currentTurnIndex + 1) % hostConnections.length;
+      let safety = 0;
+      while (skipNextTurnIds.includes(hostConnections[currentTurnIndex]?.id) && safety < hostConnections.length) {
+        const skipped = hostConnections[currentTurnIndex];
+        skipNextTurnIds = skipNextTurnIds.filter(id => id !== skipped.id);
+        skipped.conn.send({ type: "PLAYER_NOTICE", message: "⏭️ Your turn is skipped because of a Myths & Facts penalty." });
+        currentTurnIndex = (currentTurnIndex + 1) % hostConnections.length;
+        safety++;
+      }
+      broadcastTurn();
     }
 
     function hostClickDrawPile() {
-      const targetId = document.getElementById("host-draw-target").value;
-      if (!targetId) return;
-      sendTopCardToPlayer(targetId);
+      if (!hostConnections.length) return;
+      const current = hostConnections[currentTurnIndex];
+      if (!current) return;
+      sendTopCardToPlayer(current.id);
     }
 
     function sendTopCardToPlayer(playerId) {
-      if (hostPile.length === 0) {
-        return alert("The draw pile is empty!");
-      }
+      if (hostPile.length === 0) return alert("The draw pile is empty!");
       const target = hostConnections.find(p => p.id === playerId);
-      if (!target) return;
+      const current = hostConnections[currentTurnIndex];
+      if (!target || !current || target.id !== current.id || pendingMythPlayerId) return;
 
       const card = hostPile.pop();
       document.getElementById("host-pile-count").textContent = hostPile.length;
-
       if (card.startsWith("M-")) {
         const mythId = parseInt(card.split("-")[1], 10);
-        document.getElementById("host-table-log").textContent = `⚡ ${target.name} drew Myths & Facts Card #${mythId}!`;
+        pendingMythPlayerId = target.id;
+        document.getElementById("host-table-log").textContent = `⚡ ${target.name} drew Myths & Facts #${mythId}. Waiting for the answer...`;
         target.conn.send({ type: "DREW_MYTH", mythId });
       } else {
-        document.getElementById("host-table-log").textContent = `🃏 Sent 1 secret card from the pile to ${target.name}.`;
         target.conn.send({ type: "RECEIVE_CARD", card, from: "Draw Pile" });
+        document.getElementById("host-table-log").textContent = `🃏 ${target.name} drew a family card.`;
+        advanceTurn(false);
       }
     }
 
@@ -734,14 +777,38 @@
         updateHostPlayersUI();
       }
       else if (data.type === "REQUEST_DRAW") {
-        sendTopCardToPlayer(data.playerId);
+        const current = hostConnections[currentTurnIndex];
+        if (current && data.playerId === current.id && !pendingMythPlayerId) sendTopCardToPlayer(data.playerId);
       }
       else if (data.type === "TRANSFER_CARD") {
         const receiver = hostConnections.find(p => p.id === data.toId);
         const sender = hostConnections.find(p => p.id === data.fromId);
-        if (receiver && sender) {
+        const current = hostConnections[currentTurnIndex];
+        if (receiver && sender && current && sender.id === current.id && !pendingMythPlayerId && typeof data.card === "string" && /^[0-6]-[0-5]$/.test(data.card)) {
           receiver.conn.send({ type: "RECEIVE_CARD", card: data.card, from: sender.name });
           document.getElementById("host-table-log").textContent = `🔄 ${sender.name} gave a card to ${receiver.name}.`;
+          advanceTurn(false);
+        }
+      }
+      else if (data.type === "MYTH_RESOLVED") {
+        const current = hostConnections[currentTurnIndex];
+        if (!current || data.playerId !== current.id || pendingMythPlayerId !== data.playerId) return;
+        pendingMythPlayerId = null;
+        const effect = String(data.effect || "");
+        if (effect === "Play Again") {
+          current.conn.send({ type: "PLAYER_NOTICE", message: "🎁 Play Again! You keep your turn." });
+          advanceTurn(true);
+        } else if (effect === "Shield") {
+          shieldPlayerIds.push(current.id);
+          current.conn.send({ type: "PLAYER_NOTICE", message: "🛡️ Shield activated." });
+          advanceTurn(false);
+        } else if (effect === "Skip Your Next Turn") {
+          skipNextTurnIds.push(current.id);
+          current.conn.send({ type: "PLAYER_NOTICE", message: "⚠️ Your next turn will be skipped." });
+          advanceTurn(false);
+        } else {
+          current.conn.send({ type: "PLAYER_NOTICE", message: `Myths & Facts effect: ${effect}.` });
+          advanceTurn(false);
         }
       }
       else if (data.type === "FAMILY_COMPLETED") {
@@ -801,6 +868,18 @@
         otherPlayers = data.players.filter(p => p.id !== myPlayerId);
         renderPlayerHand();
       }
+      else if (data.type === "TURN_UPDATE") {
+        otherPlayers = data.players.filter(p => p.id !== myPlayerId);
+        isMyTurn = data.currentPlayerId === myPlayerId;
+        document.getElementById("p-turn-title").textContent = isMyTurn ? "🟢 YOUR TURN" : `⏳ ${data.currentPlayerName}'s turn`;
+        document.getElementById("p-turn-hint").textContent = isMyTurn ? "Choose ONE action: draw a card or give one card." : "Wait until your turn to draw or give a card.";
+        const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
+        if (drawBtn) { drawBtn.disabled = !isMyTurn || !!pendingMythLocal; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
+        renderPlayerHand();
+      }
+      else if (data.type === "PLAYER_NOTICE") {
+        showPlayerAlert(data.message);
+      }
       else if (data.type === "DEAL_HAND") {
         myHand = data.hand;
         showPlayerAlert("🃏 Cards dealt! Only you can see your hand.");
@@ -816,6 +895,8 @@
         // A Myths & Facts card is drawn from the same pile as the family cards.
         // Open it above the player's hand instead of navigating away from the room.
         mythFromGame = true;
+        pendingMythLocal = true;
+        mythAnswerSent = false;
         showPlayerAlert(`⚡ You drew Myths & Facts Card #${data.mythId}! Answer the challenge to return to your hand.`);
         // Temporarily place the challenge above the whole page, without changing
         // the active player view or closing the room connection.
@@ -831,14 +912,17 @@
     }
 
     function playerRequestDraw() {
-      if (!clientConn) return;
+      if (!clientConn || !isMyTurn || pendingMythLocal) return;
       clientConn.send({ type: "REQUEST_DRAW", playerId: myPlayerId });
     }
 
     function giveCardToPlayer(cardIdx, targetPlayerId) {
-      if (!targetPlayerId) return;
-      const [card] = myHand.splice(cardIdx, 1);
+      if (!targetPlayerId || !clientConn || !isMyTurn || pendingMythLocal) return;
+      const card = myHand[cardIdx];
+      if (!card) return;
+      myHand.splice(cardIdx, 1);
       clientConn.send({ type: "TRANSFER_CARD", fromId: myPlayerId, toId: targetPlayerId, card });
+      showPlayerAlert("🔄 Card sent. Your turn is over.");
       renderPlayerHand();
     }
 
@@ -872,8 +956,8 @@
       grid.innerHTML = myHand.map((code, idx) => {
         const [f, m] = code.split("-").map(Number);
         const selectHtml = otherPlayers.length > 0
-          ? `<select style="font-size:0.7rem; padding:0.2rem; width:100%;" onchange="giveCardToPlayer(${idx}, this.value)">
-               <option value="">Give card to...</option>
+          ? `<select ${(!isMyTurn || pendingMythLocal) ? "disabled" : ""} style="font-size:0.7rem; padding:0.2rem; width:100%;" onchange="giveCardToPlayer(${idx}, this.value); this.value='';">
+               <option value="">${isMyTurn ? "Give card to..." : "Wait for your turn"}</option>
                ${playerOptions}
              </select>`
           : "";
@@ -882,7 +966,7 @@
     }
 
     function claimCompleteFamily(fIdx) {
-      myHand = myHand.filter(c => Number(c.split("-")) !== Number(fIdx));
+      myHand = myHand.filter(c => Number(c.split("-")[0]) !== Number(fIdx));
       clientConn.send({ type: "FAMILY_COMPLETED", playerId: myPlayerId, familyIdx: fIdx });
       renderPlayerHand();
     }
@@ -920,6 +1004,10 @@
       document.getElementById("m-eff-type").textContent = ok ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
       document.getElementById("m-eff-title").textContent = eff.title;
       document.getElementById("m-eff-desc").textContent = eff.desc;
+      if (mythFromGame && clientConn && !mythAnswerSent) {
+        mythAnswerSent = true;
+        clientConn.send({ type: "MYTH_RESOLVED", playerId: myPlayerId, effect: eff.title, correct: ok });
+      }
     }
 
     function closeMythCard() {
@@ -933,9 +1021,13 @@
       if (mythFromGame) {
         // The player stays on the same connected game screen.
         mythFromGame = false;
+        pendingMythLocal = false;
         document.getElementById("myth-picker").classList.add("hidden");
         document.getElementById("view-myths").appendChild(cardView);
-        showPlayerAlert("✅ Challenge completed. You are back in the game!");
+        showPlayerAlert("✅ Challenge completed. The turn order has been updated.");
+        const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
+        if (drawBtn) { drawBtn.disabled = !isMyTurn; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
+        renderPlayerHand();
         return;
       }
 

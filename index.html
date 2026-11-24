@@ -612,6 +612,12 @@
     // ==========================================
     // MULTIPLAYER PEERJS STATE
     // ==========================================
+    // STUN + TURN relay servers: needed when a phone is on 4G/5G or another network than the host.
+    const PEER_OPTS = { config: { iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turn:openrelay.metered.ca:443?transport=tcp"], username: "openrelayproject", credential: "openrelayproject" }
+    ] } };
     let peer = null;
     let roomCode = "";
     let hostConnections = []; // { conn, id, name }
@@ -715,13 +721,14 @@
     function createHostRoom() {
       roomCode = generateRoomCode();
       const peerId = `greenclicks-room-${roomCode}`;
-      peer = new Peer(peerId);
+      peer = new Peer(peerId, PEER_OPTS);
 
       peer.on("open", () => {
         switchView("host");
         document.getElementById("display-room-code").textContent = roomCode;
 
         // Generate QR Code to join directly on phone
+        if (location.protocol === "file:") alert("This page is opened from a local file: phones cannot join. Host the page online (e.g. GitHub Pages) and open that link.");
         const joinUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
         const qrBox = document.getElementById("host-qr-box");
         qrBox.innerHTML = "";
@@ -1011,10 +1018,11 @@
       myName = nameInput;
       status.textContent = "Connecting to game table...";
 
-      peer = new Peer();
-      peer.on("error", err => { status.textContent = "❌ Connection error (" + err.type + "). Check the Room Code!"; });
+      peer = new Peer(undefined, PEER_OPTS);
+      peer.on("error", err => { status.textContent = err.type === "peer-unavailable" ? "❌ Room not found. Check the Room Code (and that the host table is still open)." : "❌ Connection error (" + err.type + "). Try again."; });
       peer.on("open", () => {
-        clientConn = peer.connect(`greenclicks-room-${codeInput}`);
+        clientConn = peer.connect(`greenclicks-room-${codeInput}`, { reliable: true });
+        setTimeout(() => { if (!myPlayerId) status.textContent = "⏳ Still connecting… If it fails, check the code, or ask the host to reload and create a new room."; }, 12000);
 
         clientConn.on("open", () => {
           clientConn.send({ type: "JOIN", name: myName });

@@ -3,352 +3,402 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Green Clicks — Eco-Deck Companion</title>
+  <title>Green Clicks — Card Game & QR Companion</title>
   <style>
     :root {
-      --bg: #f4f7f5;
-      --card: #ffffff;
-      --text: #18261c;
-      --muted: #526658;
-      --accent: #1b7a32;
-      --accent-bg: #e6f4ea;
-      --danger: #b02a37;
-      --danger-bg: #f8d7da;
-      --warn: #856404;
-      --warn-bg: #fff3cd;
-      --border: #c8d6cc;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #111613;
-        --card: #19221c;
-        --text: #e6ede8;
-        --muted: #98ab9d;
-        --accent: #3ddc84;
-        --accent-bg: #153322;
-        --danger: #f1808a;
-        --danger-bg: #3b181c;
-        --warn: #ffda6a;
-        --warn-bg: #332701;
-        --border: #2c3b31;
-      }
+      --felt: #163b28;
+      --felt-dark: #0e271a;
+      --gold: #e6c25b;
+      --cream: #faf8f2;
+      --ink: #1b241e;
+      --muted: #5a695f;
+      --accent: #1e824c;
+      --danger: #c0392b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
+      background: radial-gradient(circle at center, var(--felt) 0%, var(--felt-dark) 100%);
+      color: #fff;
+      min-height: 100vh;
       padding: 1rem;
-      max-width: 720px;
-      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+    .container { width: 100%; max-width: 820px; }
     header {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.75rem;
+      text-align: center;
       margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      padding-bottom: 0.75rem;
     }
-    .tag {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--accent);
+    .badge-top {
+      display: inline-block;
+      background: rgba(230, 194, 91, 0.18);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      font-size: 0.72rem;
       font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      text-transform: uppercase;
     }
-    h1 { font-size: 1.45rem; margin: 0.15rem 0; }
-    h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-    h3 { font-size: 0.95rem; margin: 0.75rem 0 0.4rem; }
-    p.sub { font-size: 0.85rem; color: var(--muted); }
+    h1 { font-size: 1.55rem; margin-top: 0.3rem; letter-spacing: -0.02em; }
     nav {
       display: flex;
+      justify-content: center;
       gap: 0.5rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
       flex-wrap: wrap;
     }
     button {
       font-family: inherit;
+      font-weight: 700;
       font-size: 0.88rem;
-      font-weight: 600;
-      padding: 0.5rem 0.85rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      color: var(--text);
-      cursor: pointer;
-    }
-    button:active { transform: scale(0.98); }
-    button.primary {
-      background: var(--accent);
+      padding: 0.55rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.1);
       color: #fff;
-      border-color: var(--accent);
+      cursor: pointer;
+      transition: transform 0.12s, background 0.15s;
     }
-    @media (prefers-color-scheme: dark) {
-      button.primary { color: #0a190f; }
+    button:hover { background: rgba(255,255,255,0.2); }
+    button:active { transform: scale(0.96); }
+    button.primary {
+      background: var(--gold);
+      color: #16241a;
+      border-color: var(--gold);
     }
     button.danger {
       background: var(--danger);
       color: #fff;
       border-color: var(--danger);
     }
-    button.small {
-      padding: 0.3rem 0.6rem;
-      font-size: 0.78rem;
-    }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    .grid-cards {
+    button.small { padding: 0.3rem 0.6rem; font-size: 0.76rem; }
+    .hidden { display: none !important; }
+
+    .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 0.5rem;
-      margin-top: 0.6rem;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 0.9rem;
+      margin-top: 0.8rem;
     }
-    .banner {
-      padding: 0.8rem;
-      border-radius: 6px;
-      margin: 0.75rem 0;
-      font-weight: 600;
-      font-size: 0.9rem;
+    .playing-card {
+      background: var(--cream);
+      color: var(--ink);
+      border-radius: 12px;
+      border: 4px solid #fff;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+      padding: 0.65rem;
+      aspect-ratio: 2.5 / 3.5;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+      user-select: none;
     }
-    .correct { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); }
-    .wrong { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
-    .warn { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn); }
-    .effect-box {
-      border: 2px dashed var(--accent);
-      padding: 0.85rem;
-      border-radius: 6px;
-      margin-top: 0.75rem;
-      text-align: center;
+    .playing-card:hover {
+      transform: translateY(-6px) rotate(1deg);
+      box-shadow: 0 14px 24px rgba(0,0,0,0.45);
     }
-    ul.clean { list-style: none; padding: 0; font-size: 0.9rem; }
-    ul.clean li {
-      padding: 0.45rem 0;
-      border-bottom: 1px solid var(--border);
+    .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      border-bottom: 2px solid currentColor;
+      padding-bottom: 0.25rem;
     }
-    .family-badge {
-      display: inline-block;
-      padding: 0.25rem 0.6rem;
-      background: var(--accent-bg);
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin: 0.2rem;
+    .card-icon {
+      font-size: 2.2rem;
+      text-align: center;
+      margin: 0.3rem 0;
     }
-    .hidden { display: none !important; }
-    select, input[type="text"] {
-      font-family: inherit;
-      padding: 0.45rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      color: var(--text);
+    .card-member {
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      line-height: 1.2;
     }
-    footer {
-      font-size: 0.75rem;
+    .card-tip {
+      font-size: 0.68rem;
       color: var(--muted);
-      margin-top: 1.5rem;
-      border-top: 1px solid var(--border);
-      padding-top: 0.75rem;
+      text-align: center;
+      line-height: 1.25;
+      background: rgba(0,0,0,0.04);
+      padding: 0.3rem;
+      border-radius: 6px;
+    }
+    .card-footer {
+      display: flex;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+
+    .card-back {
+      background: repeating-linear-gradient(
+        45deg,
+        #1b5e3a,
+        #1b5e3a 10px,
+        #14472c 10px,
+        #14472c 20px
+      );
+      border: 4px solid #fff;
+      border-radius: 12px;
+      width: 145px;
+      aspect-ratio: 2.5 / 3.5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.75rem;
+      box-shadow: 4px 4px 0 #d9d4c7, 8px 8px 0 #bfb9aa, 0 12px 24px rgba(0,0,0,0.45);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .card-back:hover { transform: scale(1.03); }
+    .card-back-inner {
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 0.6rem;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .myth-card-large {
+      background: var(--cream);
+      color: var(--ink);
+      border: 6px solid #fff;
+      border-radius: 16px;
+      max-width: 380px;
+      margin: 0 auto;
+      padding: 1.25rem;
+      box-shadow: 0 14px 32px rgba(0,0,0,0.45);
+    }
+    .panel {
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .table-top {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .banner {
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin: 0.75rem 0;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .banner.ok { background: #d4edda; color: #155724; }
+    .banner.ko { background: #f8d7da; color: #721c24; }
+    .effect-ticket {
+      background: #fff8e1;
+      border: 2px dashed #d39e00;
+      color: #533f03;
+      padding: 0.75rem;
+      border-radius: 10px;
+      text-align: center;
+      margin-top: 0.75rem;
+    }
+    select {
+      padding: 0.45rem 0.6rem;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <span class="badge-top">Serious Card Game · Green IT</span>
+      <h1>🃏 Green Clicks</h1>
+    </header>
 
-  <header>
-    <div class="tag">Digital Add-on · 7 Families Game</div>
-    <h1>Green Clicks — Eco-Deck Companion</h1>
-    <p class="sub">Eco-designed on purpose: one light page, no images, no custom fonts, no account, no tracking.</p>
-  </header>
+    <nav>
+      <button id="tab-btn-play" class="primary" onclick="showTab('play')">Play Card Game</button>
+      <button id="tab-btn-myths" onclick="showTab('myths')">Myths &amp; Facts (QR)</button>
+      <button id="tab-btn-hand" class="hidden" onclick="showTab('hand')">My Private Cards</button>
+      <button id="tab-btn-families" onclick="showTab('families')">7 Families Deck</button>
+    </nav>
 
-  <nav id="main-nav">
-    <button id="btn-tab-myths" class="primary" onclick="switchTab('myths')">Myths & Facts (QR)</button>
-    <button id="btn-tab-host" onclick="switchTab('host')">Host Table (7 Families)</button>
-    <button id="btn-tab-player" class="hidden" onclick="switchTab('player')">My Private Hand</button>
-    <button id="btn-tab-rules" onclick="switchTab('rules')">Rules & 7 Families</button>
-  </nav>
-
-  <!-- TAB 1: MYTHS & FACTS QR CODE CHECKER -->
-  <section id="tab-myths">
-    <div class="box" id="card-selector-box">
-      <h2>Myths & Facts Challenge</h2>
-      <p class="sub">Scan a QR code on a card (<code>?card=1</code> to <code>?card=12</code>) or pick a card number below:</p>
-
-      <h3>Beginner Mode (Everyday Habits)</h3>
-      <div class="grid-cards" id="beginner-grid"></div>
-
-      <h3>Advanced Mode (Technical & Figures)</h3>
-      <div class="grid-cards" id="advanced-grid"></div>
-    </div>
-
-    <div class="box hidden" id="challenge-box">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="tag" id="challenge-level">BEGINNER · CARD #1</span>
-        <button class="small" onclick="resetChallenge()">← All Cards</button>
-      </div>
-      <h2 id="challenge-question" style="margin-top:0.65rem;">Statement</h2>
-      <p class="sub" style="margin-bottom:0.8rem;">Say <strong>"True"</strong> or <strong>"False"</strong> out loud in English, then click your answer:</p>
-
-      <div id="answer-buttons" style="display:flex; gap:0.5rem;">
-        <button class="primary" style="flex:1;" onclick="submitAnswer(true)">TRUE</button>
-        <button class="danger" style="flex:1;" onclick="submitAnswer(false)">FALSE</button>
-      </div>
-
-      <div id="challenge-feedback" class="hidden">
-        <div id="result-banner" class="banner"></div>
-        <p id="challenge-explanation" style="margin-bottom:0.5rem;"></p>
-        <p class="sub"><strong>Source:</strong> <span id="challenge-source"></span></p>
-
-        <div class="effect-box">
-          <div class="tag" id="effect-type">RANDOM BONUS</div>
-          <div style="font-size:1.15rem; font-weight:700; margin:0.25rem 0;" id="effect-title">Effect</div>
-          <p class="sub" id="effect-desc">Description</p>
+    <section id="tab-play">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <strong>Start a Table</strong>
+            <div style="font-size:0.82rem; opacity:0.8;">Deal 6 cards per player + shuffle Myths &amp; Facts into the deck</div>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            <select id="num-players">
+              <option value="2">2 Players</option>
+              <option value="3">3 Players</option>
+              <option value="4" selected>4 Players</option>
+              <option value="5">5 Players</option>
+              <option value="6">6 Players</option>
+            </select>
+            <select id="difficulty">
+              <option value="6">Beginner (6 Myths)</option>
+              <option value="12">Advanced (12 Myths)</option>
+            </select>
+            <button class="primary" onclick="startNewTable()">Deal Cards</button>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- TAB 2: HOST TABLE (KEPT OPEN ON HOST'S PHONE) -->
-  <section id="tab-host" class="hidden">
-    <div class="box">
-      <h2>Host Table Setup</h2>
-      <p class="sub">The host's phone acts as the table (draw pile & completed families). Each player opens their own private hand link on their phone.</p>
-      <div style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-        <label for="player-count">Players:</label>
-        <select id="player-count">
-          <option value="2">2 Players</option>
-          <option value="3">3 Players</option>
-          <option value="4" selected>4 Players</option>
-          <option value="5">5 Players</option>
-          <option value="6">6 Players</option>
-        </select>
-        <label for="game-mode">Mode:</label>
-        <select id="game-mode">
-          <option value="beginner">Beginner (6 Myths)</option>
-          <option value="advanced">Advanced (12 Myths)</option>
-        </select>
-        <button class="primary" onclick="createNewGame()">Deal New Game</button>
-      </div>
-    </div>
+      <div id="active-table" class="hidden">
+        <div class="table-top">
+          <div style="text-align:center;">
+            <div class="card-back" onclick="drawTopCard()">
+              <div class="card-back-inner">
+                <div style="font-size:1.8rem;">🌱</div>
+                <div style="font-weight:800; color:var(--gold); font-size:0.95rem; margin:0.2rem 0;">GREEN CLICKS</div>
+                <div style="font-size:0.72rem; opacity:0.9;">TAP TO DRAW</div>
+              </div>
+            </div>
+            <div style="margin-top:0.5rem; font-size:0.85rem; font-weight:700;">
+              Draw Pile: <span id="pile-counter" style="color:var(--gold);">0</span> cards
+            </div>
+          </div>
 
-    <div id="host-active-game" class="hidden">
-      <div class="box">
-        <h2>1. Share Private Hand Links</h2>
-        <p class="sub" style="margin-bottom:0.5rem;">Send each player their personal link (each link only contains that player's starting 6 cards):</p>
-        <ul class="clean" id="player-links-list"></ul>
-      </div>
-
-      <div class="box">
-        <h2>2. Table Draw Pile (<span id="pile-count">0</span> cards left)</h2>
-        <p class="sub" style="margin-bottom:0.6rem;">When a player is told <em>"Draw!"</em>, tap below to draw the top card for them:</p>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-          <select id="draw-target-player"></select>
-          <button class="primary" onclick="hostDrawCard()">Draw Top Card</button>
+          <div class="panel" style="flex:1; min-width:260px; margin-bottom:0;">
+            <div style="font-size:0.8rem; text-transform:uppercase; color:var(--gold); font-weight:700;">Active Turn &amp; Multi-Phone Links</div>
+            <div style="margin:0.5rem 0; display:flex; align-items:center; gap:0.5rem;">
+              <label for="active-player-sel">Who is drawing?</label>
+              <select id="active-player-sel"></select>
+            </div>
+            <div id="drawn-feedback" class="hidden" style="margin:0.6rem 0; padding:0.6rem; background:rgba(255,255,255,0.12); border-radius:8px; font-size:0.88rem;"></div>
+            <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.15); padding-top:0.6rem;">
+              <div style="font-size:0.78rem; opacity:0.85; margin-bottom:0.4rem;">Open each player's private card hand on their phone:</div>
+              <div id="player-links" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
+            </div>
+          </div>
         </div>
-        <div id="host-draw-result" class="banner warn hidden"></div>
-      </div>
 
-      <div class="box">
-        <h2>3. Completed Families (<span id="completed-count">0</span> / 7)</h2>
-        <p class="sub">Record when a player announces <em>"Happy Family!"</em> (first to complete a family wins ties):</p>
-        <div style="margin-top:0.5rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-          <select id="complete-player"></select>
-          <select id="complete-family"></select>
-          <button class="primary" onclick="recordCompletedFamily()">Add Family</button>
-        </div>
-        <div id="completed-families-list" style="margin-top:0.75rem;"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- TAB 3: PRIVATE PLAYER HAND -->
-  <section id="tab-player" class="hidden">
-    <div class="box">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 id="player-hand-title">Player Hand</h2>
-        <span class="tag" id="player-card-total">6 cards</span>
-      </div>
-      <p class="sub" style="margin-bottom:0.75rem;">
-        Ask another player in English:<br>
-        <em>"In the <strong>[Family]</strong> family, I'd like the <strong>[Member]</strong>, please."</em>
-      </p>
-
-      <div id="happy-family-alert" class="banner correct hidden"></div>
-
-      <ul class="clean" id="private-hand-list"></ul>
-
-      <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border);">
-        <h3>Received a Card? Add it to Your Hand:</h3>
-        <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.4rem;">
-          <select id="add-card-family"></select>
-          <select id="add-card-member"></select>
-          <button class="primary small" onclick="playerAddCard()">+ Add Card</button>
+        <div class="panel">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <strong>Quick View Hand (Pass &amp; Play)</strong>
+              <span id="host-hand-label" style="font-size:0.82rem; color:var(--gold); margin-left:0.4rem;">Hidden</span>
+            </div>
+            <div id="host-hand-buttons" style="display:flex; gap:0.35rem; flex-wrap:wrap;"></div>
+          </div>
+          <div id="host-hand-cards" class="card-grid hidden"></div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- TAB 4: RULES & 7 FAMILIES -->
-  <section id="tab-rules" class="hidden">
-    <div class="box">
-      <h2>Quick Rules (English)</h2>
-      <ul class="clean">
-        <li><strong>Goal:</strong> Collect the most complete families of 6 cards.</li>
-        <li><strong>Turn:</strong> Ask any player: <em>"In the [Family] family, I'd like the [Member], please."</em></li>
-        <li><strong>Success:</strong> If they have it, they give it to you and you play again.</li>
-        <li><strong>Miss:</strong> If not, they say <em>"Draw!"</em> and you draw 1 card from the pile.</li>
-        <li><strong>Myths & Facts:</strong> Answer True/False in English, then scan the QR code for a random Bonus or Penalty!</li>
-      </ul>
-    </div>
-    <div class="box">
-      <h2>The 7 Families (42 Cards)</h2>
-      <p class="sub" style="margin-bottom:0.6rem;">Members in each family: <strong>Grandfather (Explanatory card)</strong>, Grandmother, Father, Mother, Son, Daughter.</p>
-      <div id="families-summary"></div>
-    </div>
-  </section>
+    <section id="tab-myths" class="hidden">
+      <div id="myth-picker" class="panel">
+        <strong>Select a Myths &amp; Facts Card (or scan QR ?card=1..12)</strong>
+        <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
+      </div>
 
-  <footer>
-    Green Clicks · MyDigitalSchool Nancy · Prototype content: verify facts before printing physical cards.
-  </footer>
+      <div id="myth-card-view" class="hidden">
+        <div class="myth-card-large">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1b241e; padding-bottom:0.4rem; margin-bottom:0.75rem;">
+            <span id="m-tag" style="font-weight:800; font-size:0.78rem; color:#1e824c;">BEGINNER · #1</span>
+            <button class="small" style="color:#1b241e; border-color:#ccc;" onclick="closeMythCard()">All Cards</button>
+          </div>
+          <div style="text-align:center; font-size:2rem; margin-bottom:0.4rem;">❓</div>
+          <h2 id="m-question" style="font-size:1.1rem; text-align:center; line-height:1.35; margin-bottom:0.8rem;">Question</h2>
+          <p style="font-size:0.8rem; color:#5a695f; text-align:center; margin-bottom:0.8rem;">Say <strong>True</strong> or <strong>False</strong> in English, then tap:</p>
+
+          <div id="m-choices" style="display:flex; gap:0.6rem;">
+            <button style="flex:1; background:#1e824c; color:#fff; border:none;" onclick="answerMyth(true)">TRUE</button>
+            <button style="flex:1; background:#c0392b; color:#fff; border:none;" onclick="answerMyth(false)">FALSE</button>
+          </div>
+
+          <div id="m-result" class="hidden">
+            <div id="m-banner" class="banner"></div>
+            <p id="m-exp" style="font-size:0.88rem; line-height:1.4; margin-bottom:0.4rem;"></p>
+            <p style="font-size:0.76rem; color:#5a695f;"><strong>Source:</strong> <span id="m-src"></span></p>
+            <div class="effect-ticket">
+              <div id="m-eff-type" style="font-size:0.72rem; font-weight:800; letter-spacing:0.05em;">BONUS</div>
+              <div id="m-eff-title" style="font-size:1.1rem; font-weight:800; margin:0.15rem 0;">Play Again</div>
+              <div id="m-eff-desc" style="font-size:0.8rem;">Take an extra turn!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-hand" class="hidden">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <strong id="p-title" style="font-size:1.1rem; color:var(--gold);">Player 1's Hand</strong>
+            <div style="font-size:0.8rem; opacity:0.85;">Ask in English: <em>"In the [Family] family, I'd like the [Member], please."</em></div>
+          </div>
+          <div style="display:flex; gap:0.35rem; align-items:center;">
+            <select id="add-fam"></select>
+            <select id="add-mem"></select>
+            <button class="primary small" onclick="addPrivateCard()">+ Receive Card</button>
+          </div>
+        </div>
+      </div>
+      <div id="p-happy-alert" class="banner ok hidden"></div>
+      <div id="private-cards-grid" class="card-grid"></div>
+    </section>
+
+    <section id="tab-families" class="hidden">
+      <div class="panel">
+        <strong>The 7 Families (42 Cards Overview)</strong>
+        <p style="font-size:0.82rem; opacity:0.85;">Each family has 6 cards: Grandfather (Summary card), Grandmother, Father, Mother, Son, Daughter.</p>
+      </div>
+      <div id="gallery-grid" class="card-grid"></div>
+    </section>
+  </div>
 
   <script>
     const FAMILIES = [
-      { id: 0, name: "Devices", desc: "Extending lifespan, repairing, buying refurbished, and fighting e-waste." },
-      { id: 1, name: "Data centers", desc: "Energy consumption, cooling systems, and server optimization." },
-      { id: 2, name: "Eco-design", desc: "Lightweight websites, green coding, and sustainable UX/UI." },
-      { id: 3, name: "Everyday habits", desc: "Turning off devices, managing emails, and limiting HD streaming." },
-      { id: 4, name: "Cloud & storage", desc: "Cleaning unused files, local vs. cloud storage, and backups." },
-      { id: 5, name: "Hidden costs", desc: "Rare earth metals, manufacturing footprint, and water usage." },
-      { id: 6, name: "Networks", desc: "Wi-Fi vs. 4G/5G mobile data, turning off the internet box at night." }
+      { id: 0, name: "Devices", color: "#1e824c", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
+      { id: 1, name: "Data centers", color: "#2980b9", icon: "🏢", tip: "Servers run 24/7 and need heavy cooling." },
+      { id: 2, name: "Eco-design", color: "#16a085", icon: "🌿", tip: "Light web pages save energy & data." },
+      { id: 3, name: "Everyday habits", color: "#d35400", icon: "🔌", tip: "Turn off devices instead of standby." },
+      { id: 4, name: "Cloud & storage", color: "#8e44ad", icon: "☁️", tip: "Store locally & delete unused files." },
+      { id: 5, name: "Hidden costs", color: "#c0392b", icon: "⛏️", tip: "800 kg of raw materials for 1 laptop." },
+      { id: 6, name: "Networks", color: "#2c3e50", icon: "📡", tip: "Wi-Fi uses far less energy than 4G/5G." }
     ];
 
     const MEMBERS = [
-      "Grandfather (Summary)",
-      "Grandmother",
-      "Father",
-      "Mother",
-      "Son",
-      "Daughter"
+      { name: "Grandfather", role: "Summary Card" },
+      { name: "Grandmother", role: "Family Member" },
+      { name: "Father", role: "Family Member" },
+      { name: "Mother", role: "Family Member" },
+      { name: "Son", role: "Family Member" },
+      { name: "Daughter", role: "Family Member" }
     ];
 
-    const MYTHS_CARDS = [
+    const MYTHS = [
       { id: 1, level: "Beginner", q: "Sending an email with a large attachment uses as much energy as leaving a light bulb on for several hours.", ans: true, exp: "Storing and transmitting heavy attachments across servers and networks consumes significant electricity. Use links or compress files instead.", src: "ADEME" },
       { id: 2, level: "Beginner", q: "Using Dark Mode saves a lot of battery on all types of smartphone and laptop screens.", ans: false, exp: "Dark Mode only saves significant energy on OLED/AMOLED screens where black pixels are turned off. On LCD screens, the backlight stays on.", src: "Purdue University / IEA" },
       { id: 3, level: "Beginner", q: "Streaming a video on 4G/5G mobile data consumes much more energy than using Wi-Fi.", ans: true, exp: "Mobile cellular networks require far more energy per gigabyte transferred than fixed fiber/Wi-Fi connections.", src: "ADEME" },
       { id: 4, level: "Beginner", q: "Putting your computer or TV on standby uses almost zero electricity.", ans: false, exp: "Standby ('vampire') power can represent up to 10% of household electricity use. Turning devices completely off saves real energy.", src: "International Energy Agency (IEA)" },
       { id: 5, level: "Beginner", q: "Buying a refurbished smartphone avoids about 80% of its carbon footprint compared to a new one.", ans: true, exp: "Up to 80% of a smartphone's environmental impact happens during raw material extraction and manufacturing.", src: "ADEME" },
-      { id: 6, level: "Beginner", q: "Deleting old unread emails is the single most effective action to save the planet.", ans: false, exp: "While cleaning your inbox is a good habit, extending the lifespan of your devices (keeping a phone 4 years instead of 2) has a vastly bigger impact.", src: "ADEME" },
+      { id: 6, level: "Beginner", q: "Deleting old unread emails is the single most effective action to save the planet.", ans: false, exp: "Extending the lifespan of your devices (keeping a phone 4 years instead of 2) has a vastly bigger impact than deleting emails.", src: "ADEME" },
       { id: 7, level: "Advanced", q: "Digital technology accounts for roughly 3% to 4% of global greenhouse gas emissions—more than civil aviation.", ans: true, exp: "Global digital infrastructure (devices, networks, data centers) generates around 3.5% to 4% of global GHG emissions.", src: "The Shift Project / ADEME" },
-      { id: 8, level: "Advanced", q: "Data centers consume more energy globally than manufacturing user devices (smartphones, laptops, TVs).", ans: false, exp: "User terminals (manufacturing and usage) account for the largest share (~60–70%) of digital carbon footprint, ahead of data centers and networks.", src: "ADEME-ARCEP Study" },
+      { id: 8, level: "Advanced", q: "Data centers consume more energy globally than manufacturing user devices (smartphones, laptops, TVs).", ans: false, exp: "User terminals (manufacturing and usage) account for the largest share (~60–70%) of digital carbon footprint.", src: "ADEME-ARCEP Study" },
       { id: 9, level: "Advanced", q: "The average weight of a web page has more than doubled over the past 10 years.", ans: true, exp: "Unoptimized images, heavy JavaScript frameworks, and auto-playing videos have pushed median web pages past 2 MB.", src: "HTTP Archive" },
       { id: 10, level: "Advanced", q: "Manufacturing a single 2 kg laptop requires around 800 kg of raw materials.", ans: true, exp: "Mining rare metals and refining components requires massive amounts of earth, water, and fossil fuels.", src: "ADEME" },
       { id: 11, level: "Advanced", q: "Cloud storage means your files float virtually without physical hardware impact.", ans: false, exp: "'The Cloud' relies on physical data centers running 24/7 with redundant servers and heavy cooling systems.", src: "International Energy Agency (IEA)" },
@@ -367,314 +417,272 @@
       { title: "Back to the Pile", desc: "Put 1 of your cards back into the draw pile and shuffle." }
     ];
 
-    let currentCard = null;
-    let hostState = null;
+    let tableState = null;
+    let activeMyth = null;
     let privateHand = [];
-    let playerNumber = null;
+    let privateKey = null;
+    let hostVisiblePlayer = null;
+
+    function createCardHTML(fIdx, mIdx, actionHtml = "") {
+      const fam = FAMILIES[fIdx];
+      const mem = MEMBERS[mIdx];
+      return `
+        <div class="playing-card" style="border-top: 8px solid ${fam.color};">
+          <div class="card-header" style="color:${fam.color};">
+            <span>${fam.name}</span>
+            <span>${mIdx + 1}/6</span>
+          </div>
+          <div class="card-icon">${fam.icon}</div>
+          <div class="card-member">${mem.name}<br><span style="font-size:0.7rem; font-weight:600; color:#666;">${mem.role}</span></div>
+          <div class="card-tip">${fam.tip}</div>
+          <div class="card-footer">${actionHtml}</div>
+        </div>
+      `;
+    }
 
     function init() {
-      const begGrid = document.getElementById("beginner-grid");
-      const advGrid = document.getElementById("advanced-grid");
-      MYTHS_CARDS.forEach(c => {
-        const btn = document.createElement("button");
-        btn.textContent = `Card #${c.id}`;
-        btn.onclick = () => openChallenge(c.id);
-        (c.level === "Beginner" ? begGrid : advGrid).appendChild(btn);
+      const mGrid = document.getElementById("myth-buttons-grid");
+      MYTHS.forEach(m => {
+        const b = document.createElement("button");
+        b.textContent = `#${m.id} (${m.level})`;
+        b.onclick = () => openMythCard(m.id);
+        mGrid.appendChild(b);
       });
 
-      const famDiv = document.getElementById("families-summary");
-      const addFamSel = document.getElementById("add-card-family");
-      const compFamSel = document.getElementById("complete-family");
-      FAMILIES.forEach((f, idx) => {
-        famDiv.innerHTML += `<div style="margin-bottom:0.65rem;"><strong style="color:var(--accent);">${idx + 1}. ${f.name}</strong><p class="sub">${f.desc}</p></div>`;
-        addFamSel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
-        compFamSel.innerHTML += `<option value="${f.name}">${f.name}</option>`;
-      });
+      const addFam = document.getElementById("add-fam");
+      const addMem = document.getElementById("add-mem");
+      const gallery = document.getElementById("gallery-grid");
 
-      const addMemSel = document.getElementById("add-card-member");
+      FAMILIES.forEach(f => {
+        addFam.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+        MEMBERS.forEach((m, mIdx) => {
+          gallery.innerHTML += createCardHTML(f.id, mIdx);
+        });
+      });
       MEMBERS.forEach((m, idx) => {
-        addMemSel.innerHTML += `<option value="${idx}">${m}</option>`;
+        addMem.innerHTML += `<option value="${idx}">${m.name}</option>`;
       });
 
       const params = new URLSearchParams(window.location.search);
-      const cardParam = parseInt(params.get("card"), 10);
-      const handParam = params.get("hand");
-      const pNumParam = params.get("p");
+      const cParam = parseInt(params.get("card"), 10);
+      const hParam = params.get("hand");
+      const pParam = params.get("p");
 
-      if (handParam) {
-        loadPrivateHandFromUrl(pNumParam || "1", handParam);
-        switchTab("player");
-      } else if (cardParam >= 1 && cardParam <= 12) {
-        switchTab("myths");
-        openChallenge(cardParam);
+      if (hParam) {
+        loadPrivateHand(pParam || "1", hParam);
+        showTab("hand");
+      } else if (cParam >= 1 && cParam <= 12) {
+        showTab("myths");
+        openMythCard(cParam);
       } else {
-        const savedHost = localStorage.getItem("greenclicks_host");
-        if (savedHost) {
-          hostState = JSON.parse(savedHost);
-          renderHostTable();
+        const saved = localStorage.getItem("gc_table_v2");
+        if (saved) {
+          tableState = JSON.parse(saved);
+          renderTable();
         }
       }
     }
 
-    function switchTab(tab) {
-      ["myths", "host", "player", "rules"].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.toggle("hidden", t !== tab);
-        document.getElementById(`btn-tab-${t}`).classList.toggle("primary", t === tab);
+    function showTab(name) {
+      ["play", "myths", "hand", "families"].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle("hidden", t !== name);
+        document.getElementById(`tab-btn-${t}`).classList.toggle("primary", t === name);
       });
     }
 
-    function openChallenge(id) {
-      currentCard = MYTHS_CARDS.find(c => c.id === id);
-      if (!currentCard) return;
-      document.getElementById("card-selector-box").classList.add("hidden");
-      document.getElementById("challenge-box").classList.remove("hidden");
-      document.getElementById("challenge-feedback").classList.add("hidden");
-      document.getElementById("answer-buttons").classList.remove("hidden");
-
-      document.getElementById("challenge-level").textContent = `${currentCard.level.toUpperCase()} · CARD #${currentCard.id}`;
-      document.getElementById("challenge-question").textContent = `"${currentCard.q}"`;
-    }
-
-    function submitAnswer(userGuess) {
-      const isCorrect = userGuess === currentCard.ans;
-      document.getElementById("answer-buttons").classList.add("hidden");
-      document.getElementById("challenge-feedback").classList.remove("hidden");
-
-      const banner = document.getElementById("result-banner");
-      banner.className = "banner " + (isCorrect ? "correct" : "wrong");
-      banner.textContent = isCorrect
-        ? `✅ Correct! The statement is ${currentCard.ans ? "TRUE" : "FALSE"}.`
-        : `❌ Wrong! The statement is actually ${currentCard.ans ? "TRUE" : "FALSE"}.`;
-
-      document.getElementById("challenge-explanation").textContent = currentCard.exp;
-      document.getElementById("challenge-source").textContent = currentCard.src;
-
-      const pool = isCorrect ? BONUSES : PENALTIES;
-      const effect = pool[Math.floor(Math.random() * pool.length)];
-      document.getElementById("effect-type").textContent = isCorrect ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
-      document.getElementById("effect-title").textContent = effect.title;
-      document.getElementById("effect-desc").textContent = effect.desc;
-    }
-
-    function resetChallenge() {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("card");
-      window.history.replaceState({}, "", url.pathname + url.search);
-      document.getElementById("challenge-box").classList.add("hidden");
-      document.getElementById("card-selector-box").classList.remove("hidden");
-    }
-
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+        [a[i], a[j]] = [a[j], a[i]];
       }
-      return arr;
+      return a;
     }
 
-    function createNewGame() {
-      const numPlayers = parseInt(document.getElementById("player-count").value, 10);
-      const mode = document.getElementById("game-mode").value;
-
-      let deck = [];
+    function startNewTable() {
+      const n = parseInt(document.getElementById("num-players").value, 10);
+      const mythCount = parseInt(document.getElementById("difficulty").value, 10);
+      let cards = [];
       for (let f = 0; f < 7; f++) {
-        for (let m = 0; m < 6; m++) {
-          deck.push(`${f}-${m}`);
-        }
+        for (let m = 0; m < 6; m++) cards.push(`${f}-${m}`);
       }
-      shuffle(deck);
+      shuffle(cards);
+      const hands = Array.from({ length: n }, () => cards.splice(0, 6));
+      for (let id = 1; id <= mythCount; id++) cards.push(`M-${id}`);
+      shuffle(cards);
 
-      const initialHands = [];
-      for (let p = 0; p < numPlayers; p++) {
-        initialHands.push(deck.splice(0, 6));
-      }
-
-      const mythLimit = mode === "beginner" ? 6 : 12;
-      for (let id = 1; id <= mythLimit; id++) {
-        deck.push(`M-${id}`);
-      }
-      shuffle(deck);
-
-      hostState = {
-        numPlayers,
-        initialHands,
-        pile: deck,
-        completed: []
-      };
-      localStorage.setItem("greenclicks_host", JSON.stringify(hostState));
-      document.getElementById("host-draw-result").classList.add("hidden");
-      renderHostTable();
+      tableState = { n, hands, pile: cards };
+      hostVisiblePlayer = null;
+      localStorage.setItem("gc_table_v2", JSON.stringify(tableState));
+      document.getElementById("drawn-feedback").classList.add("hidden");
+      renderTable();
     }
 
-    function renderHostTable() {
-      if (!hostState) return;
-      document.getElementById("host-active-game").classList.remove("hidden");
-      document.getElementById("pile-count").textContent = hostState.pile.length;
-      document.getElementById("completed-count").textContent = hostState.completed.length;
+    function renderTable() {
+      if (!tableState) return;
+      document.getElementById("active-table").classList.remove("hidden");
+      document.getElementById("pile-counter").textContent = tableState.pile.length;
 
-      const linksList = document.getElementById("player-links-list");
-      const drawSel = document.getElementById("draw-target-player");
-      const compSel = document.getElementById("complete-player");
-      linksList.innerHTML = "";
-      drawSel.innerHTML = "";
-      compSel.innerHTML = "";
+      const sel = document.getElementById("active-player-sel");
+      const linksDiv = document.getElementById("player-links");
+      const handBtns = document.getElementById("host-hand-buttons");
+      sel.innerHTML = "";
+      linksDiv.innerHTML = "";
+      handBtns.innerHTML = "";
 
-      const baseUrl = window.location.href.split("?")[0];
+      const base = window.location.origin + window.location.pathname;
 
-      for (let p = 0; p < hostState.numPlayers; p++) {
-        const encodedHand = btoa(hostState.initialHands[p].join(","));
-        const playerUrl = `${baseUrl}?p=${p + 1}&hand=${encodeURIComponent(encodedHand)}`;
+      for (let i = 0; i < tableState.n; i++) {
+        sel.innerHTML += `<option value="${i}">Player ${i + 1}</option>`;
+        const enc = btoa(tableState.hands[i].join(","));
+        const url = `${base}?p=${i + 1}&hand=${encodeURIComponent(enc)}`;
+        linksDiv.innerHTML += `<a href="${url}" target="_blank"><button class="small primary">📱 Player ${i + 1}</button></a>`;
 
-        const li = document.createElement("li");
-        li.innerHTML = `<span><strong>Player ${p + 1}</strong> (6 starting cards)</span>
-          <div style="display:flex; gap:0.35rem;">
-            <button class="small" onclick="copyPlayerLink('${playerUrl}', this)">Copy Link</button>
-            <a href="${playerUrl}" target="_blank"><button class="small primary">Open</button></a>
-          </div>`;
-        linksList.appendChild(li);
-
-        drawSel.innerHTML += `<option value="${p + 1}">Player ${p + 1}</option>`;
-        compSel.innerHTML += `<option value="Player ${p + 1}">Player ${p + 1}</option>`;
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "small";
+        toggleBtn.textContent = hostVisiblePlayer === i ? `Hide P${i + 1}` : `Show P${i + 1} (${tableState.hands[i].length})`;
+        toggleBtn.onclick = () => {
+          hostVisiblePlayer = (hostVisiblePlayer === i) ? null : i;
+          renderTable();
+        };
+        handBtns.appendChild(toggleBtn);
       }
 
-      const compList = document.getElementById("completed-families-list");
-      compList.innerHTML = hostState.completed.map(c =>
-        `<span class="family-badge">🏆 ${c.family} (${c.player})</span>`
-      ).join("");
-    }
-
-    function copyPlayerLink(url, btn) {
-      navigator.clipboard.writeText(url).then(() => {
-        const old = btn.textContent;
-        btn.textContent = "Copied!";
-        setTimeout(() => btn.textContent = old, 1500);
-      });
-    }
-
-    function hostDrawCard() {
-      if (!hostState || hostState.pile.length === 0) {
-        return alert("The draw pile is empty!");
-      }
-      const pNum = document.getElementById("draw-target-player").value;
-      const drawn = hostState.pile.pop();
-      localStorage.setItem("greenclicks_host", JSON.stringify(hostState));
-
-      const resBox = document.getElementById("host-draw-result");
-      resBox.classList.remove("hidden");
-
-      if (drawn.startsWith("M-")) {
-        const mythId = parseInt(drawn.split("-")[1], 10);
-        resBox.className = "banner warn";
-        resBox.innerHTML = `⚡ <strong>Player ${pNum} drew Myths & Facts Card #${mythId}!</strong><br>
-          <button class="primary small" style="margin-top:0.4rem;" onclick="switchTab('myths'); openChallenge(${mythId});">Open Challenge #${mythId}</button>`;
+      const cardsDiv = document.getElementById("host-hand-cards");
+      const label = document.getElementById("host-hand-label");
+      if (hostVisiblePlayer === null) {
+        cardsDiv.classList.add("hidden");
+        label.textContent = "Hidden (Tap a player to view)";
       } else {
-        const [fIdx, mIdx] = drawn.split("-").map(Number);
-        resBox.className = "banner correct";
-        resBox.innerHTML = `🃏 <strong>Player ${pNum} drew:</strong> ${FAMILIES[fIdx].name} — ${MEMBERS[mIdx]}<br>
-          <span class="sub">(Player ${pNum}: add this card to your phone hand)</span>`;
+        cardsDiv.classList.remove("hidden");
+        label.textContent = `Showing Player ${hostVisiblePlayer + 1}`;
+        const h = tableState.hands[hostVisiblePlayer].sort();
+        cardsDiv.innerHTML = h.map((code, idx) => {
+          const [f, m] = code.split("-").map(Number);
+          return createCardHTML(f, m, `<button class="small danger" onclick="hostGiveCard(${hostVisiblePlayer}, ${idx})">Give</button>`);
+        }).join("");
       }
-      renderHostTable();
     }
 
-    function recordCompletedFamily() {
-      const player = document.getElementById("complete-player").value;
-      const family = document.getElementById("complete-family").value;
-      if (hostState.completed.some(c => c.family === family)) {
-        return alert("This family has already been completed!");
+    function drawTopCard() {
+      if (!tableState || tableState.pile.length === 0) return alert("Draw pile is empty!");
+      const pIdx = parseInt(document.getElementById("active-player-sel").value, 10);
+      const card = tableState.pile.pop();
+      const fb = document.getElementById("drawn-feedback");
+      fb.classList.remove("hidden");
+
+      if (card.startsWith("M-")) {
+        const mId = parseInt(card.split("-")[1], 10);
+        fb.innerHTML = `⚡ <strong>Player ${pIdx + 1} drew Myths &amp; Facts #${mId}!</strong> <button class="small primary" onclick="showTab('myths'); openMythCard(${mId});">Flip Card</button>`;
+      } else {
+        tableState.hands[pIdx].push(card);
+        const [f, m] = card.split("-").map(Number);
+        fb.innerHTML = `🃏 <strong>Player ${pIdx + 1} drew a card!</strong> (Added to P${pIdx + 1}'s hand: <em>${FAMILIES[f].name} - ${MEMBERS[m].name}</em>)`;
       }
-      hostState.completed.push({ player, family });
-      localStorage.setItem("greenclicks_host", JSON.stringify(hostState));
-      renderHostTable();
+      localStorage.setItem("gc_table_v2", JSON.stringify(tableState));
+      renderTable();
     }
 
-    function loadPrivateHandFromUrl(pNum, encodedHand) {
-      playerNumber = pNum;
-      document.getElementById("btn-tab-player").classList.remove("hidden");
-      document.getElementById("player-hand-title").textContent = `Player ${pNum}'s Private Hand`;
+    function hostGiveCard(fromIdx, cardIdx) {
+      const to = prompt(`Give this card to which player? (1 to ${tableState.n})`);
+      const toIdx = parseInt(to, 10) - 1;
+      if (isNaN(toIdx) || toIdx < 0 || toIdx >= tableState.n || toIdx === fromIdx) return;
+      const [c] = tableState.hands[fromIdx].splice(cardIdx, 1);
+      tableState.hands[toIdx].push(c);
+      localStorage.setItem("gc_table_v2", JSON.stringify(tableState));
+      renderTable();
+    }
 
-      const storageKey = `greenclicks_hand_p${pNum}_${encodedHand.slice(0, 12)}`;
-      const saved = localStorage.getItem(storageKey);
+    function openMythCard(id) {
+      activeMyth = MYTHS.find(m => m.id === id);
+      if (!activeMyth) return;
+      document.getElementById("myth-picker").classList.add("hidden");
+      document.getElementById("myth-card-view").classList.remove("hidden");
+      document.getElementById("m-result").classList.add("hidden");
+      document.getElementById("m-choices").classList.remove("hidden");
+      document.getElementById("m-tag").textContent = `${activeMyth.level.toUpperCase()} · CARD #${activeMyth.id}`;
+      document.getElementById("m-question").textContent = `"${activeMyth.q}"`;
+    }
 
+    function answerMyth(guess) {
+      const ok = guess === activeMyth.ans;
+      document.getElementById("m-choices").classList.add("hidden");
+      document.getElementById("m-result").classList.remove("hidden");
+      const b = document.getElementById("m-banner");
+      b.className = "banner " + (ok ? "ok" : "ko");
+      b.textContent = ok ? `✅ Correct! (${activeMyth.ans ? "TRUE" : "FALSE"})` : `❌ Wrong! (${activeMyth.ans ? "TRUE" : "FALSE"})`;
+      document.getElementById("m-exp").textContent = activeMyth.exp;
+      document.getElementById("m-src").textContent = activeMyth.src;
+
+      const list = ok ? BONUSES : PENALTIES;
+      const eff = list[Math.floor(Math.random() * list.length)];
+      document.getElementById("m-eff-type").textContent = ok ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
+      document.getElementById("m-eff-title").textContent = eff.title;
+      document.getElementById("m-eff-desc").textContent = eff.desc;
+    }
+
+    function closeMythCard() {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("card");
+      window.history.replaceState({}, "", u.pathname + u.search);
+      document.getElementById("myth-card-view").classList.add("hidden");
+      document.getElementById("myth-picker").classList.remove("hidden");
+    }
+
+    function loadPrivateHand(pNum, enc) {
+      document.getElementById("tab-btn-hand").classList.remove("hidden");
+      document.getElementById("p-title").textContent = `Player ${pNum}'s Hand`;
+      privateKey = `gc_priv_${pNum}_${enc.slice(0, 10)}`;
+      const saved = localStorage.getItem(privateKey);
       if (saved) {
         privateHand = JSON.parse(saved);
       } else {
-        try {
-          const decoded = atob(decodeURIComponent(encodedHand));
-          privateHand = decoded.split(",").map(code => {
-            const [f, m] = code.split("-").map(Number);
-            return { f, m };
-          });
-          localStorage.setItem(storageKey, JSON.stringify(privateHand));
-        } catch (e) {
-          privateHand = [];
-        }
+        privateHand = atob(decodeURIComponent(enc)).split(",").filter(Boolean).map(c => {
+          const [f, m] = c.split("-").map(Number);
+          return { f, m };
+        });
+        localStorage.setItem(privateKey, JSON.stringify(privateHand));
       }
-      window._currentHandStorageKey = storageKey;
       renderPrivateHand();
-    }
-
-    function savePrivateHand() {
-      if (window._currentHandStorageKey) {
-        localStorage.setItem(window._currentHandStorageKey, JSON.stringify(privateHand));
-      }
     }
 
     function renderPrivateHand() {
-      const list = document.getElementById("private-hand-list");
-      list.innerHTML = "";
-      document.getElementById("player-card-total").textContent = `${privateHand.length} cards`;
-
       privateHand.sort((a, b) => (a.f - b.f) || (a.m - b.m));
+      const grid = document.getElementById("private-cards-grid");
+      grid.innerHTML = privateHand.map((c, idx) =>
+        createCardHTML(c.f, c.m, `<button class="small danger" onclick="removePrivateCard(${idx})">Give Card</button>`)
+      ).join("");
 
       const counts = {};
-      privateHand.forEach(c => { counts[c.f] = (counts[c.f] || 0) + 1; });
-      const completeFamIdx = Object.keys(counts).find(k => counts[k] === 6);
-
-      const alertBox = document.getElementById("happy-family-alert");
-      if (completeFamIdx !== undefined) {
-        const famName = FAMILIES[completeFamIdx].name;
+      privateHand.forEach(c => counts[c.f] = (counts[c.f] || 0) + 1);
+      const done = Object.keys(counts).find(k => counts[k] === 6);
+      const alertBox = document.getElementById("p-happy-alert");
+      if (done !== undefined) {
         alertBox.classList.remove("hidden");
-        alertBox.innerHTML = `🎉 You have all 6 cards of <strong>${famName}</strong>! Say <em>"Happy family!"</em> and lay them down:
-          <button class="primary small" style="margin-left:0.5rem;" onclick="layDownFamily(${completeFamIdx})">Lay Down Family</button>`;
+        alertBox.innerHTML = `🎉 Complete family: <strong>${FAMILIES[done].name}</strong>! Say "Happy family!" <button class="small primary" onclick="layDown(${done})">Lay Down</button>`;
       } else {
         alertBox.classList.add("hidden");
       }
-
-      if (privateHand.length === 0) {
-        list.innerHTML = `<li class="sub">Your hand is empty. Draw a card from the Host Table!</li>`;
-        return;
-      }
-
-      privateHand.forEach((card, idx) => {
-        const li = document.createElement("li");
-        li.innerHTML = `<span><strong>${FAMILIES[card.f].name}</strong> — ${MEMBERS[card.m]}</span>
-          <button class="small danger" onclick="playerRemoveCard(${idx})">Give / Discard</button>`;
-        list.appendChild(li);
-      });
     }
 
-    function playerAddCard() {
-      const f = parseInt(document.getElementById("add-card-family").value, 10);
-      const m = parseInt(document.getElementById("add-card-member").value, 10);
-      if (privateHand.some(c => c.f === f && c.m === m)) {
-        return alert("You already have this exact card in your hand!");
-      }
+    function addPrivateCard() {
+      const f = parseInt(document.getElementById("add-fam").value, 10);
+      const m = parseInt(document.getElementById("add-mem").value, 10);
+      if (privateHand.some(c => c.f === f && c.m === m)) return alert("Already in your hand!");
       privateHand.push({ f, m });
-      savePrivateHand();
+      localStorage.setItem(privateKey, JSON.stringify(privateHand));
       renderPrivateHand();
     }
 
-    function playerRemoveCard(idx) {
+    function removePrivateCard(idx) {
       privateHand.splice(idx, 1);
-      savePrivateHand();
+      localStorage.setItem(privateKey, JSON.stringify(privateHand));
       renderPrivateHand();
     }
 
-    function layDownFamily(fIdx) {
+    function layDown(fIdx) {
       privateHand = privateHand.filter(c => c.f !== Number(fIdx));
-      savePrivateHand();
+      localStorage.setItem(privateKey, JSON.stringify(privateHand));
       renderPrivateHand();
-      alert(`Happy Family! Tell the host to record "${FAMILIES[fIdx].name}" for Player ${playerNumber}.`);
     }
 
     init();

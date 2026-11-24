@@ -3,19 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Green Clicks — Multiplayer Card Game</title>
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>Green Clicks — Turn-Based Card Game</title>
   <style>
     :root {
-      --felt: #26493a;
-      --felt-dark: #183026;
+      --felt: #153926;
+      --felt-dark: #0d2418;
       --gold: #e6c25b;
       --cream: #faf8f2;
-      --ink: #18241d;
+      --ink: #1b241e;
       --muted: #5a695f;
-      --accent: #1e824c;
-      --danger: #c0392b;
+      --accent: #2ecc71;
+      --danger: #e74c3c;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -32,58 +30,53 @@
     header {
       text-align: center;
       margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
       padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255,255,255,0.14);
     }
-    .logo-title {
-      font-size: 1.85rem;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      line-height: 1;
+    .badge-top {
+      display: inline-block;
+      background: rgba(230, 194, 91, 0.18);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
       text-transform: uppercase;
     }
-    .logo-sub {
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: #8ce99a;
-      font-style: italic;
-      margin-top: -0.15rem;
-    }
-    .subtitle {
-      font-size: 0.8rem;
-      opacity: 0.85;
-      margin-top: 0.25rem;
-    }
+    h1 { font-size: 1.55rem; margin-top: 0.3rem; }
     nav {
       display: flex;
       justify-content: center;
       gap: 0.5rem;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1rem;
       flex-wrap: wrap;
     }
     button {
       font-family: inherit;
       font-weight: 700;
-      font-size: 0.85rem;
-      padding: 0.55rem 0.95rem;
+      font-size: 0.88rem;
+      padding: 0.55rem 1rem;
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.1);
       color: #fff;
       cursor: pointer;
       transition: transform 0.12s, background 0.15s;
     }
-    button:hover { background: rgba(255,255,255,0.16); }
-    button:active { transform: scale(0.96); }
+    button:hover:not(:disabled) { background: rgba(255,255,255,0.22); }
+    button:active:not(:disabled) { transform: scale(0.96); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
     button.primary {
       background: var(--gold);
-      color: #16241a;
+      color: #152419;
       border-color: var(--gold);
     }
     button.green {
-      background: #3ddc84;
-      color: #0e2417;
-      border-color: #3ddc84;
+      background: var(--accent);
+      color: #0d2418;
+      border-color: var(--accent);
     }
     button.danger {
       background: var(--danger);
@@ -94,59 +87,41 @@
     .hidden { display: none !important; }
 
     .panel {
-      background: rgba(0,0,0,0.32);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 12px;
-      padding: 1.1rem;
-      margin-bottom: 1rem;
-    }
-    input[type="text"], select {
-      font-family: inherit;
-      padding: 0.55rem 0.75rem;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.95);
-      color: #18241d;
-      font-weight: 700;
-      font-size: 0.9rem;
-    }
-
-    /* ROOM CODE & QR DISPLAY */
-    .room-banner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      background: rgba(0,0,0,0.4);
-      border: 2px dashed var(--gold);
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       padding: 1rem;
       margin-bottom: 1rem;
     }
-    .room-code-big {
-      font-size: 2rem;
-      font-weight: 900;
-      letter-spacing: 0.15em;
-      color: var(--gold);
-      background: rgba(0,0,0,0.45);
-      padding: 0.3rem 0.8rem;
+    input, select {
+      font-family: inherit;
+      padding: 0.55rem 0.75rem;
       border-radius: 8px;
-      display: inline-block;
-      margin: 0.3rem 0;
-    }
-    #host-qr-box {
-      background: #fff;
-      padding: 8px;
-      border-radius: 8px;
-      display: inline-block;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: #102b1d;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.92rem;
     }
 
-    /* PLAYING CARDS */
+    .turn-banner {
+      background: linear-gradient(90deg, rgba(230,194,91,0.25), rgba(46,204,113,0.25));
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .turn-banner.my-turn {
+      background: linear-gradient(90deg, #1e824c, #27ae60);
+      border-color: #fff;
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+    }
+
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 0.9rem;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 0.85rem;
       margin-top: 0.8rem;
     }
     .playing-card {
@@ -155,81 +130,56 @@
       border-radius: 12px;
       border: 4px solid #fff;
       box-shadow: 0 8px 18px rgba(0,0,0,0.35);
-      padding: 0.65rem;
+      padding: 0.6rem;
       aspect-ratio: 2.5 / 3.5;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease;
       user-select: none;
     }
-    .playing-card:hover {
-      transform: translateY(-6px) rotate(1deg);
-      box-shadow: 0 14px 24px rgba(0,0,0,0.45);
-    }
+    .playing-card:hover { transform: translateY(-5px); }
     .card-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       font-size: 0.7rem;
       font-weight: 800;
       text-transform: uppercase;
       border-bottom: 2px solid currentColor;
-      padding-bottom: 0.25rem;
+      padding-bottom: 0.2rem;
     }
-    .card-icon { font-size: 2.2rem; text-align: center; margin: 0.2rem 0; }
-    .card-member { text-align: center; font-weight: 800; font-size: 0.92rem; line-height: 1.2; }
+    .card-icon { font-size: 2.1rem; text-align: center; }
+    .card-member { text-align: center; font-weight: 800; font-size: 0.92rem; line-height: 1.15; }
     .card-tip {
-      font-size: 0.66rem;
+      font-size: 0.65rem;
       color: var(--muted);
       text-align: center;
-      line-height: 1.25;
       background: rgba(0,0,0,0.05);
-      padding: 0.3rem;
+      padding: 0.25rem;
       border-radius: 6px;
     }
-    .card-footer { display: flex; justify-content: center; gap: 0.3rem; }
 
-    /* DRAW PILE BACK */
-    .card-back {
-      background: repeating-linear-gradient(45deg, #1b5e3a, #1b5e3a 10px, #14472c 10px, #14472c 20px);
-      border: 4px solid #fff;
-      border-radius: 12px;
-      width: 140px;
-      aspect-ratio: 2.5 / 3.5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 0.65rem;
-      box-shadow: 4px 4px 0 #d9d4c7, 8px 8px 0 #bfb9aa, 0 12px 24px rgba(0,0,0,0.45);
-      cursor: pointer;
-      margin: 0 auto;
-    }
-    .card-back:hover { transform: scale(1.03); }
-    .card-back-inner {
-      border: 2px solid var(--gold);
-      border-radius: 8px;
-      padding: 0.5rem;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    .room-code {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      background: rgba(0,0,0,0.4);
+      padding: 0.4rem 1rem;
+      border-radius: 10px;
+      display: inline-block;
+      margin: 0.4rem 0;
     }
 
-    /* MYTH CARD LARGE */
     .myth-card-large {
       background: var(--cream);
       color: var(--ink);
       border: 6px solid #fff;
       border-radius: 16px;
-      max-width: 390px;
+      max-width: 400px;
       margin: 0 auto;
       padding: 1.25rem;
-      box-shadow: 0 14px 32px rgba(0,0,0,0.45);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.5);
     }
     .banner {
       padding: 0.75rem;
@@ -240,7 +190,6 @@
     }
     .banner.ok { background: #d4edda; color: #155724; }
     .banner.ko { background: #f8d7da; color: #721c24; }
-    .banner.info { background: #fff3cd; color: #856404; }
     .effect-ticket {
       background: #fff8e1;
       border: 2px dashed #d39e00;
@@ -250,174 +199,152 @@
       text-align: center;
       margin-top: 0.75rem;
     }
+    .log-feed {
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 0.83rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .log-item {
+      background: rgba(255,255,255,0.08);
+      padding: 0.4rem 0.65rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--gold);
+    }
     .player-pill {
-      background: rgba(255,255,255,0.12);
-      padding: 0.45rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 700;
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
+      background: rgba(255,255,255,0.12);
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin: 0.25rem;
     }
-    .dot-online { width: 9px; height: 9px; border-radius: 50%; background: #3ddc84; display: inline-block; }
+    .player-pill.active-turn {
+      background: var(--gold);
+      color: #152419;
+    }
+    .privacy-veil {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: rgba(0,0,0,0.45);
+      border: 2px dashed var(--gold);
+      border-radius: 12px;
+      margin-top: 0.75rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div class="logo-title">GREEN</div>
-      <div class="logo-sub">Clicks</div>
-      <div class="subtitle">Serious Card Game · Green IT &amp; Eco-Design</div>
+      <span class="badge-top">Serious Card Game · Turn-Based</span>
+      <h1>🃏 Green Clicks</h1>
     </header>
 
-    <nav id="top-nav">
-      <button id="nav-home" class="primary" onclick="switchView('home')">🏠 Lobby (Host / Join)</button>
+    <nav>
+      <button id="nav-lobby" class="primary" onclick="switchView('lobby')">🎲 Table Setup</button>
+      <button id="nav-game" class="hidden" onclick="switchView('game')">✋ Game Board</button>
       <button id="nav-myths" onclick="switchView('myths')">❓ Myths &amp; Facts (QR)</button>
-      <button id="nav-families" onclick="switchView('families')">📖 7 Families</button>
+      <button id="nav-deck" onclick="switchView('deck')">📖 7 Families</button>
     </nav>
 
-    <!-- =========================================================
-         VIEW 1: LOBBY (CHOOSE HOST TABLE OR JOIN ON PHONE)
-         ========================================================= -->
-    <section id="view-home">
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
-        <!-- OPTION A: JOIN A GAME (FOR PHONES) -->
-        <div class="panel" style="border: 2px solid #3ddc84;">
-          <div style="font-size:0.75rem; font-weight:800; color:#3ddc84; text-transform:uppercase;">📱 On Your Smartphone</div>
-          <h2 style="margin:0.3rem 0;">Join a Game</h2>
-          <p style="font-size:0.84rem; opacity:0.85; margin-bottom:0.85rem;">Enter your name and the 4-letter Room Code shown on the host screen (or scan the host QR code):</p>
-          <div style="display:flex; flex-direction:column; gap:0.55rem;">
-            <input type="text" id="join-name" placeholder="Your Name (e.g. Loïc)" maxlength="16">
-            <input type="text" id="join-code" placeholder="4-Letter Room Code (e.g. ABCD)" maxlength="4" style="text-transform:uppercase; letter-spacing:0.15em;">
-            <button class="green" onclick="joinRoom()">Join Game →</button>
-          </div>
-          <div id="join-status" style="font-size:0.82rem; margin-top:0.6rem; color:var(--gold);"></div>
+    <section id="view-lobby">
+      <div class="panel">
+        <h2 style="margin-bottom:0.4rem;">🎲 Start a Turn-Based Match (2 to 6 Players)</h2>
+        <p style="font-size:0.85rem; opacity:0.85; margin-bottom:0.85rem;">
+          Add each player's name, choose Beginner or Advanced mode, and deal 6 secret cards per player.
+        </p>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+          <input type="text" id="new-player-name" placeholder="Player name (e.g. Alex)" maxlength="16" onkeydown="if(event.key==='Enter') addPlayerToLobby()">
+          <button class="primary" onclick="addPlayerToLobby()">+ Add Player</button>
         </div>
-
-        <!-- OPTION B: HOST THE TABLE (FOR PC / TABLET / HOST PHONE) -->
-        <div class="panel">
-          <div style="font-size:0.75rem; font-weight:800; color:var(--gold); text-transform:uppercase;">🎲 On Main Screen / Host</div>
-          <h2 style="margin:0.3rem 0;">Create Game Table</h2>
-          <p style="font-size:0.84rem; opacity:0.85; margin-bottom:0.85rem;">Host the draw pile &amp; table. Players join from their own phones and receive their secret cards automatically!</p>
-          <div style="display:flex; flex-direction:column; gap:0.55rem;">
-            <select id="host-difficulty">
-              <option value="6">Beginner Mode (6 Myths &amp; Facts)</option>
-              <option value="12">Advanced Mode (12 Myths &amp; Facts)</option>
-            </select>
-            <button class="primary" onclick="createHostRoom()">Create Room &amp; Get Code</button>
-          </div>
+        <div id="lobby-players-list" style="margin-bottom:0.85rem;"></div>
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
+          <select id="host-mode">
+            <option value="6">Beginner Mode (6 Myths &amp; Facts)</option>
+            <option value="12">Advanced Mode (12 Myths &amp; Facts)</option>
+          </select>
+          <button class="green" id="btn-start-match" onclick="startTurnBasedMatch()" disabled>Deal 6 Secret Cards &amp; Start Turn 1</button>
         </div>
       </div>
     </section>
 
-    <!-- =========================================================
-         VIEW 2: HOST TABLE (LIVE MULTIPLAYER ROOM)
-         ========================================================= -->
-    <section id="view-host" class="hidden">
-      <div class="room-banner">
-        <div>
-          <div style="font-size:0.78rem; text-transform:uppercase; font-weight:800; color:var(--gold);">Room Code — Join on Phones</div>
-          <div class="room-code-big" id="display-room-code">----</div>
-          <div style="font-size:0.8rem; opacity:0.9;">Scan the QR code or open the site and enter the code above.</div>
-          <div style="margin-top:0.6rem;" id="connected-players-list">
-            <span style="font-size:0.82rem; opacity:0.75;">Waiting for players to join...</span>
-          </div>
+    <section id="view-game" class="hidden">
+      <div class="turn-banner my-turn" id="turn-banner">
+        <div style="font-size:0.78rem; text-transform:uppercase; font-weight:800; opacity:0.9;">Current Turn</div>
+        <div style="font-size:1.35rem; font-weight:900;" id="turn-player-name">Player 1's Turn</div>
+        <div style="font-size:0.85rem; margin-top:0.2rem;" id="turn-instruction">Ask another player for a card in English!</div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.6rem;">
+          <div><strong>Players &amp; Completed Families:</strong></div>
+          <div style="font-weight:800; color:var(--gold);">🃏 Draw Pile: <span id="game-pile-count">0</span> cards</div>
         </div>
-        <div style="text-align:center;">
-          <div id="host-qr-box"></div>
-          <div style="font-size:0.7rem; margin-top:0.25rem; opacity:0.8;">Scan to Join</div>
+        <div id="game-players-bar"></div>
+      </div>
+
+      <div id="my-turn-actions" class="panel" style="border: 2px solid var(--accent);">
+        <h3 style="color:var(--accent); margin-bottom:0.4rem;">🎯 Ask for a Card in English</h3>
+        <p style="font-size:0.85rem; margin-bottom:0.75rem; background:rgba(255,255,255,0.08); padding:0.5rem 0.75rem; border-radius:8px;">
+          Say out loud: <em>"In the <strong id="preview-fam">Devices</strong> family, I'd like the <strong id="preview-mem">Father</strong>, please."</em>
+        </p>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+          <select id="ask-target"></select>
+          <select id="ask-fam" onchange="updateAskPreview()"></select>
+          <select id="ask-mem" onchange="updateAskPreview()"></select>
+          <button class="green" onclick="submitCardRequest()">Ask Player</button>
         </div>
       </div>
 
-      <div class="panel" id="host-deal-bar">
+      <div id="special-action-box" class="panel hidden" style="border: 2px solid var(--gold);">
+        <h3 id="special-action-title" style="color:var(--gold); margin-bottom:0.4rem;">🎁 Bonus Action</h3>
+        <p id="special-action-desc" style="font-size:0.85rem; margin-bottom:0.6rem;"></p>
+        <div id="special-action-controls" style="display:flex; gap:0.5rem; flex-wrap:wrap;"></div>
+      </div>
+
+      <div class="panel">
+        <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; opacity:0.8; margin-bottom:0.4rem;">Table Log</div>
+        <div class="log-feed" id="table-log"></div>
+      </div>
+
+      <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-          <div>
-            <strong>Ready to start?</strong>
-            <span style="font-size:0.82rem; opacity:0.85;" id="player-count-label">(0 players connected — 2 to 6 required)</span>
-          </div>
-          <button class="green" id="btn-start-deal" onclick="hostDealCards()">🃏 Deal 6 Secret Cards to Everyone</button>
-        </div>
-      </div>
-
-      <div id="host-board-active" class="hidden">
-        <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
-          <div style="text-align:center;">
-            <div class="card-back" onclick="hostClickDrawPile()">
-              <div class="card-back-inner">
-                <div style="font-size:1.8rem;">🌱</div>
-                <div style="font-weight:800; color:var(--gold); font-size:0.9rem;">DRAW PILE</div>
-                <div style="font-size:0.7rem; margin-top:0.2rem;">Send card to selected player</div>
-              </div>
-            </div>
-            <div style="margin-top:0.45rem; font-weight:800;">Remaining: <span id="host-pile-count" style="color:var(--gold);">0</span> cards</div>
-          </div>
-
-          <div class="panel" style="flex:1; min-width:260px; margin-bottom:0;">
-            <div style="font-size:0.78rem; text-transform:uppercase; color:var(--gold); font-weight:800;">Draw Action</div>
-            <p style="font-size:0.82rem; opacity:0.85; margin:0.3rem 0 0.6rem;">When a player is told <em>"Draw!"</em>, select them and tap the deck—the card goes straight to their phone secretly:</p>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-              <select id="host-draw-target"></select>
-              <button class="primary" onclick="hostClickDrawPile()">Send Top Card</button>
-            </div>
-            <div id="host-table-log" style="margin-top:0.75rem; font-size:0.85rem; color:#8ce99a; font-weight:600;"></div>
+          <h2>✋ Secret Hand (<span id="hand-owner-label">Player</span>)</h2>
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            <span id="my-shield-badge" class="badge-top hidden">🛡️ Shield Active</span>
+            <button class="primary small" id="btn-toggle-privacy" onclick="toggleHandPrivacy()">👁️ Reveal My Cards</button>
           </div>
         </div>
-
-        <div class="panel">
-          <strong>Completed Families on Table (<span id="host-comp-num">0</span> / 7)</strong>
-          <div id="host-completed-badges" style="margin-top:0.6rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size:0.82rem; opacity:0.7;">No families completed yet.</span>
-          </div>
+        <div id="privacy-veil" class="privacy-veil">
+          <div style="font-size:2rem; margin-bottom:0.4rem;">🙈</div>
+          <strong id="veil-text">Pass the device to Player 1</strong>
+          <p style="font-size:0.82rem; opacity:0.85; margin:0.35rem 0 0.75rem;">Keep your cards hidden from other players!</p>
+          <button class="primary" onclick="toggleHandPrivacy()">Tap to View My Secret Cards</button>
         </div>
+        <div id="my-cards-grid" class="card-grid hidden"></div>
       </div>
     </section>
 
-    <!-- =========================================================
-         VIEW 3: PLAYER PHONE VIEW (SECRET HAND + REAL-TIME ACTIONS)
-         ========================================================= -->
-    <section id="view-player" class="hidden">
-      <div class="panel" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-        <div>
-          <span class="dot-online"></span> <strong id="p-room-badge" style="color:var(--gold);">Room ----</strong>
-          <h2 id="p-welcome-name" style="margin-top:0.15rem;">My Secret Hand</h2>
-        </div>
-        <button class="small" onclick="playerRequestDraw()">🃏 Draw 1 Card from Pile</button>
-      </div>
-
-      <div id="p-notification" class="banner info hidden"></div>
-      <div id="p-happy-banner" class="banner ok hidden"></div>
-
-      <div class="panel" style="padding:0.75rem;">
-        <div style="font-size:0.8rem; opacity:0.9;">
-          🗣️ Ask out loud in English: <em>"In the <strong>[Family]</strong> family, I'd like the <strong>[Member]</strong>, please."</em>
-        </div>
-      </div>
-
-      <!-- SECRET CARDS IN HAND -->
-      <div id="p-hand-grid" class="card-grid">
-        <p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Waiting for the host to deal cards...</p>
-      </div>
-    </section>
-
-    <!-- =========================================================
-         VIEW 4: MYTHS & FACTS QR CARD CHECKER
-         ========================================================= -->
     <section id="view-myths" class="hidden">
       <div id="myth-picker" class="panel">
-        <strong>Myths &amp; Facts Challenge (or scan QR ?card=1..12)</strong>
-        <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(115px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
+        <strong>Myths &amp; Facts Cards (Scan QR <code>?card=1..12</code> or tap a card)</strong>
+        <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
       </div>
 
       <div id="myth-card-view" class="hidden">
         <div class="myth-card-large">
           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1b241e; padding-bottom:0.4rem; margin-bottom:0.75rem;">
             <span id="m-tag" style="font-weight:800; font-size:0.78rem; color:#1e824c;">BEGINNER · #1</span>
-            <button class="small" style="color:#1b241e; border-color:#ccc;" onclick="closeMythCard()">All Cards</button>
+            <button id="m-close-btn" class="small" style="color:#1b241e; border-color:#ccc;" onclick="closeMythCard()">All Cards</button>
           </div>
           <div style="text-align:center; font-size:2rem; margin-bottom:0.4rem;">❓</div>
           <h2 id="m-question" style="font-size:1.08rem; text-align:center; line-height:1.35; margin-bottom:0.8rem;">Question</h2>
-          <p style="font-size:0.8rem; color:#5a695f; text-align:center; margin-bottom:0.8rem;">Say <strong>True</strong> or <strong>False</strong> in English, then tap:</p>
+          <p style="font-size:0.8rem; color:#5a695f; text-align:center; margin-bottom:0.8rem;">Say <strong>True</strong> or <strong>False</strong> out loud in English, then tap:</p>
 
           <div id="m-choices" style="display:flex; gap:0.6rem;">
             <button style="flex:1; background:#1e824c; color:#fff; border:none;" onclick="answerMyth(true)">TRUE</button>
@@ -426,22 +353,20 @@
 
           <div id="m-result" class="hidden">
             <div id="m-banner" class="banner"></div>
-            <p id="m-exp" style="font-size:0.86rem; line-height:1.4; margin-bottom:0.4rem;"></p>
+            <p id="m-exp" style="font-size:0.88rem; line-height:1.4; margin-bottom:0.4rem;"></p>
             <p style="font-size:0.76rem; color:#5a695f;"><strong>Source:</strong> <span id="m-src"></span></p>
             <div class="effect-ticket">
-              <div id="m-eff-type" style="font-size:0.72rem; font-weight:800; letter-spacing:0.05em;">BONUS</div>
+              <div id="m-eff-type" style="font-size:0.72rem; font-weight:800;">BONUS</div>
               <div id="m-eff-title" style="font-size:1.1rem; font-weight:800; margin:0.15rem 0;">Play Again</div>
-              <div id="m-eff-desc" style="font-size:0.8rem;">Take an extra turn!</div>
+              <div id="m-eff-desc" style="font-size:0.8rem;">Description</div>
             </div>
+            <button id="m-continue-btn" class="primary hidden" style="width:100%; margin-top:0.75rem;" onclick="applyMythOutcomeAndReturn()">Apply Effect &amp; Continue Turn →</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- =========================================================
-         VIEW 5: 7 FAMILIES OVERVIEW
-         ========================================================= -->
-    <section id="view-families" class="hidden">
+    <section id="view-deck" class="hidden">
       <div class="panel">
         <strong>The 7 Families (42 Cards)</strong>
         <p style="font-size:0.82rem; opacity:0.85;">Each family has 6 cards: Grandfather (Summary), Grandmother, Father, Mother, Son, Daughter.</p>
@@ -451,9 +376,6 @@
   </div>
 
   <script>
-    // ==========================================
-    // GAME DATA
-    // ==========================================
     const FAMILIES = [
       { id: 0, name: "Devices", color: "#1e824c", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
       { id: 1, name: "Data centers", color: "#2980b9", icon: "🏢", tip: "Servers run 24/7 and need heavy cooling." },
@@ -489,33 +411,26 @@
     ];
 
     const BONUSES = [
-      { title: "Play Again", desc: "Take an extra turn right now!" },
-      { title: "Steal a Card", desc: "Pick 1 random card from another player's hand." },
-      { title: "Shield", desc: "Block the next Steal a Card or Penalty against you!" }
+      { code: "PLAY_AGAIN", title: "Play Again", desc: "Take an extra turn right now!" },
+      { code: "STEAL", title: "Steal a Card", desc: "Pick 1 random card from another player!" },
+      { code: "SHIELD", title: "Shield", desc: "Blocks the next Steal or Penalty against you!" }
     ];
 
     const PENALTIES = [
-      { title: "Skip Your Next Turn", desc: "You miss your next turn to ask for a card." },
-      { title: "Give a Card", desc: "Give 1 card of your choice to the player on your left." },
-      { title: "Back to the Pile", desc: "Put 1 of your cards back into the draw pile and shuffle." }
+      { code: "SKIP", title: "Skip Your Next Turn", desc: "You will miss your next turn." },
+      { code: "GIVE", title: "Give a Card", desc: "Give 1 of your cards to another player." },
+      { code: "BACK_PILE", title: "Back to the Pile", desc: "1 of your cards goes back into the draw pile." }
     ];
 
-    // ==========================================
-    // MULTIPLAYER PEERJS STATE
-    // ==========================================
-    let peer = null;
-    let roomCode = "";
-    let hostConnections = []; // { conn, id, name }
-    let hostPile = [];
-    let hostCompleted = [];
-    let clientConn = null;
-    let myPlayerId = "";
-    let myName = "";
-    let myHand = [];
-    let otherPlayers = [];
+    let lobbyNames = ["Player 1", "Player 2", "Player 3"];
+    let state = null;
+    let handRevealed = false;
     let activeMyth = null;
+    let isInMatchMyth = false;
+    let lastMythCorrect = false;
+    let currentMythEffect = null;
 
-    function createCardHTML(fIdx, mIdx, footerHtml = "") {
+    function createCardHTML(fIdx, mIdx) {
       const fam = FAMILIES[fIdx];
       const mem = MEMBERS[mIdx];
       return `
@@ -525,118 +440,85 @@
             <span>${mIdx + 1}/6</span>
           </div>
           <div class="card-icon">${fam.icon}</div>
-          <div class="card-member">${mem.name}<br><span style="font-size:0.68rem; font-weight:600; color:#666;">${mem.role}</span></div>
+          <div class="card-member">${mem.name}<br><span style="font-size:0.7rem; font-weight:600; color:#666;">${mem.role}</span></div>
           <div class="card-tip">${fam.tip}</div>
-          <div class="card-footer">${footerHtml}</div>
         </div>
       `;
     }
 
-    function switchView(view) {
-      ["home", "host", "player", "myths", "families"].forEach(v => {
-        document.getElementById(`view-${v}`).classList.toggle("hidden", v !== view);
-      });
-      ["home", "myths", "families"].forEach(n => {
-        const btn = document.getElementById(`nav-${n}`);
-        if (btn) btn.classList.toggle("primary", n === view);
-      });
-    }
-
     function init() {
-      // Populate Myths buttons
       const mGrid = document.getElementById("myth-buttons-grid");
       MYTHS.forEach(m => {
         const b = document.createElement("button");
         b.textContent = `#${m.id} (${m.level})`;
-        b.onclick = () => openMythCard(m.id);
+        b.onclick = () => openMythCard(m.id, false);
         mGrid.appendChild(b);
       });
 
-      // Populate 7 Families Gallery
+      const askFam = document.getElementById("ask-fam");
+      const askMem = document.getElementById("ask-mem");
       const gallery = document.getElementById("gallery-grid");
+
       FAMILIES.forEach(f => {
+        askFam.innerHTML += `<option value="${f.id}">${f.name}</option>`;
         MEMBERS.forEach((m, mIdx) => {
           gallery.innerHTML += createCardHTML(f.id, mIdx);
         });
       });
+      MEMBERS.forEach((m, idx) => {
+        askMem.innerHTML += `<option value="${idx}">${m.name}</option>`;
+      });
 
-      // Check URL Parameters (?room=ABCD or ?card=1)
+      renderLobbyNames();
+
       const params = new URLSearchParams(window.location.search);
-      const roomParam = params.get("room");
       const cardParam = parseInt(params.get("card"), 10);
-
-      if (roomParam) {
-        document.getElementById("join-code").value = roomParam.toUpperCase();
-        switchView("home");
-      } else if (cardParam >= 1 && cardParam <= 12) {
+      if (cardParam >= 1 && cardParam <= 12) {
         switchView("myths");
-        openMythCard(cardParam);
+        openMythCard(cardParam, false);
+      } else {
+        const saved = localStorage.getItem("gc_turn_state_v1");
+        if (saved) {
+          state = JSON.parse(saved);
+          document.getElementById("nav-game").classList.remove("hidden");
+          switchView("game");
+          renderBoard();
+        }
       }
     }
 
-    // ==========================================
-    // HOST TABLE LOGIC (CREATES ROOM CODE)
-    // ==========================================
-    function generateRoomCode() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-      let code = "";
-      for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-      return code;
-    }
-
-    function createHostRoom() {
-      roomCode = generateRoomCode();
-      const peerId = `greenclicks-room-${roomCode}`;
-      peer = new Peer(peerId);
-
-      peer.on("open", () => {
-        switchView("host");
-        document.getElementById("display-room-code").textContent = roomCode;
-
-        // Generate QR Code to join directly on phone
-        const joinUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
-        const qrBox = document.getElementById("host-qr-box");
-        qrBox.innerHTML = "";
-        new QRCode(qrBox, { text: joinUrl, width: 110, height: 110 });
-      });
-
-      peer.on("error", err => {
-        alert("Connection error: " + err.type + ". Try again!");
-      });
-
-      peer.on("connection", conn => {
-        conn.on("data", data => handleHostData(conn, data));
-        conn.on("close", () => {
-          hostConnections = hostConnections.filter(p => p.conn !== conn);
-          updateHostPlayersUI();
-        });
+    function switchView(view) {
+      ["lobby", "game", "myths", "deck"].forEach(v => {
+        document.getElementById(`view-${v}`).classList.toggle("hidden", v !== view);
+        document.getElementById(`nav-${v}`).classList.toggle("primary", v === view);
       });
     }
 
-    function updateHostPlayersUI() {
-      const list = document.getElementById("connected-players-list");
-      const countLabel = document.getElementById("player-count-label");
-      const drawSel = document.getElementById("host-draw-target");
+    function updateAskPreview() {
+      document.getElementById("preview-fam").textContent = FAMILIES[document.getElementById("ask-fam").value].name;
+      document.getElementById("preview-mem").textContent = MEMBERS[document.getElementById("ask-mem").value].name;
+    }
 
-      countLabel.textContent = `(${hostConnections.length} players connected — 2 to 6 required)`;
-      drawSel.innerHTML = "";
+    // LOBBY
+    function addPlayerToLobby() {
+      const input = document.getElementById("new-player-name");
+      const name = input.value.trim();
+      if (!name || lobbyNames.length >= 6) return;
+      lobbyNames.push(name);
+      input.value = "";
+      renderLobbyNames();
+    }
 
-      if (hostConnections.length === 0) {
-        list.innerHTML = `<span style="font-size:0.82rem; opacity:0.75;">Waiting for players to join...</span>`;
-        return;
-      }
+    function removeLobbyName(idx) {
+      lobbyNames.splice(idx, 1);
+      renderLobbyNames();
+    }
 
-      list.innerHTML = hostConnections.map(p =>
-        `<span class="player-pill"><span class="dot-online"></span> ${p.name}</span>`
-      ).join(" ");
-
-      hostConnections.forEach(p => {
-        drawSel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-      });
-
-      // Broadcast player roster to all phones
-      const roster = hostConnections.map(p => ({ id: p.id, name: p.name }));
-      hostConnections.forEach(p => p.conn.send({ type: "ROSTER", players: roster }));
+    function renderLobbyNames() {
+      document.getElementById("lobby-players-list").innerHTML = lobbyNames.map((n, idx) =>
+        `<span class="player-pill">👤 ${n} <button class="small danger" style="padding:0.1rem 0.4rem;" onclick="removeLobbyName(${idx})">×</button></span>`
+      ).join("");
+      document.getElementById("btn-start-match").disabled = lobbyNames.length < 2;
     }
 
     function shuffle(arr) {
@@ -647,252 +529,310 @@
       return arr;
     }
 
-    function hostDealCards() {
-      const n = hostConnections.length;
-      if (n < 2 || n > 6) {
-        return alert("You need between 2 and 6 players connected on their phones to deal!");
-      }
-
-      const mythCount = parseInt(document.getElementById("host-difficulty").value, 10);
+    function startTurnBasedMatch() {
+      const mythLimit = parseInt(document.getElementById("host-mode").value, 10);
       let deck = [];
       for (let f = 0; f < 7; f++) {
         for (let m = 0; m < 6; m++) deck.push(`${f}-${m}`);
       }
       shuffle(deck);
 
-      // Deal 6 secret cards to each connected phone
-      hostConnections.forEach(player => {
-        const hand = deck.splice(0, 6);
-        player.conn.send({ type: "DEAL_HAND", hand });
-      });
+      const players = lobbyNames.map((name, idx) => ({
+        id: idx,
+        name,
+        hand: deck.splice(0, 6),
+        completed: [],
+        shield: false,
+        skipNext: false
+      }));
 
-      // Remaining cards + Myths & Facts go to table draw pile
-      for (let id = 1; id <= mythCount; id++) deck.push(`M-${id}`);
-      hostPile = shuffle(deck);
-      hostCompleted = [];
+      for (let id = 1; id <= mythLimit; id++) deck.push(`M-${id}`);
+      shuffle(deck);
 
-      document.getElementById("host-board-active").classList.remove("hidden");
-      document.getElementById("host-pile-count").textContent = hostPile.length;
-      document.getElementById("host-table-log").textContent = "✅ 6 secret cards dealt to every player's phone!";
+      state = {
+        players,
+        pile: deck,
+        turnIndex: 0,
+        logs: [`🎲 Game started! ${players.name} plays first.`],
+        pendingMyth: null,
+        pendingSpecial: null
+      };
+
+      players.forEach(p => checkHappyFamilies(p));
+      handRevealed = false;
+      saveState();
+      document.getElementById("nav-game").classList.remove("hidden");
+      switchView("game");
+      renderBoard();
     }
 
-    function hostClickDrawPile() {
-      const targetId = document.getElementById("host-draw-target").value;
-      if (!targetId) return;
-      sendTopCardToPlayer(targetId);
+    function saveState() {
+      localStorage.setItem("gc_turn_state_v1", JSON.stringify(state));
     }
 
-    function sendTopCardToPlayer(playerId) {
-      if (hostPile.length === 0) {
-        return alert("The draw pile is empty!");
-      }
-      const target = hostConnections.find(p => p.id === playerId);
-      if (!target) return;
-
-      const card = hostPile.pop();
-      document.getElementById("host-pile-count").textContent = hostPile.length;
-
-      if (card.startsWith("M-")) {
-        const mythId = parseInt(card.split("-"), 10);
-        document.getElementById("host-table-log").textContent = `⚡ ${target.name} drew Myths & Facts Card #${mythId}!`;
-        target.conn.send({ type: "DREW_MYTH", mythId });
-      } else {
-        document.getElementById("host-table-log").textContent = `🃏 Sent 1 secret card from the pile to ${target.name}.`;
-        target.conn.send({ type: "RECEIVE_CARD", card, from: "Draw Pile" });
-      }
+    function addLog(txt) {
+      state.logs.unshift(txt);
+      if (state.logs.length > 25) state.logs.pop();
     }
 
-    function handleHostData(conn, data) {
-      if (data.type === "JOIN") {
-        if (hostConnections.length >= 6) {
-          conn.send({ type: "ERROR", msg: "Room is full (max 6 players)." });
-          return;
-        }
-        const playerId = "p_" + Math.random().toString(36).slice(2, 8);
-        hostConnections.push({ conn, id: playerId, name: data.name });
-        conn.send({ type: "WELCOME", playerId, roomCode });
-        updateHostPlayersUI();
-      }
-      else if (data.type === "REQUEST_DRAW") {
-        sendTopCardToPlayer(data.playerId);
-      }
-      else if (data.type === "TRANSFER_CARD") {
-        const receiver = hostConnections.find(p => p.id === data.toId);
-        const sender = hostConnections.find(p => p.id === data.fromId);
-        if (receiver && sender) {
-          receiver.conn.send({ type: "RECEIVE_CARD", card: data.card, from: sender.name });
-          document.getElementById("host-table-log").textContent = `🔄 ${sender.name} gave a card to ${receiver.name}.`;
+    function checkHappyFamilies(player) {
+      for (let f = 0; f < 7; f++) {
+        if (player.hand.filter(c => c.startsWith(`${f}-`)).length === 6) {
+          player.hand = player.hand.filter(c => !c.startsWith(`${f}-`));
+          player.completed.push(f);
+          addLog(`🏆 HAPPY FAMILY! ${player.name} completed ${FAMILIES[f].name}!`);
         }
       }
-      else if (data.type === "FAMILY_COMPLETED") {
-        const sender = hostConnections.find(p => p.id === data.playerId);
-        const famName = FAMILIES[data.familyIdx].name;
-        hostCompleted.push({ player: sender ? sender.name : "Player", family: famName });
-        document.getElementById("host-comp-num").textContent = hostCompleted.length;
-        document.getElementById("host-completed-badges").innerHTML = hostCompleted.map(c =>
-          `<span style="background:#3ddc84; color:#0e2417; padding:0.3rem 0.75rem; border-radius:99px; font-weight:800; font-size:0.82rem;">🏆 ${c.family} (${c.player})</span>`
-        ).join("");
-        document.getElementById("host-table-log").textContent = `🎉 Happy Family! ${sender.name} completed "${famName}"!`;
+    }
+
+    function advanceTurn() {
+      handRevealed = false;
+      const total = state.players.length;
+      for (let step = 1; step <= total; step++) {
+        const nextIdx = (state.turnIndex + step) % total;
+        const candidate = state.players[nextIdx];
+        if (candidate.skipNext) {
+          candidate.skipNext = false;
+          addLog(`⏭️ ${candidate.name}'s turn was skipped!`);
+          continue;
+        }
+        state.turnIndex = nextIdx;
+        return;
       }
     }
 
-    // ==========================================
-    // PLAYER PHONE LOGIC (JOINS ROOM)
-    // ==========================================
-    function joinRoom() {
-      const nameInput = document.getElementById("join-name").value.trim();
-      const codeInput = document.getElementById("join-code").value.trim().toUpperCase();
-      const status = document.getElementById("join-status");
-
-      if (!nameInput) return alert("Please enter your name!");
-      if (codeInput.length !== 4) return alert("Please enter the 4-letter Room Code!");
-
-      myName = nameInput;
-      status.textContent = "Connecting to game table...";
-
-      peer = new Peer();
-      peer.on("open", () => {
-        clientConn = peer.connect(`greenclicks-room-${codeInput}`);
-
-        clientConn.on("open", () => {
-          clientConn.send({ type: "JOIN", name: myName });
-        });
-
-        clientConn.on("data", data => handlePlayerData(data));
-
-        clientConn.on("error", () => {
-          status.textContent = "❌ Could not connect. Check the Room Code!";
-        });
-      });
+    function toggleHandPrivacy() {
+      handRevealed = !handRevealed;
+      renderBoard();
     }
 
-    function handlePlayerData(data) {
-      if (data.type === "ERROR") {
-        alert(data.msg);
-      }
-      else if (data.type === "WELCOME") {
-        myPlayerId = data.playerId;
-        roomCode = data.roomCode;
-        switchView("player");
-        document.getElementById("p-room-badge").textContent = `Room ${roomCode}`;
-        document.getElementById("p-welcome-name").textContent = `${myName}'s Private Hand`;
-      }
-      else if (data.type === "ROSTER") {
-        otherPlayers = data.players.filter(p => p.id !== myPlayerId);
-        renderPlayerHand();
-      }
-      else if (data.type === "DEAL_HAND") {
-        myHand = data.hand;
-        showPlayerAlert("🃏 Cards dealt! Only you can see your hand.");
-        renderPlayerHand();
-      }
-      else if (data.type === "RECEIVE_CARD") {
-        myHand.push(data.card);
-        const [f, m] = data.card.split("-").map(Number);
-        showPlayerAlert(`✨ You received: ${FAMILIES[f].name} — ${MEMBERS[m].name} (from ${data.from})`);
-        renderPlayerHand();
-      }
-      else if (data.type === "DREW_MYTH") {
-        showPlayerAlert(`⚡ You drew Myths & Facts Card #${data.mythId}! Opening challenge...`);
-        setTimeout(() => {
-          switchView("myths");
-          openMythCard(data.mythId);
-        }, 1200);
-      }
-    }
+    function renderBoard() {
+      if (!state) return;
+      const current = state.players[state.turnIndex];
 
-    function showPlayerAlert(msg) {
-      const box = document.getElementById("p-notification");
-      box.textContent = msg;
-      box.classList.remove("hidden");
-    }
+      document.getElementById("turn-player-name").textContent = `🎯 ${current.name}'s Turn`;
+      document.getElementById("game-pile-count").textContent = state.pile.length;
 
-    function playerRequestDraw() {
-      if (!clientConn) return;
-      clientConn.send({ type: "REQUEST_DRAW", playerId: myPlayerId });
-    }
+      document.getElementById("game-players-bar").innerHTML = state.players.map((p, idx) => {
+        const active = idx === state.turnIndex ? "active-turn" : "";
+        const trophies = p.completed.map(f => FAMILIES[f].icon).join("");
+        return `<span class="player-pill ${active}">${p.name} (${p.hand.length}🃏) ${trophies} ${p.shield ? "🛡️" : ""}</span>`;
+      }).join("");
 
-    function giveCardToPlayer(cardIdx, targetPlayerId) {
-      if (!targetPlayerId) return;
-      const [card] = myHand.splice(cardIdx, 1);
-      clientConn.send({ type: "TRANSFER_CARD", fromId: myPlayerId, toId: targetPlayerId, card });
-      renderPlayerHand();
-    }
+      const actionBox = document.getElementById("my-turn-actions");
+      const specBox = document.getElementById("special-action-box");
 
-    function renderPlayerHand() {
-      myHand.sort();
-      const grid = document.getElementById("p-hand-grid");
-      if (myHand.length === 0) {
-        grid.innerHTML = `<p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Your hand is empty. Tap "Draw 1 Card from Pile"!</p>`;
+      if (state.pendingMyth) {
+        actionBox.classList.add("hidden");
+        specBox.classList.add("hidden");
+        switchView("myths");
+        openMythCard(state.pendingMyth.mythId, true);
         return;
       }
 
-      // Check for complete family (6 cards of same family)
-      const counts = {};
-      myHand.forEach(c => {
-        const f = c.split("-");
-        counts[f] = (counts[f] || 0) + 1;
-      });
-      const completeFam = Object.keys(counts).find(k => counts[k] === 6);
-      const happyBanner = document.getElementById("p-happy-banner");
-
-      if (completeFam !== undefined) {
-        happyBanner.classList.remove("hidden");
-        happyBanner.innerHTML = `🎉 Complete family: <strong>${FAMILIES[completeFam].name}</strong>! Say "Happy family!"
-          <button class="small green" style="margin-left:0.5rem;" onclick="claimCompleteFamily(${completeFam})">Lay Down Family</button>`;
+      if (state.pendingSpecial) {
+        actionBox.classList.add("hidden");
+        specBox.classList.remove("hidden");
+        const ctrl = document.getElementById("special-action-controls");
+        if (state.pendingSpecial.type === "STEAL") {
+          document.getElementById("special-action-title").textContent = `🕵️ ${current.name}: Steal a Card!`;
+          document.getElementById("special-action-desc").textContent = "Choose a player to steal 1 random card from:";
+          ctrl.innerHTML = state.players
+            .filter((p, idx) => idx !== state.turnIndex && p.hand.length > 0)
+            .map(p => `<button class="primary" onclick="resolveSpecial(${p.id}, null)">Steal from ${p.name}</button>`)
+            .join("");
+        } else {
+          document.getElementById("special-action-title").textContent = `⚠️ ${current.name}: Give a Card!`;
+          document.getElementById("special-action-desc").textContent = "Choose a player and 1 card to give away:";
+          const optsP = state.players.filter((p, idx) => idx !== state.turnIndex).map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+          const optsC = current.hand.map(c => {
+            const [f, m] = c.split("-").map(Number);
+            return `<option value="${c}">${FAMILIES[f].name} - ${MEMBERS[m].name}</option>`;
+          }).join("");
+          ctrl.innerHTML = `<select id="give-p">${optsP}</select><select id="give-c">${optsC}</select>
+            <button class="danger" onclick="resolveSpecial(parseInt(document.getElementById('give-p').value,10), document.getElementById('give-c').value)">Give Card</button>`;
+        }
       } else {
-        happyBanner.classList.add("hidden");
+        specBox.classList.add("hidden");
+        actionBox.classList.remove("hidden");
+        const targetSel = document.getElementById("ask-target");
+        const prev = targetSel.value;
+        targetSel.innerHTML = state.players
+          .filter((p, idx) => idx !== state.turnIndex)
+          .map(p => `<option value="${p.id}">Ask ${p.name} (${p.hand.length} cards)</option>`)
+          .join("");
+        if (prev && [...targetSel.options].some(o => o.value === prev)) targetSel.value = prev;
+        updateAskPreview();
       }
 
-      const playerOptions = otherPlayers.map(p => `<option value="${p.id}">Give → ${p.name}</option>`).join("");
+      document.getElementById("table-log").innerHTML = state.logs.map(l => `<div class="log-item">${l}</div>`).join("");
 
-      grid.innerHTML = myHand.map((code, idx) => {
-        const [f, m] = code.split("-").map(Number);
-        const selectHtml = otherPlayers.length > 0
-          ? `<select style="font-size:0.7rem; padding:0.2rem; width:100%;" onchange="giveCardToPlayer(${idx}, this.value)">
-               <option value="">Give card to...</option>
-               ${playerOptions}
-             </select>`
-          : "";
-        return createCardHTML(f, m, selectHtml);
-      }).join("");
+      // Secret Hand Privacy Control
+      document.getElementById("hand-owner-label").textContent = `${current.name} (${current.hand.length} cards)`;
+      document.getElementById("veil-text").textContent = `Pass the device to ${current.name}`;
+      document.getElementById("my-shield-badge").classList.toggle("hidden", !current.shield);
+      document.getElementById("btn-toggle-privacy").textContent = handRevealed ? "🙈 Hide My Cards" : "👁️ Reveal My Cards";
+      document.getElementById("privacy-veil").classList.toggle("hidden", handRevealed);
+
+      const grid = document.getElementById("my-cards-grid");
+      grid.classList.toggle("hidden", !handRevealed);
+      if (handRevealed) {
+        const sorted = [...current.hand].sort();
+        grid.innerHTML = sorted.map(code => {
+          const [f, m] = code.split("-").map(Number);
+          return createCardHTML(f, m);
+        }).join("");
+      }
     }
 
-    function claimCompleteFamily(fIdx) {
-      myHand = myHand.filter(c => Number(c.split("-")) !== Number(fIdx));
-      clientConn.send({ type: "FAMILY_COMPLETED", playerId: myPlayerId, familyIdx: fIdx });
-      renderPlayerHand();
+    function submitCardRequest() {
+      const current = state.players[state.turnIndex];
+      const targetId = parseInt(document.getElementById("ask-target").value, 10);
+      const target = state.players.find(p => p.id === targetId);
+      const f = document.getElementById("ask-fam").value;
+      const m = document.getElementById("ask-mem").value;
+      const cardCode = `${f}-${m}`;
+      const label = `${FAMILIES[f].name} — ${MEMBERS[m].name}`;
+
+      const foundIdx = target.hand.indexOf(cardCode);
+      if (foundIdx !== -1) {
+        target.hand.splice(foundIdx, 1);
+        current.hand.push(cardCode);
+        addLog(`✅ ${current.name} got [${label}] from ${target.name} and plays again!`);
+        checkHappyFamilies(current);
+      } else {
+        addLog(`❌ ${target.name} didn't have [${label}]. ${current.name} draws a card!`);
+        if (state.pile.length > 0) {
+          const drawn = state.pile.pop();
+          if (drawn.startsWith("M-")) {
+            const mythId = parseInt(drawn.split("-")[1], 10);
+            state.pendingMyth = { mythId };
+            addLog(`⚡ ${current.name} drew Myths & Facts Card #${mythId}!`);
+          } else {
+            current.hand.push(drawn);
+            checkHappyFamilies(current);
+            advanceTurn();
+          }
+        } else {
+          advanceTurn();
+        }
+      }
+      saveState();
+      renderBoard();
     }
 
-    // ==========================================
-    // MYTHS & FACTS LOGIC
-    // ==========================================
-    function openMythCard(id) {
+    function openMythCard(id, inMatch) {
       activeMyth = MYTHS.find(m => m.id === id);
       if (!activeMyth) return;
+      isInMatchMyth = inMatch;
       document.getElementById("myth-picker").classList.add("hidden");
       document.getElementById("myth-card-view").classList.remove("hidden");
       document.getElementById("m-result").classList.add("hidden");
       document.getElementById("m-choices").classList.remove("hidden");
+      document.getElementById("m-close-btn").classList.toggle("hidden", inMatch);
       document.getElementById("m-tag").textContent = `${activeMyth.level.toUpperCase()} · CARD #${activeMyth.id}`;
       document.getElementById("m-question").textContent = `"${activeMyth.q}"`;
     }
 
     function answerMyth(guess) {
-      const ok = guess === activeMyth.ans;
+      lastMythCorrect = (guess === activeMyth.ans);
       document.getElementById("m-choices").classList.add("hidden");
       document.getElementById("m-result").classList.remove("hidden");
+
       const b = document.getElementById("m-banner");
-      b.className = "banner " + (ok ? "ok" : "ko");
-      b.textContent = ok ? `✅ Correct! (${activeMyth.ans ? "TRUE" : "FALSE"})` : `❌ Wrong! (${activeMyth.ans ? "TRUE" : "FALSE"})`;
+      b.className = "banner " + (lastMythCorrect ? "ok" : "ko");
+      b.textContent = lastMythCorrect ? `✅ Correct! (${activeMyth.ans ? "TRUE" : "FALSE"})` : `❌ Wrong! (${activeMyth.ans ? "TRUE" : "FALSE"})`;
       document.getElementById("m-exp").textContent = activeMyth.exp;
       document.getElementById("m-src").textContent = activeMyth.src;
 
-      const list = ok ? BONUSES : PENALTIES;
-      const eff = list[Math.floor(Math.random() * list.length)];
-      document.getElementById("m-eff-type").textContent = ok ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
-      document.getElementById("m-eff-title").textContent = eff.title;
-      document.getElementById("m-eff-desc").textContent = eff.desc;
+      const list = lastMythCorrect ? BONUSES : PENALTIES;
+      currentMythEffect = list[Math.floor(Math.random() * list.length)];
+      document.getElementById("m-eff-type").textContent = lastMythCorrect ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
+      document.getElementById("m-eff-title").textContent = currentMythEffect.title;
+      document.getElementById("m-eff-desc").textContent = currentMythEffect.desc;
+      document.getElementById("m-continue-btn").classList.toggle("hidden", !isInMatchMyth);
+    }
+
+    function applyMythOutcomeAndReturn() {
+      const current = state.players[state.turnIndex];
+      state.pendingMyth = null;
+      const code = currentMythEffect.code;
+
+      if (lastMythCorrect) {
+        if (code === "PLAY_AGAIN") {
+          addLog(`🎁 ${current.name} answered right → Bonus: Play Again!`);
+        } else if (code === "SHIELD") {
+          current.shield = true;
+          addLog(`🛡️ ${current.name} activated a Shield!`);
+          advanceTurn();
+        } else if (code === "STEAL") {
+          const victims = state.players.filter((p, idx) => idx !== state.turnIndex && p.hand.length > 0);
+          if (victims.length > 0) {
+            state.pendingSpecial = { type: "STEAL" };
+          } else {
+            advanceTurn();
+          }
+        }
+      } else {
+        if (current.shield) {
+          current.shield = false;
+          addLog(`🛡️ ${current.name}'s Shield blocked the penalty!`);
+          advanceTurn();
+        } else if (code === "SKIP") {
+          current.skipNext = true;
+          addLog(`⚠️ ${current.name} will skip next turn!`);
+          advanceTurn();
+        } else if (code === "BACK_PILE") {
+          if (current.hand.length > 0) {
+            const rnd = Math.floor(Math.random() * current.hand.length);
+            const [ret] = current.hand.splice(rnd, 1);
+            state.pile.push(ret);
+            shuffle(state.pile);
+          }
+          addLog(`⚠️ ${current.name} returned 1 card to the draw pile!`);
+          advanceTurn();
+        } else if (code === "GIVE") {
+          if (current.hand.length > 0) {
+            state.pendingSpecial = { type: "GIVE" };
+          } else {
+            advanceTurn();
+          }
+        }
+      }
+      saveState();
+      switchView("game");
+      renderBoard();
+    }
+
+    function resolveSpecial(targetId, cardCode) {
+      const current = state.players[state.turnIndex];
+      const target = state.players.find(p => p.id === targetId);
+      const type = state.pendingSpecial.type;
+      state.pendingSpecial = null;
+
+      if (type === "STEAL" && target && target.hand.length > 0) {
+        if (target.shield) {
+          target.shield = false;
+          addLog(`🛡️ ${target.name}'s Shield blocked ${current.name}'s steal!`);
+        } else {
+          const rnd = Math.floor(Math.random() * target.hand.length);
+          const [stolen] = target.hand.splice(rnd, 1);
+          current.hand.push(stolen);
+          checkHappyFamilies(current);
+          addLog(`🕵️ ${current.name} stole a random card from ${target.name}!`);
+        }
+      } else if (type === "GIVE" && target && cardCode) {
+        const idx = current.hand.indexOf(cardCode);
+        if (idx !== -1) {
+          current.hand.splice(idx, 1);
+          target.hand.push(cardCode);
+          checkHappyFamilies(target);
+          addLog(`🎁 ${current.name} gave a card to ${target.name}.`);
+        }
+      }
+      advanceTurn();
+      saveState();
+      renderBoard();
     }
 
     function closeMythCard() {
@@ -901,7 +841,6 @@
       window.history.replaceState({}, "", u.pathname + u.search);
       document.getElementById("myth-card-view").classList.add("hidden");
       document.getElementById("myth-picker").classList.remove("hidden");
-      if (myPlayerId) switchView("player");
     }
 
     init();

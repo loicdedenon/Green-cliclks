@@ -230,6 +230,16 @@
       text-align: center;
       margin-top: 0.8rem;
     }
+
+    /* INDIVIDUAL PLAYER ACCESS */
+    .join-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.8rem; margin-top:0.8rem; }
+    .join-card { background:rgba(255,255,255,0.08); border:1px solid rgba(230,194,91,0.55); border-radius:10px; padding:0.8rem; text-align:center; }
+    .qr-box { background:#fff; display:inline-flex; padding:0.55rem; border-radius:8px; margin:0.6rem 0; min-width:150px; min-height:150px; align-items:center; justify-content:center; }
+    .qr-box img { max-width:100%; height:auto; }
+    .player-link { display:block; overflow-wrap:anywhere; font-size:0.72rem; opacity:0.85; margin:0.35rem 0; }
+    .personal-card-view { width:100%; max-width:650px; margin:0 auto; }
+    .personal-card-view .panel { text-align:center; }
+    .personal-card-view .card-grid { grid-template-columns:repeat(auto-fit, minmax(135px, 1fr)); }
   </style>
 </head>
 <body>
@@ -271,6 +281,11 @@
 
     <!-- VIEW 2: TURN-BASED GAME BOARD -->
     <section id="view-game" class="hidden">
+      <div class="panel" id="player-access-panel">
+        <h3 style="color:var(--gold);">📱 Connect each player</h3>
+        <p style="font-size:0.84rem; opacity:0.88; margin-top:0.35rem;">Each player scans their own QR code to see their private cards on their phone. These personal pages are read-only in this first version.</p>
+        <div id="player-qr-grid" class="join-grid"></div>
+      </div>
       <div class="turn-banner my-turn" id="turn-banner">
         <div style="font-size:0.78rem; text-transform:uppercase; font-weight:800; opacity:0.9;">Current Turn</div>
         <div style="font-size:1.35rem; font-weight:900;" id="turn-player-name">Player 1</div>
@@ -324,6 +339,20 @@
 
         <div id="my-cards-grid" class="card-grid"></div>
       </div>
+    </section>
+
+    <!-- PERSONAL PLAYER VIEW: opened from an individual QR code -->
+    <section id="view-player" class="hidden personal-card-view">
+      <div class="panel">
+        <span class="badge-top">Green Clicks · Personal space</span>
+        <h2 id="personal-player-name" style="margin:0.65rem 0;">Your cards</h2>
+        <p style="font-size:0.86rem; opacity:0.88;">Only the cards included in your personal link are displayed here.</p>
+      </div>
+      <div class="panel">
+        <h3>✋ Your secret hand (<span id="personal-card-count">0</span> cards)</h3>
+        <div id="personal-cards-grid" class="card-grid"></div>
+      </div>
+      <p style="font-size:0.76rem; text-align:center; opacity:0.75;">Keep this page private. Your cards are not synchronized with the game board in this first version.</p>
     </section>
 
     <!-- VIEW 3: STANDALONE MYTHS & FACTS (QR CODES ?card=1..12) -->
@@ -380,6 +409,7 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     const FAMILIES = [
       { id: 0, name: "Devices", color: "#1e824c", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
@@ -482,6 +512,11 @@
       });
 
       const params = new URLSearchParams(window.location.search);
+      const playerParam = params.get("player");
+      if (playerParam) {
+        openPersonalPlayerView(playerParam);
+        return;
+      }
       const cardParam = parseInt(params.get("card"), 10);
       if (cardParam >= 1 && cardParam <= 12) {
         openMythPopup(cardParam, false);
@@ -522,6 +557,89 @@
       if (state.logs.length > 25) state.logs.pop();
     }
 
+    function encodePlayerLink(player) {
+      const payload = { name: player.name, hand: player.hand };
+      const json = JSON.stringify(payload);
+      const token = btoa(unescape(encodeURIComponent(json)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.hash = "";
+      url.searchParams.set("player", token);
+      return url.toString();
+    }
+
+    function renderPlayerAccess() {
+      const grid = document.getElementById("player-qr-grid");
+      grid.innerHTML = "";
+      state.players.forEach(player => {
+        const link = encodePlayerLink(player);
+        const card = document.createElement("div");
+        card.className = "join-card";
+
+        const heading = document.createElement("h4");
+        heading.textContent = player.name;
+        card.appendChild(heading);
+
+        const qr = document.createElement("div");
+        qr.className = "qr-box";
+        card.appendChild(qr);
+
+        if (window.QRCode) {
+          new QRCode(qr, { text: link, width: 140, height: 140, colorDark: "#102b1d", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+        } else {
+          qr.textContent = "QR code unavailable";
+        }
+
+        const urlText = document.createElement("a");
+        urlText.className = "player-link";
+        urlText.href = link;
+        urlText.target = "_blank";
+        urlText.rel = "noopener";
+        urlText.textContent = "Open personal link";
+        card.appendChild(urlText);
+
+        const copyButton = document.createElement("button");
+        copyButton.className = "small";
+        copyButton.textContent = "Copy link";
+        copyButton.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(link);
+            copyButton.textContent = "Copied!";
+          } catch (e) {
+            window.prompt("Copy this personal link:", link);
+          }
+        };
+        card.appendChild(copyButton);
+        grid.appendChild(card);
+      });
+    }
+
+    function openPersonalPlayerView(token) {
+      try {
+        const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = base64 + "=".repeat((4 - base64.length % 4) % 4);
+        const payload = JSON.parse(decodeURIComponent(escape(atob(padded))));
+        if (!payload || typeof payload.name !== "string" || !Array.isArray(payload.hand) ||
+            !payload.hand.every(code => typeof code === "string" && /^[0-6]-[0-5]$/.test(code))) {
+          throw new Error("Invalid player link");
+        }
+        document.querySelector("nav").classList.add("hidden");
+        ["setup", "game", "myths", "deck"].forEach(view => {
+          document.getElementById(`view-${view}`).classList.add("hidden");
+        });
+        document.getElementById("view-player").classList.remove("hidden");
+        document.getElementById("personal-player-name").textContent = `${payload.name}'s cards`;
+        document.getElementById("personal-card-count").textContent = payload.hand.length;
+        document.getElementById("personal-cards-grid").innerHTML = payload.hand.slice().sort().map(code => {
+          const [f, m] = code.split("-").map(Number);
+          return createCardHTML(f, m);
+        }).join("");
+      } catch (error) {
+        document.querySelector("#view-setup").innerHTML = '<div class="panel"><h2>Invalid player link</h2><p>Please ask the organizer for a new QR code.</p></div>';
+      }
+    }
+
     function startMatch() {
       const count = parseInt(document.getElementById("player-count").value, 10);
       const mythLimit = parseInt(document.getElementById("myth-mode").value, 10);
@@ -555,6 +673,7 @@
       state.handLocked = true;
       state.logs = [`🎲 Game started! ${state.players[0].name} goes first.`];
 
+      renderPlayerAccess();
       document.getElementById("nav-game").classList.remove("hidden");
       switchView("game");
       renderGameBoard();

@@ -3,95 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Green Clicks — Card Game & QR Companion</title>
+  <title>Green Clicks — Serious Card Game</title>
   <style>
     :root {
-      --felt: #163b28;
-      --felt-dark: #0e271a;
-      --gold: #e6c25b;
-      --cream: #faf8f2;
-      --ink: #1b241e;
-      --muted: #5a695f;
-      --accent: #1e824c;
-      --danger: #c0392b;
+      /* Official Brand Palette from your Graphic Charter */
+      --green-forest: #336454;
+      --plum-deep: #801b5d;
+      --orange: #db6215;
+      --pink: #e83c6b;
+      --yellow: #eecd00;
+      --charcoal: #50504f;
+      --red-brick: #aa3021;
+      --blue-ocean: #0084c0;
+      --cream: #faf8f4;
+      --ink: #222423;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(circle at center, var(--felt) 0%, var(--felt-dark) 100%);
-      color: #fff;
+      background: radial-gradient(circle at top, #3d7563 0%, var(--green-forest) 65%, #23473b 100%);
+      color: #ffffff;
       min-height: 100vh;
       padding: 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    .container { width: 100%; max-width: 820px; }
+
+    .container {
+      width: 100%;
+      max-width: 840px;
+    }
+
+    /* HEADER WITH BRAND LOGO (MANIHOT + REDACTION STYLE) */
     header {
       text-align: center;
+      padding-bottom: 0.85rem;
       margin-bottom: 1rem;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
-      padding-bottom: 0.75rem;
+      border-bottom: 2px solid rgba(255,255,255,0.18);
     }
-    .badge-top {
-      display: inline-block;
-      background: rgba(230, 194, 91, 0.18);
-      color: var(--gold);
-      border: 1px solid var(--gold);
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 0.2rem 0.65rem;
-      border-radius: 999px;
+
+    .brand-logo {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 0.9;
+      user-select: none;
+    }
+    .brand-logo .top-word {
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: 2.5rem;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 2px 3px 0 rgba(0,0,0,0.35);
     }
-    h1 { font-size: 1.55rem; margin-top: 0.3rem; letter-spacing: -0.02em; }
+    .brand-logo .bottom-word {
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-weight: 700;
+      font-size: 1.95rem;
+      color: var(--yellow);
+      margin-top: -0.35rem;
+      margin-left: 1.5rem;
+      text-shadow: 1px 2px 0 rgba(0,0,0,0.4);
+    }
+
+    .subtitle {
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-size: 0.86rem;
+      opacity: 0.92;
+      margin-top: 0.4rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* NAVIGATION */
     nav {
       display: flex;
       justify-content: center;
       gap: 0.5rem;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.25rem;
       flex-wrap: wrap;
     }
+
     button {
       font-family: inherit;
       font-weight: 700;
       font-size: 0.88rem;
       padding: 0.55rem 1rem;
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.1);
-      color: #fff;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.25);
+      color: #ffffff;
       cursor: pointer;
-      transition: transform 0.12s, background 0.15s;
+      transition: transform 0.12s, background 0.15s, border-color 0.15s;
     }
-    button:hover { background: rgba(255,255,255,0.2); }
+    button:hover { background: rgba(0,0,0,0.42); border-color: rgba(255,255,255,0.5); }
     button:active { transform: scale(0.96); }
+
     button.primary {
-      background: var(--gold);
-      color: #16241a;
-      border-color: var(--gold);
+      background: var(--yellow);
+      color: #1f2421;
+      border-color: var(--yellow);
     }
+    button.primary:hover { background: #ffe01b; }
+
+    button.plum {
+      background: var(--plum-deep);
+      color: #ffffff;
+      border-color: #a8287b;
+    }
+
     button.danger {
-      background: var(--danger);
-      color: #fff;
-      border-color: var(--danger);
+      background: var(--red-brick);
+      color: #ffffff;
+      border-color: #c93b2a;
     }
-    button.small { padding: 0.3rem 0.6rem; font-size: 0.76rem; }
+
+    button.small {
+      padding: 0.32rem 0.65rem;
+      font-size: 0.78rem;
+    }
+
     .hidden { display: none !important; }
 
+    .panel {
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    select {
+      padding: 0.48rem 0.65rem;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: #1d3b31;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* =========================================
+       7 FAMILIES CARDS (CHARTER COLORS)
+       ========================================= */
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
       gap: 0.9rem;
-      margin-top: 0.8rem;
+      margin-top: 0.85rem;
     }
+
     .playing-card {
       background: var(--cream);
       color: var(--ink);
-      border-radius: 12px;
-      border: 4px solid #fff;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+      border-radius: 14px;
+      border: 4px solid #ffffff;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.35);
       padding: 0.65rem;
       aspect-ratio: 2.5 / 3.5;
       display: flex;
@@ -99,109 +170,177 @@
       justify-content: space-between;
       position: relative;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      cursor: pointer;
       user-select: none;
     }
     .playing-card:hover {
       transform: translateY(-6px) rotate(1deg);
-      box-shadow: 0 14px 24px rgba(0,0,0,0.45);
+      box-shadow: 0 14px 26px rgba(0,0,0,0.45);
+      z-index: 5;
     }
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.72rem;
-      font-weight: 800;
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: 0.76rem;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
       border-bottom: 2px solid currentColor;
       padding-bottom: 0.25rem;
     }
+
     .card-icon {
-      font-size: 2.2rem;
+      font-size: 2.3rem;
       text-align: center;
-      margin: 0.3rem 0;
+      margin: 0.2rem 0;
     }
+
     .card-member {
       text-align: center;
       font-weight: 800;
       font-size: 0.95rem;
-      line-height: 1.2;
+      line-height: 1.15;
     }
+    .card-member span {
+      display: block;
+      font-family: Georgia, serif;
+      font-style: italic;
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--charcoal);
+      margin-top: 0.1rem;
+    }
+
     .card-tip {
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
       font-size: 0.68rem;
-      color: var(--muted);
+      color: #363837;
       text-align: center;
       line-height: 1.25;
-      background: rgba(0,0,0,0.04);
-      padding: 0.3rem;
+      background: rgba(0,0,0,0.05);
+      padding: 0.32rem;
       border-radius: 6px;
     }
+
     .card-footer {
       display: flex;
       justify-content: center;
-      gap: 0.3rem;
     }
 
+    /* =========================================
+       CARD BACKS (GREEN & PLUM VERSIONS)
+       ========================================= */
     .card-back {
-      background: repeating-linear-gradient(
-        45deg,
-        #1b5e3a,
-        #1b5e3a 10px,
-        #14472c 10px,
-        #14472c 20px
-      );
-      border: 4px solid #fff;
-      border-radius: 12px;
-      width: 145px;
+      background: var(--green-forest);
+      border: 4px solid #ffffff;
+      border-radius: 14px;
+      width: 155px;
       aspect-ratio: 2.5 / 3.5;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 0.75rem;
-      box-shadow: 4px 4px 0 #d9d4c7, 8px 8px 0 #bfb9aa, 0 12px 24px rgba(0,0,0,0.45);
+      padding: 0.55rem;
+      box-shadow: 4px 4px 0 #d8d4c8, 8px 8px 0 #b8b3a6, 0 12px 24px rgba(0,0,0,0.45);
       cursor: pointer;
       transition: transform 0.15s;
+      user-select: none;
     }
-    .card-back:hover { transform: scale(1.03); }
+    .card-back:hover { transform: scale(1.04); }
+
     .card-back-inner {
-      border: 2px solid var(--gold);
-      border-radius: 8px;
-      padding: 0.6rem;
+      border: 2px solid rgba(255,255,255,0.75);
+      border-radius: 10px;
       width: 100%;
       height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 0.5rem;
+    }
+
+    .mini-logo-top {
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: 1.35rem;
+      letter-spacing: 0.04em;
+      color: #ffffff;
+      line-height: 0.9;
+    }
+    .mini-logo-bottom {
+      font-family: Georgia, serif;
+      font-style: italic;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--yellow);
+      margin-top: -0.2rem;
+      margin-left: 0.85rem;
+    }
+
+    /* =========================================
+       MYTHS & FACTS CARDS (PINK & ORANGE CHARTER)
+       ========================================= */
+    .myth-back-card {
+      border-radius: 14px;
+      border: 4px solid #ffffff;
+      padding: 1rem 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+      transition: transform 0.18s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 155px;
+    }
+    .myth-back-card:hover { transform: translateY(-5px); }
+    .myth-back-card.beginner { background: var(--pink); }
+    .myth-back-card.advanced { background: var(--orange); }
+
+    .myths-logo-top {
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: 1.55rem;
+      letter-spacing: 0.04em;
+      color: #ffffff;
+      line-height: 0.9;
+    }
+    .myths-logo-bottom {
+      font-family: Georgia, serif;
+      font-style: italic;
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #ffffff;
+      margin-top: -0.25rem;
+      margin-left: 0.9rem;
     }
 
     .myth-card-large {
       background: var(--cream);
       color: var(--ink);
-      border: 6px solid #fff;
-      border-radius: 16px;
-      max-width: 380px;
+      border: 6px solid #ffffff;
+      border-radius: 18px;
+      max-width: 400px;
       margin: 0 auto;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+    }
+
+    .myth-card-banner {
+      padding: 0.9rem 1rem;
+      text-align: center;
+      color: #ffffff;
+    }
+    .myth-card-banner.beginner { background: var(--pink); }
+    .myth-card-banner.advanced { background: var(--orange); }
+
+    .myth-card-body {
       padding: 1.25rem;
-      box-shadow: 0 14px 32px rgba(0,0,0,0.45);
     }
-    .panel {
-      background: rgba(0,0,0,0.28);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    .table-top {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1.2rem;
-    }
+
     .banner {
       padding: 0.75rem;
       border-radius: 8px;
@@ -209,47 +348,67 @@
       font-weight: 700;
       font-size: 0.9rem;
     }
-    .banner.ok { background: #d4edda; color: #155724; }
-    .banner.ko { background: #f8d7da; color: #721c24; }
+    .banner.ok { background: #dff2ea; color: #1b5440; border: 1px solid var(--green-forest); }
+    .banner.ko { background: #fbe3e0; color: var(--red-brick); border: 1px solid var(--red-brick); }
+
     .effect-ticket {
-      background: #fff8e1;
-      border: 2px dashed #d39e00;
-      color: #533f03;
-      padding: 0.75rem;
-      border-radius: 10px;
+      background: var(--plum-deep);
+      color: #ffffff;
+      border: 2px dashed var(--yellow);
+      padding: 0.85rem;
+      border-radius: 12px;
+      text-align: center;
+      margin-top: 0.8rem;
+    }
+
+    /* PRIVACY SHIELD BOX */
+    .privacy-shield {
+      background: var(--plum-deep);
+      border: 2px solid var(--yellow);
+      border-radius: 14px;
+      padding: 1.5rem 1rem;
       text-align: center;
       margin-top: 0.75rem;
     }
-    select {
-      padding: 0.45rem 0.6rem;
-      border-radius: 6px;
-      border: none;
-      font-weight: 600;
+
+    .table-top {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-bottom: 1.2rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <span class="badge-top">Serious Card Game · Green IT</span>
-      <h1>🃏 Green Clicks</h1>
+      <div class="brand-logo">
+        <span class="top-word">GREEN</span>
+        <span class="bottom-word">Clicks</span>
+      </div>
+      <div class="subtitle">Serious Card Game · Green IT &amp; Eco-Design</div>
     </header>
 
     <nav>
-      <button id="tab-btn-play" class="primary" onclick="showTab('play')">Play Card Game</button>
-      <button id="tab-btn-myths" onclick="showTab('myths')">Myths &amp; Facts (QR)</button>
-      <button id="tab-btn-hand" class="hidden" onclick="showTab('hand')">My Private Cards</button>
-      <button id="tab-btn-families" onclick="showTab('families')">7 Families Deck</button>
+      <button id="tab-btn-play" class="primary" onclick="showTab('play')">🃏 Game Table</button>
+      <button id="tab-btn-myths" onclick="showTab('myths')">❓ Myths &amp; Facts (QR)</button>
+      <button id="tab-btn-hand" class="hidden" onclick="showTab('hand')">✋ My Private Hand</button>
+      <button id="tab-btn-families" onclick="showTab('families')">📖 7 Families</button>
     </nav>
 
+    <!-- ==========================================
+         1. GAME TABLE (WITH SECRET DRAW & PASS-PLAY)
+         ========================================== -->
     <section id="tab-play">
       <div class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
           <div>
-            <strong>Start a Table</strong>
-            <div style="font-size:0.82rem; opacity:0.8;">Deal 6 cards per player + shuffle Myths &amp; Facts into the deck</div>
+            <strong>Setup New Game</strong>
+            <div style="font-size:0.82rem; opacity:0.85;">6 secret cards per player + Myths &amp; Facts shuffled into the pile</div>
           </div>
-          <div style="display:flex; gap:0.4rem; align-items:center;">
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
             <select id="num-players">
               <option value="2">2 Players</option>
               <option value="3">3 Players</option>
@@ -268,89 +427,121 @@
 
       <div id="active-table" class="hidden">
         <div class="table-top">
+          <!-- Interactive Draw Pile -->
           <div style="text-align:center;">
             <div class="card-back" onclick="drawTopCard()">
               <div class="card-back-inner">
-                <div style="font-size:1.8rem;">🌱</div>
-                <div style="font-weight:800; color:var(--gold); font-size:0.95rem; margin:0.2rem 0;">GREEN CLICKS</div>
-                <div style="font-size:0.72rem; opacity:0.9;">TAP TO DRAW</div>
+                <div class="mini-logo-top">GREEN</div>
+                <div class="mini-logo-bottom">Clicks</div>
+                <div style="font-size:0.7rem; font-weight:800; margin-top:0.65rem; background:rgba(0,0,0,0.35); padding:0.2rem 0.55rem; border-radius:99px;">TAP TO DRAW</div>
               </div>
             </div>
-            <div style="margin-top:0.5rem; font-size:0.85rem; font-weight:700;">
-              Draw Pile: <span id="pile-counter" style="color:var(--gold);">0</span> cards
+            <div style="margin-top:0.55rem; font-size:0.85rem; font-weight:700;">
+              Draw Pile: <span id="pile-counter" style="color:var(--yellow);">0</span> cards
             </div>
           </div>
 
-          <div class="panel" style="flex:1; min-width:260px; margin-bottom:0;">
-            <div style="font-size:0.8rem; text-transform:uppercase; color:var(--gold); font-weight:700;">Active Turn &amp; Multi-Phone Links</div>
-            <div style="margin:0.5rem 0; display:flex; align-items:center; gap:0.5rem;">
-              <label for="active-player-sel">Who is drawing?</label>
+          <!-- Turn & Multi-Phone Links -->
+          <div class="panel" style="flex:1; min-width:265px; margin-bottom:0;">
+            <div style="font-size:0.78rem; text-transform:uppercase; color:var(--yellow); font-weight:800;">Secret Draw &amp; Multi-Phone</div>
+            <div style="margin:0.55rem 0; display:flex; align-items:center; gap:0.5rem;">
+              <label for="active-player-sel">Player drawing:</label>
               <select id="active-player-sel"></select>
             </div>
-            <div id="drawn-feedback" class="hidden" style="margin:0.6rem 0; padding:0.6rem; background:rgba(255,255,255,0.12); border-radius:8px; font-size:0.88rem;"></div>
-            <div style="margin-top:0.6rem; border-top:1px solid rgba(255,255,255,0.15); padding-top:0.6rem;">
-              <div style="font-size:0.78rem; opacity:0.85; margin-bottom:0.4rem;">Open each player's private card hand on their phone:</div>
+
+            <!-- Secret Draw Result (Hidden until player peeks) -->
+            <div id="drawn-feedback" class="hidden" style="margin:0.65rem 0; padding:0.7rem; background:var(--plum-deep); border:1px solid var(--yellow); border-radius:10px; font-size:0.86rem;"></div>
+
+            <div style="margin-top:0.65rem; border-top:1px solid rgba(255,255,255,0.18); padding-top:0.65rem;">
+              <div style="font-size:0.78rem; opacity:0.9; margin-bottom:0.4rem;">Send each player their private hand link (multi-phone):</div>
               <div id="player-links" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
             </div>
           </div>
         </div>
 
+        <!-- Pass & Play Secret Hand Viewer -->
         <div class="panel">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
             <div>
-              <strong>Quick View Hand (Pass &amp; Play)</strong>
-              <span id="host-hand-label" style="font-size:0.82rem; color:var(--gold); margin-left:0.4rem;">Hidden</span>
+              <strong>Pass &amp; Play (Single Device)</strong>
+              <span id="host-hand-label" style="font-size:0.8rem; color:var(--yellow); margin-left:0.4rem;">All hands hidden</span>
             </div>
             <div id="host-hand-buttons" style="display:flex; gap:0.35rem; flex-wrap:wrap;"></div>
           </div>
+
+          <!-- Privacy Lock Screen before revealing hand -->
+          <div id="privacy-lock-screen" class="privacy-shield hidden">
+            <div style="font-size:2rem; margin-bottom:0.3rem;">🔒</div>
+            <h3 id="lock-player-name" style="margin-bottom:0.3rem;">Pass device to Player 1</h3>
+            <p style="font-size:0.82rem; opacity:0.9; margin-bottom:0.8rem;">Make sure other players are not looking at the screen!</p>
+            <button class="primary" onclick="unlockSelectedHand()">👁️ Reveal My Cards</button>
+          </div>
+
           <div id="host-hand-cards" class="card-grid hidden"></div>
         </div>
       </div>
     </section>
 
+    <!-- ==========================================
+         2. MYTHS & FACTS (PINK & ORANGE BRAND CARDS)
+         ========================================== -->
     <section id="tab-myths" class="hidden">
       <div id="myth-picker" class="panel">
-        <strong>Select a Myths &amp; Facts Card (or scan QR ?card=1..12)</strong>
-        <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <strong>Myths &amp; Facts Challenge Deck</strong>
+            <div style="font-size:0.82rem; opacity:0.85;">Pink (#e83c6b) = Beginner · Orange (#db6215) = Advanced (or scan QR <code>?card=1..12</code>)</div>
+          </div>
+        </div>
+        <div id="myth-buttons-grid" class="card-grid"></div>
       </div>
 
       <div id="myth-card-view" class="hidden">
         <div class="myth-card-large">
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1b241e; padding-bottom:0.4rem; margin-bottom:0.75rem;">
-            <span id="m-tag" style="font-weight:800; font-size:0.78rem; color:#1e824c;">BEGINNER · #1</span>
-            <button class="small" style="color:#1b241e; border-color:#ccc;" onclick="closeMythCard()">All Cards</button>
-          </div>
-          <div style="text-align:center; font-size:2rem; margin-bottom:0.4rem;">❓</div>
-          <h2 id="m-question" style="font-size:1.1rem; text-align:center; line-height:1.35; margin-bottom:0.8rem;">Question</h2>
-          <p style="font-size:0.8rem; color:#5a695f; text-align:center; margin-bottom:0.8rem;">Say <strong>True</strong> or <strong>False</strong> in English, then tap:</p>
-
-          <div id="m-choices" style="display:flex; gap:0.6rem;">
-            <button style="flex:1; background:#1e824c; color:#fff; border:none;" onclick="answerMyth(true)">TRUE</button>
-            <button style="flex:1; background:#c0392b; color:#fff; border:none;" onclick="answerMyth(false)">FALSE</button>
+          <div id="m-banner-top" class="myth-card-banner beginner">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+              <span id="m-tag" style="font-weight:800; font-size:0.75rem; background:rgba(0,0,0,0.25); padding:0.2rem 0.55rem; border-radius:99px;">BEGINNER · #1</span>
+              <button class="small" style="background:rgba(0,0,0,0.25); border-color:rgba(255,255,255,0.4);" onclick="closeMythCard()">← All Cards</button>
+            </div>
+            <div class="myths-logo-top">MYTHS</div>
+            <div class="myths-logo-bottom">&amp;Facts</div>
           </div>
 
-          <div id="m-result" class="hidden">
-            <div id="m-banner" class="banner"></div>
-            <p id="m-exp" style="font-size:0.88rem; line-height:1.4; margin-bottom:0.4rem;"></p>
-            <p style="font-size:0.76rem; color:#5a695f;"><strong>Source:</strong> <span id="m-src"></span></p>
-            <div class="effect-ticket">
-              <div id="m-eff-type" style="font-size:0.72rem; font-weight:800; letter-spacing:0.05em;">BONUS</div>
-              <div id="m-eff-title" style="font-size:1.1rem; font-weight:800; margin:0.15rem 0;">Play Again</div>
-              <div id="m-eff-desc" style="font-size:0.8rem;">Take an extra turn!</div>
+          <div class="myth-card-body">
+            <h2 id="m-question" style="font-size:1.08rem; text-align:center; line-height:1.4; margin-bottom:0.85rem;">Question</h2>
+            <p style="font-family:Georgia, serif; font-style:italic; font-size:0.84rem; color:var(--charcoal); text-align:center; margin-bottom:0.85rem;">Say <strong>"True"</strong> or <strong>"False"</strong> out loud in English, then tap:</p>
+
+            <div id="m-choices" style="display:flex; gap:0.65rem;">
+              <button style="flex:1; background:var(--green-forest); color:#fff; border:none; font-size:0.95rem;" onclick="answerMyth(true)">TRUE</button>
+              <button style="flex:1; background:var(--red-brick); color:#fff; border:none; font-size:0.95rem;" onclick="answerMyth(false)">FALSE</button>
+            </div>
+
+            <div id="m-result" class="hidden">
+              <div id="m-banner" class="banner"></div>
+              <p id="m-exp" style="font-family:Georgia, serif; font-size:0.88rem; line-height:1.45; margin-bottom:0.45rem;"></p>
+              <p style="font-size:0.76rem; color:var(--charcoal);"><strong>Source:</strong> <span id="m-src"></span></p>
+              <div class="effect-ticket">
+                <div id="m-eff-type" style="font-size:0.72rem; font-weight:800; letter-spacing:0.06em; color:var(--yellow);">BONUS</div>
+                <div id="m-eff-title" style="font-family:Impact, sans-serif; font-size:1.25rem; letter-spacing:0.03em; margin:0.2rem 0;">PLAY AGAIN</div>
+                <div id="m-eff-desc" style="font-size:0.82rem; opacity:0.95;">Take an extra turn!</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- ==========================================
+         3. PRIVATE PLAYER HAND (MULTI-PHONE)
+         ========================================== -->
     <section id="tab-hand" class="hidden">
       <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
           <div>
-            <strong id="p-title" style="font-size:1.1rem; color:var(--gold);">Player 1's Hand</strong>
-            <div style="font-size:0.8rem; opacity:0.85;">Ask in English: <em>"In the [Family] family, I'd like the [Member], please."</em></div>
+            <strong id="p-title" style="font-size:1.1rem; color:var(--yellow);">Player 1's Private Hand</strong>
+            <div style="font-family:Georgia, serif; font-style:italic; font-size:0.84rem; opacity:0.95;">Ask in English: "In the [Family] family, I'd like the [Member], please."</div>
           </div>
-          <div style="display:flex; gap:0.35rem; align-items:center;">
+          <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap;">
             <select id="add-fam"></select>
             <select id="add-mem"></select>
             <button class="primary small" onclick="addPrivateCard()">+ Receive Card</button>
@@ -361,24 +552,28 @@
       <div id="private-cards-grid" class="card-grid"></div>
     </section>
 
+    <!-- ==========================================
+         4. 7 FAMILIES OVERVIEW
+         ========================================== -->
     <section id="tab-families" class="hidden">
       <div class="panel">
-        <strong>The 7 Families (42 Cards Overview)</strong>
-        <p style="font-size:0.82rem; opacity:0.85;">Each family has 6 cards: Grandfather (Summary card), Grandmother, Father, Mother, Son, Daughter.</p>
+        <strong>The 7 Families (42 Cards)</strong>
+        <p style="font-size:0.82rem; opacity:0.88;">Color-coded with your official Green Clicks palette. Each family has 6 cards: Grandfather (Summary), Grandmother, Father, Mother, Son, Daughter.</p>
       </div>
       <div id="gallery-grid" class="card-grid"></div>
     </section>
   </div>
 
   <script>
+    // 7 FAMILIES USING OFFICIAL CHARTER HEX COLORS
     const FAMILIES = [
-      { id: 0, name: "Devices", color: "#1e824c", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
-      { id: 1, name: "Data centers", color: "#2980b9", icon: "🏢", tip: "Servers run 24/7 and need heavy cooling." },
-      { id: 2, name: "Eco-design", color: "#16a085", icon: "🌿", tip: "Light web pages save energy & data." },
-      { id: 3, name: "Everyday habits", color: "#d35400", icon: "🔌", tip: "Turn off devices instead of standby." },
-      { id: 4, name: "Cloud & storage", color: "#8e44ad", icon: "☁️", tip: "Store locally & delete unused files." },
-      { id: 5, name: "Hidden costs", color: "#c0392b", icon: "⛏️", tip: "800 kg of raw materials for 1 laptop." },
-      { id: 6, name: "Networks", color: "#2c3e50", icon: "📡", tip: "Wi-Fi uses far less energy than 4G/5G." }
+      { id: 0, name: "Devices", color: "#336454", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
+      { id: 1, name: "Data centers", color: "#0084c0", icon: "🏢", tip: "Servers run 24/7 and need heavy cooling." },
+      { id: 2, name: "Eco-design", color: "#db6215", icon: "🌿", tip: "Light web pages save energy & data." },
+      { id: 3, name: "Everyday habits", color: "#e83c6b", icon: "🔌", tip: "Turn off devices instead of standby." },
+      { id: 4, name: "Cloud & storage", color: "#801b5d", icon: "☁️", tip: "Store locally & delete unused files." },
+      { id: 5, name: "Hidden costs", color: "#aa3021", icon: "⛏️", tip: "800 kg of raw materials for 1 laptop." },
+      { id: 6, name: "Networks", color: "#50504f", icon: "📡", tip: "Wi-Fi uses far less energy than 4G/5G." }
     ];
 
     const MEMBERS = [
@@ -421,19 +616,21 @@
     let activeMyth = null;
     let privateHand = [];
     let privateKey = null;
-    let hostVisiblePlayer = null;
+    let selectedHostPlayer = null;
+    let isHostHandUnlocked = false;
+    let lastSecretDraw = null;
 
     function createCardHTML(fIdx, mIdx, actionHtml = "") {
       const fam = FAMILIES[fIdx];
       const mem = MEMBERS[mIdx];
       return `
-        <div class="playing-card" style="border-top: 8px solid ${fam.color};">
+        <div class="playing-card" style="border-top: 9px solid ${fam.color};">
           <div class="card-header" style="color:${fam.color};">
             <span>${fam.name}</span>
             <span>${mIdx + 1}/6</span>
           </div>
           <div class="card-icon">${fam.icon}</div>
-          <div class="card-member">${mem.name}<br><span style="font-size:0.7rem; font-weight:600; color:#666;">${mem.role}</span></div>
+          <div class="card-member">${mem.name}<span>${mem.role}</span></div>
           <div class="card-tip">${fam.tip}</div>
           <div class="card-footer">${actionHtml}</div>
         </div>
@@ -441,14 +638,22 @@
     }
 
     function init() {
+      // Populate Myths Cards with Pink/Orange Brand Design
       const mGrid = document.getElementById("myth-buttons-grid");
       MYTHS.forEach(m => {
-        const b = document.createElement("button");
-        b.textContent = `#${m.id} (${m.level})`;
-        b.onclick = () => openMythCard(m.id);
-        mGrid.appendChild(b);
+        const div = document.createElement("div");
+        const isAdv = m.level === "Advanced";
+        div.className = `myth-back-card ${isAdv ? "advanced" : "beginner"}`;
+        div.onclick = () => openMythCard(m.id);
+        div.innerHTML = `
+          <div style="font-size:0.7rem; font-weight:800; background:rgba(0,0,0,0.25); padding:0.15rem 0.5rem; border-radius:99px; margin-bottom:0.4rem;">CARD #${m.id} · ${m.level.toUpperCase()}</div>
+          <div class="myths-logo-top">MYTHS</div>
+          <div class="myths-logo-bottom">&amp;Facts</div>
+        `;
+        mGrid.appendChild(div);
       });
 
+      // Populate Dropdowns & 7 Families Gallery
       const addFam = document.getElementById("add-fam");
       const addMem = document.getElementById("add-mem");
       const gallery = document.getElementById("gallery-grid");
@@ -463,6 +668,7 @@
         addMem.innerHTML += `<option value="${idx}">${m.name}</option>`;
       });
 
+      // URL Routing
       const params = new URLSearchParams(window.location.search);
       const cParam = parseInt(params.get("card"), 10);
       const hParam = params.get("hand");
@@ -475,7 +681,7 @@
         showTab("myths");
         openMythCard(cParam);
       } else {
-        const saved = localStorage.getItem("gc_table_v2");
+        const saved = localStorage.getItem("gc_table_charter_v3");
         if (saved) {
           tableState = JSON.parse(saved);
           renderTable();
@@ -490,6 +696,7 @@
       });
     }
 
+    // TABLE & SECRET HANDS LOGIC
     function shuffle(a) {
       for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -511,8 +718,10 @@
       shuffle(cards);
 
       tableState = { n, hands, pile: cards };
-      hostVisiblePlayer = null;
-      localStorage.setItem("gc_table_v2", JSON.stringify(tableState));
+      selectedHostPlayer = null;
+      isHostHandUnlocked = false;
+      lastSecretDraw = null;
+      localStorage.setItem("gc_table_charter_v3", JSON.stringify(tableState));
       document.getElementById("drawn-feedback").classList.add("hidden");
       renderTable();
     }
@@ -535,32 +744,67 @@
         sel.innerHTML += `<option value="${i}">Player ${i + 1}</option>`;
         const enc = btoa(tableState.hands[i].join(","));
         const url = `${base}?p=${i + 1}&hand=${encodeURIComponent(enc)}`;
-        linksDiv.innerHTML += `<a href="${url}" target="_blank"><button class="small primary">📱 Player ${i + 1}</button></a>`;
+        linksDiv.innerHTML += `
+          <div style="display:inline-flex; gap:0.25rem; background:rgba(0,0,0,0.25); padding:0.25rem; border-radius:8px;">
+            <a href="${url}" target="_blank"><button class="small primary">📱 P${i + 1}</button></a>
+            <button class="small" onclick="copyLink('${url}', this)">Copy</button>
+          </div>
+        `;
 
         const toggleBtn = document.createElement("button");
-        toggleBtn.className = "small";
-        toggleBtn.textContent = hostVisiblePlayer === i ? `Hide P${i + 1}` : `Show P${i + 1} (${tableState.hands[i].length})`;
+        toggleBtn.className = "small" + (selectedHostPlayer === i ? " plum" : "");
+        toggleBtn.textContent = (selectedHostPlayer === i && isHostHandUnlocked)
+          ? `🔒 Lock P${i + 1}`
+          : `Player ${i + 1} (${tableState.hands[i].length})`;
         toggleBtn.onclick = () => {
-          hostVisiblePlayer = (hostVisiblePlayer === i) ? null : i;
+          if (selectedHostPlayer === i && isHostHandUnlocked) {
+            selectedHostPlayer = null;
+            isHostHandUnlocked = false;
+          } else {
+            selectedHostPlayer = i;
+            isHostHandUnlocked = false;
+          }
           renderTable();
         };
         handBtns.appendChild(toggleBtn);
       }
 
+      const lockScreen = document.getElementById("privacy-lock-screen");
       const cardsDiv = document.getElementById("host-hand-cards");
       const label = document.getElementById("host-hand-label");
-      if (hostVisiblePlayer === null) {
+
+      if (selectedHostPlayer === null) {
+        lockScreen.classList.add("hidden");
         cardsDiv.classList.add("hidden");
-        label.textContent = "Hidden (Tap a player to view)";
+        label.textContent = "All hands hidden";
+      } else if (!isHostHandUnlocked) {
+        lockScreen.classList.remove("hidden");
+        cardsDiv.classList.add("hidden");
+        document.getElementById("lock-player-name").textContent = `Pass device to Player ${selectedHostPlayer + 1}`;
+        label.textContent = `Locked for Player ${selectedHostPlayer + 1}`;
       } else {
+        lockScreen.classList.add("hidden");
         cardsDiv.classList.remove("hidden");
-        label.textContent = `Showing Player ${hostVisiblePlayer + 1}`;
-        const h = tableState.hands[hostVisiblePlayer].sort();
+        label.textContent = `Viewing Player ${selectedHostPlayer + 1} (Tap Lock when done)`;
+        const h = tableState.hands[selectedHostPlayer].sort();
         cardsDiv.innerHTML = h.map((code, idx) => {
           const [f, m] = code.split("-").map(Number);
-          return createCardHTML(f, m, `<button class="small danger" onclick="hostGiveCard(${hostVisiblePlayer}, ${idx})">Give</button>`);
+          return createCardHTML(f, m, `<button class="small danger" onclick="hostGiveCard(${selectedHostPlayer}, ${idx})">Give Card</button>`);
         }).join("");
       }
+    }
+
+    function unlockSelectedHand() {
+      isHostHandUnlocked = true;
+      renderTable();
+    }
+
+    function copyLink(url, btn) {
+      navigator.clipboard.writeText(url).then(() => {
+        const old = btn.textContent;
+        btn.textContent = "✓";
+        setTimeout(() => btn.textContent = old, 1400);
+      });
     }
 
     function drawTopCard() {
@@ -572,14 +816,22 @@
 
       if (card.startsWith("M-")) {
         const mId = parseInt(card.split("-")[1], 10);
-        fb.innerHTML = `⚡ <strong>Player ${pIdx + 1} drew Myths &amp; Facts #${mId}!</strong> <button class="small primary" onclick="showTab('myths'); openMythCard(${mId});">Flip Card</button>`;
+        fb.innerHTML = `⚡ <strong>Player ${pIdx + 1} drew Myths &amp; Facts #${mId}!</strong><br>
+          <button class="small primary" style="margin-top:0.4rem;" onclick="showTab('myths'); openMythCard(${mId});">Flip Challenge Card</button>`;
       } else {
         tableState.hands[pIdx].push(card);
         const [f, m] = card.split("-").map(Number);
-        fb.innerHTML = `🃏 <strong>Player ${pIdx + 1} drew a card!</strong> (Added to P${pIdx + 1}'s hand: <em>${FAMILIES[f].name} - ${MEMBERS[m].name}</em>)`;
+        lastSecretDraw = `<strong>${FAMILIES[f].name}</strong> — ${MEMBERS[m].name}`;
+        fb.innerHTML = `🃏 <strong>Card added secretly to Player ${pIdx + 1}'s hand!</strong><br>
+          <button class="small primary" style="margin-top:0.4rem;" onclick="peekSecretDraw(this)">👁️ Player ${pIdx + 1}: Tap to Peek Secretly</button>`;
       }
-      localStorage.setItem("gc_table_v2", JSON.stringify(tableState));
+      localStorage.setItem("gc_table_charter_v3", JSON.stringify(tableState));
       renderTable();
+    }
+
+    function peekSecretDraw(btn) {
+      if (!lastSecretDraw) return;
+      btn.parentElement.innerHTML = `🤫 Your drawn card: ${lastSecretDraw} <button class="small" style="margin-left:0.4rem;" onclick="this.parentElement.classList.add('hidden')">Hide</button>`;
     }
 
     function hostGiveCard(fromIdx, cardIdx) {
@@ -588,10 +840,13 @@
       if (isNaN(toIdx) || toIdx < 0 || toIdx >= tableState.n || toIdx === fromIdx) return;
       const [c] = tableState.hands[fromIdx].splice(cardIdx, 1);
       tableState.hands[toIdx].push(c);
-      localStorage.setItem("gc_table_v2", JSON.stringify(tableState));
+      selectedHostPlayer = null;
+      isHostHandUnlocked = false;
+      localStorage.setItem("gc_table_charter_v3", JSON.stringify(tableState));
       renderTable();
     }
 
+    // MYTHS CARD LOGIC
     function openMythCard(id) {
       activeMyth = MYTHS.find(m => m.id === id);
       if (!activeMyth) return;
@@ -599,6 +854,9 @@
       document.getElementById("myth-card-view").classList.remove("hidden");
       document.getElementById("m-result").classList.add("hidden");
       document.getElementById("m-choices").classList.remove("hidden");
+
+      const bannerTop = document.getElementById("m-banner-top");
+      bannerTop.className = "myth-card-banner " + (activeMyth.level === "Advanced" ? "advanced" : "beginner");
       document.getElementById("m-tag").textContent = `${activeMyth.level.toUpperCase()} · CARD #${activeMyth.id}`;
       document.getElementById("m-question").textContent = `"${activeMyth.q}"`;
     }
@@ -616,7 +874,7 @@
       const list = ok ? BONUSES : PENALTIES;
       const eff = list[Math.floor(Math.random() * list.length)];
       document.getElementById("m-eff-type").textContent = ok ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
-      document.getElementById("m-eff-title").textContent = eff.title;
+      document.getElementById("m-eff-title").textContent = eff.title.toUpperCase();
       document.getElementById("m-eff-desc").textContent = eff.desc;
     }
 
@@ -628,9 +886,10 @@
       document.getElementById("myth-picker").classList.remove("hidden");
     }
 
+    // PRIVATE HAND LOGIC
     function loadPrivateHand(pNum, enc) {
       document.getElementById("tab-btn-hand").classList.remove("hidden");
-      document.getElementById("p-title").textContent = `Player ${pNum}'s Hand`;
+      document.getElementById("p-title").textContent = `Player ${pNum}'s Private Hand`;
       privateKey = `gc_priv_${pNum}_${enc.slice(0, 10)}`;
       const saved = localStorage.getItem(privateKey);
       if (saved) {

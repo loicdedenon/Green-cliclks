@@ -250,6 +250,25 @@
       text-align: center;
       margin-top: 0.75rem;
     }
+    /* Myths & Facts challenge opened from a live game: keep the player in the room */
+    #myth-card-view.player-myth-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      overflow-y: auto;
+      background: rgba(5, 15, 9, 0.88);
+    }
+    #myth-card-view.player-myth-overlay .myth-card-large {
+      width: 100%;
+      max-width: 520px;
+      max-height: calc(100vh - 2rem);
+      overflow-y: auto;
+    }
+
     .player-pill {
       background: rgba(255,255,255,0.12);
       padding: 0.45rem 0.75rem;
@@ -514,6 +533,7 @@
     let myHand = [];
     let otherPlayers = [];
     let activeMyth = null;
+    let mythFromGame = false;
 
     function createCardHTML(fIdx, mIdx, footerHtml = "") {
       const fam = FAMILIES[fIdx];
@@ -793,11 +813,14 @@
         renderPlayerHand();
       }
       else if (data.type === "DREW_MYTH") {
-        showPlayerAlert(`⚡ You drew Myths & Facts Card #${data.mythId}! Opening challenge...`);
-        setTimeout(() => {
-          switchView("myths");
-          openMythCard(data.mythId);
-        }, 1200);
+        // A Myths & Facts card is drawn from the same pile as the family cards.
+        // Open it above the player's hand instead of navigating away from the room.
+        mythFromGame = true;
+        showPlayerAlert(`⚡ You drew Myths & Facts Card #${data.mythId}! Answer the challenge to return to your hand.`);
+        // Temporarily place the challenge above the whole page, without changing
+        // the active player view or closing the room connection.
+        document.body.appendChild(document.getElementById("myth-card-view"));
+        openMythCard(data.mythId);
       }
     }
 
@@ -871,7 +894,11 @@
       activeMyth = MYTHS.find(m => m.id === id);
       if (!activeMyth) return;
       document.getElementById("myth-picker").classList.add("hidden");
-      document.getElementById("myth-card-view").classList.remove("hidden");
+      const cardView = document.getElementById("myth-card-view");
+      cardView.classList.remove("hidden");
+      cardView.classList.toggle("player-myth-overlay", mythFromGame);
+      const closeButton = cardView.querySelector("button.small");
+      closeButton.textContent = mythFromGame ? "Return to Game" : "All Cards";
       document.getElementById("m-result").classList.add("hidden");
       document.getElementById("m-choices").classList.remove("hidden");
       document.getElementById("m-tag").textContent = `${activeMyth.level.toUpperCase()} · CARD #${activeMyth.id}`;
@@ -899,7 +926,19 @@
       const u = new URL(window.location.href);
       u.searchParams.delete("card");
       window.history.replaceState({}, "", u.pathname + u.search);
-      document.getElementById("myth-card-view").classList.add("hidden");
+      const cardView = document.getElementById("myth-card-view");
+      cardView.classList.add("hidden");
+      cardView.classList.remove("player-myth-overlay");
+
+      if (mythFromGame) {
+        // The player stays on the same connected game screen.
+        mythFromGame = false;
+        document.getElementById("myth-picker").classList.add("hidden");
+        document.getElementById("view-myths").appendChild(cardView);
+        showPlayerAlert("✅ Challenge completed. You are back in the game!");
+        return;
+      }
+
       document.getElementById("myth-picker").classList.remove("hidden");
       if (myPlayerId) switchView("player");
     }

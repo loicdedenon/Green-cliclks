@@ -3,344 +3,234 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Green Clicks — Serious Card Game</title>
+  <title>Green Clicks — Multiplayer Card Game</title>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
-      /* Official Brand Palette from your Graphic Charter */
-      --green-forest: #336454;
-      --plum-deep: #801b5d;
-      --orange: #db6215;
-      --pink: #e83c6b;
-      --yellow: #eecd00;
-      --charcoal: #50504f;
-      --red-brick: #aa3021;
-      --blue-ocean: #0084c0;
-      --cream: #faf8f4;
-      --ink: #222423;
+      --felt: #26493a;
+      --felt-dark: #183026;
+      --gold: #e6c25b;
+      --cream: #faf8f2;
+      --ink: #18241d;
+      --muted: #5a695f;
+      --accent: #1e824c;
+      --danger: #c0392b;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(circle at top, #3d7563 0%, var(--green-forest) 65%, #23473b 100%);
-      color: #ffffff;
+      background: radial-gradient(circle at center, var(--felt) 0%, var(--felt-dark) 100%);
+      color: #fff;
       min-height: 100vh;
       padding: 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-
-    .container {
-      width: 100%;
-      max-width: 840px;
-    }
-
-    /* HEADER WITH BRAND LOGO (MANIHOT + REDACTION STYLE) */
+    .container { width: 100%; max-width: 860px; }
     header {
       text-align: center;
-      padding-bottom: 0.85rem;
       margin-bottom: 1rem;
-      border-bottom: 2px solid rgba(255,255,255,0.18);
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
     }
-
-    .brand-logo {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      line-height: 0.9;
-      user-select: none;
-    }
-    .brand-logo .top-word {
-      font-family: Impact, "Arial Black", sans-serif;
-      font-size: 2.5rem;
-      letter-spacing: 0.04em;
+    .logo-title {
+      font-size: 1.85rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1;
       text-transform: uppercase;
-      color: #ffffff;
-      text-shadow: 2px 3px 0 rgba(0,0,0,0.35);
     }
-    .brand-logo .bottom-word {
-      font-family: Georgia, "Times New Roman", serif;
+    .logo-sub {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #8ce99a;
       font-style: italic;
-      font-weight: 700;
-      font-size: 1.95rem;
-      color: var(--yellow);
-      margin-top: -0.35rem;
-      margin-left: 1.5rem;
-      text-shadow: 1px 2px 0 rgba(0,0,0,0.4);
+      margin-top: -0.15rem;
     }
-
     .subtitle {
-      font-family: Georgia, "Times New Roman", serif;
-      font-style: italic;
-      font-size: 0.86rem;
-      opacity: 0.92;
-      margin-top: 0.4rem;
-      letter-spacing: 0.02em;
+      font-size: 0.8rem;
+      opacity: 0.85;
+      margin-top: 0.25rem;
     }
-
-    /* NAVIGATION */
     nav {
       display: flex;
       justify-content: center;
       gap: 0.5rem;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.2rem;
       flex-wrap: wrap;
     }
-
     button {
       font-family: inherit;
       font-weight: 700;
-      font-size: 0.88rem;
-      padding: 0.55rem 1rem;
+      font-size: 0.85rem;
+      padding: 0.55rem 0.95rem;
       border-radius: 8px;
-      border: 2px solid rgba(255,255,255,0.25);
+      border: 1px solid rgba(255,255,255,0.2);
       background: rgba(0,0,0,0.25);
-      color: #ffffff;
+      color: #fff;
       cursor: pointer;
-      transition: transform 0.12s, background 0.15s, border-color 0.15s;
+      transition: transform 0.12s, background 0.15s;
     }
-    button:hover { background: rgba(0,0,0,0.42); border-color: rgba(255,255,255,0.5); }
+    button:hover { background: rgba(255,255,255,0.16); }
     button:active { transform: scale(0.96); }
-
     button.primary {
-      background: var(--yellow);
-      color: #1f2421;
-      border-color: var(--yellow);
+      background: var(--gold);
+      color: #16241a;
+      border-color: var(--gold);
     }
-    button.primary:hover { background: #ffe01b; }
-
-    button.plum {
-      background: var(--plum-deep);
-      color: #ffffff;
-      border-color: #a8287b;
+    button.green {
+      background: #3ddc84;
+      color: #0e2417;
+      border-color: #3ddc84;
     }
-
     button.danger {
-      background: var(--red-brick);
-      color: #ffffff;
-      border-color: #c93b2a;
+      background: var(--danger);
+      color: #fff;
+      border-color: var(--danger);
     }
-
-    button.small {
-      padding: 0.32rem 0.65rem;
-      font-size: 0.78rem;
-    }
-
+    button.small { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
     .hidden { display: none !important; }
 
     .panel {
-      background: rgba(0, 0, 0, 0.28);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 14px;
+      background: rgba(0,0,0,0.32);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 12px;
+      padding: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    input[type="text"], select {
+      font-family: inherit;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.95);
+      color: #18241d;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    /* ROOM CODE & QR DISPLAY */
+    .room-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: rgba(0,0,0,0.4);
+      border: 2px dashed var(--gold);
+      border-radius: 12px;
       padding: 1rem;
       margin-bottom: 1rem;
     }
-
-    select {
-      padding: 0.48rem 0.65rem;
+    .room-code-big {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      background: rgba(0,0,0,0.45);
+      padding: 0.3rem 0.8rem;
       border-radius: 8px;
-      border: 2px solid rgba(255,255,255,0.3);
-      background: #1d3b31;
-      color: #fff;
-      font-weight: 700;
+      display: inline-block;
+      margin: 0.3rem 0;
+    }
+    #host-qr-box {
+      background: #fff;
+      padding: 8px;
+      border-radius: 8px;
+      display: inline-block;
     }
 
-    /* =========================================
-       7 FAMILIES CARDS (CHARTER COLORS)
-       ========================================= */
+    /* PLAYING CARDS */
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 0.9rem;
-      margin-top: 0.85rem;
+      margin-top: 0.8rem;
     }
-
     .playing-card {
       background: var(--cream);
       color: var(--ink);
-      border-radius: 14px;
-      border: 4px solid #ffffff;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+      border-radius: 12px;
+      border: 4px solid #fff;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
       padding: 0.65rem;
       aspect-ratio: 2.5 / 3.5;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      position: relative;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       user-select: none;
     }
     .playing-card:hover {
       transform: translateY(-6px) rotate(1deg);
-      box-shadow: 0 14px 26px rgba(0,0,0,0.45);
-      z-index: 5;
+      box-shadow: 0 14px 24px rgba(0,0,0,0.45);
     }
-
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: Impact, "Arial Black", sans-serif;
-      font-size: 0.76rem;
-      letter-spacing: 0.03em;
+      font-size: 0.7rem;
+      font-weight: 800;
       text-transform: uppercase;
       border-bottom: 2px solid currentColor;
       padding-bottom: 0.25rem;
     }
-
-    .card-icon {
-      font-size: 2.3rem;
-      text-align: center;
-      margin: 0.2rem 0;
-    }
-
-    .card-member {
-      text-align: center;
-      font-weight: 800;
-      font-size: 0.95rem;
-      line-height: 1.15;
-    }
-    .card-member span {
-      display: block;
-      font-family: Georgia, serif;
-      font-style: italic;
-      font-size: 0.72rem;
-      font-weight: 400;
-      color: var(--charcoal);
-      margin-top: 0.1rem;
-    }
-
+    .card-icon { font-size: 2.2rem; text-align: center; margin: 0.2rem 0; }
+    .card-member { text-align: center; font-weight: 800; font-size: 0.92rem; line-height: 1.2; }
     .card-tip {
-      font-family: Georgia, "Times New Roman", serif;
-      font-style: italic;
-      font-size: 0.68rem;
-      color: #363837;
+      font-size: 0.66rem;
+      color: var(--muted);
       text-align: center;
       line-height: 1.25;
       background: rgba(0,0,0,0.05);
-      padding: 0.32rem;
+      padding: 0.3rem;
       border-radius: 6px;
     }
+    .card-footer { display: flex; justify-content: center; gap: 0.3rem; }
 
-    .card-footer {
-      display: flex;
-      justify-content: center;
-    }
-
-    /* =========================================
-       CARD BACKS (GREEN & PLUM VERSIONS)
-       ========================================= */
+    /* DRAW PILE BACK */
     .card-back {
-      background: var(--green-forest);
-      border: 4px solid #ffffff;
-      border-radius: 14px;
-      width: 155px;
+      background: repeating-linear-gradient(45deg, #1b5e3a, #1b5e3a 10px, #14472c 10px, #14472c 20px);
+      border: 4px solid #fff;
+      border-radius: 12px;
+      width: 140px;
       aspect-ratio: 2.5 / 3.5;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 0.55rem;
-      box-shadow: 4px 4px 0 #d8d4c8, 8px 8px 0 #b8b3a6, 0 12px 24px rgba(0,0,0,0.45);
+      padding: 0.65rem;
+      box-shadow: 4px 4px 0 #d9d4c7, 8px 8px 0 #bfb9aa, 0 12px 24px rgba(0,0,0,0.45);
       cursor: pointer;
-      transition: transform 0.15s;
-      user-select: none;
+      margin: 0 auto;
     }
-    .card-back:hover { transform: scale(1.04); }
-
+    .card-back:hover { transform: scale(1.03); }
     .card-back-inner {
-      border: 2px solid rgba(255,255,255,0.75);
-      border-radius: 10px;
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 0.5rem;
       width: 100%;
       height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 0.5rem;
     }
 
-    .mini-logo-top {
-      font-family: Impact, "Arial Black", sans-serif;
-      font-size: 1.35rem;
-      letter-spacing: 0.04em;
-      color: #ffffff;
-      line-height: 0.9;
-    }
-    .mini-logo-bottom {
-      font-family: Georgia, serif;
-      font-style: italic;
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: var(--yellow);
-      margin-top: -0.2rem;
-      margin-left: 0.85rem;
-    }
-
-    /* =========================================
-       MYTHS & FACTS CARDS (PINK & ORANGE CHARTER)
-       ========================================= */
-    .myth-back-card {
-      border-radius: 14px;
-      border: 4px solid #ffffff;
-      padding: 1rem 0.75rem;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
-      transition: transform 0.18s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 155px;
-    }
-    .myth-back-card:hover { transform: translateY(-5px); }
-    .myth-back-card.beginner { background: var(--pink); }
-    .myth-back-card.advanced { background: var(--orange); }
-
-    .myths-logo-top {
-      font-family: Impact, "Arial Black", sans-serif;
-      font-size: 1.55rem;
-      letter-spacing: 0.04em;
-      color: #ffffff;
-      line-height: 0.9;
-    }
-    .myths-logo-bottom {
-      font-family: Georgia, serif;
-      font-style: italic;
-      font-weight: 700;
-      font-size: 1.3rem;
-      color: #ffffff;
-      margin-top: -0.25rem;
-      margin-left: 0.9rem;
-    }
-
+    /* MYTH CARD LARGE */
     .myth-card-large {
       background: var(--cream);
       color: var(--ink);
-      border: 6px solid #ffffff;
-      border-radius: 18px;
-      max-width: 400px;
+      border: 6px solid #fff;
+      border-radius: 16px;
+      max-width: 390px;
       margin: 0 auto;
-      overflow: hidden;
-      box-shadow: 0 16px 36px rgba(0,0,0,0.5);
-    }
-
-    .myth-card-banner {
-      padding: 0.9rem 1rem;
-      text-align: center;
-      color: #ffffff;
-    }
-    .myth-card-banner.beginner { background: var(--pink); }
-    .myth-card-banner.advanced { background: var(--orange); }
-
-    .myth-card-body {
       padding: 1.25rem;
+      box-shadow: 0 14px 32px rgba(0,0,0,0.45);
     }
-
     .banner {
       padding: 0.75rem;
       border-radius: 8px;
@@ -348,232 +238,230 @@
       font-weight: 700;
       font-size: 0.9rem;
     }
-    .banner.ok { background: #dff2ea; color: #1b5440; border: 1px solid var(--green-forest); }
-    .banner.ko { background: #fbe3e0; color: var(--red-brick); border: 1px solid var(--red-brick); }
-
+    .banner.ok { background: #d4edda; color: #155724; }
+    .banner.ko { background: #f8d7da; color: #721c24; }
+    .banner.info { background: #fff3cd; color: #856404; }
     .effect-ticket {
-      background: var(--plum-deep);
-      color: #ffffff;
-      border: 2px dashed var(--yellow);
-      padding: 0.85rem;
-      border-radius: 12px;
-      text-align: center;
-      margin-top: 0.8rem;
-    }
-
-    /* PRIVACY SHIELD BOX */
-    .privacy-shield {
-      background: var(--plum-deep);
-      border: 2px solid var(--yellow);
-      border-radius: 14px;
-      padding: 1.5rem 1rem;
+      background: #fff8e1;
+      border: 2px dashed #d39e00;
+      color: #533f03;
+      padding: 0.75rem;
+      border-radius: 10px;
       text-align: center;
       margin-top: 0.75rem;
     }
-
-    .table-top {
-      display: flex;
-      justify-content: space-around;
+    .player-pill {
+      background: rgba(255,255,255,0.12);
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 1.2rem;
-      margin-bottom: 1.2rem;
+      gap: 0.4rem;
     }
+    .dot-online { width: 9px; height: 9px; border-radius: 50%; background: #3ddc84; display: inline-block; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div class="brand-logo">
-        <span class="top-word">GREEN</span>
-        <span class="bottom-word">Clicks</span>
-      </div>
+      <div class="logo-title">GREEN</div>
+      <div class="logo-sub">Clicks</div>
       <div class="subtitle">Serious Card Game · Green IT &amp; Eco-Design</div>
     </header>
 
-    <nav>
-      <button id="tab-btn-play" class="primary" onclick="showTab('play')">🃏 Game Table</button>
-      <button id="tab-btn-myths" onclick="showTab('myths')">❓ Myths &amp; Facts (QR)</button>
-      <button id="tab-btn-hand" class="hidden" onclick="showTab('hand')">✋ My Private Hand</button>
-      <button id="tab-btn-families" onclick="showTab('families')">📖 7 Families</button>
+    <nav id="top-nav">
+      <button id="nav-home" class="primary" onclick="switchView('home')">🏠 Lobby (Host / Join)</button>
+      <button id="nav-myths" onclick="switchView('myths')">❓ Myths &amp; Facts (QR)</button>
+      <button id="nav-families" onclick="switchView('families')">📖 7 Families</button>
     </nav>
 
-    <!-- ==========================================
-         1. GAME TABLE (WITH SECRET DRAW & PASS-PLAY)
-         ========================================== -->
-    <section id="tab-play">
-      <div class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
-          <div>
-            <strong>Setup New Game</strong>
-            <div style="font-size:0.82rem; opacity:0.85;">6 secret cards per player + Myths &amp; Facts shuffled into the pile</div>
+    <!-- =========================================================
+         VIEW 1: LOBBY (CHOOSE HOST TABLE OR JOIN ON PHONE)
+         ========================================================= -->
+    <section id="view-home">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+        <!-- OPTION A: JOIN A GAME (FOR PHONES) -->
+        <div class="panel" style="border: 2px solid #3ddc84;">
+          <div style="font-size:0.75rem; font-weight:800; color:#3ddc84; text-transform:uppercase;">📱 On Your Smartphone</div>
+          <h2 style="margin:0.3rem 0;">Join a Game</h2>
+          <p style="font-size:0.84rem; opacity:0.85; margin-bottom:0.85rem;">Enter your name and the 4-letter Room Code shown on the host screen (or scan the host QR code):</p>
+          <div style="display:flex; flex-direction:column; gap:0.55rem;">
+            <input type="text" id="join-name" placeholder="Your Name (e.g. Loïc)" maxlength="16">
+            <input type="text" id="join-code" placeholder="4-Letter Room Code (e.g. ABCD)" maxlength="4" style="text-transform:uppercase; letter-spacing:0.15em;">
+            <button class="green" onclick="joinRoom()">Join Game →</button>
           </div>
-          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
-            <select id="num-players">
-              <option value="2">2 Players</option>
-              <option value="3">3 Players</option>
-              <option value="4" selected>4 Players</option>
-              <option value="5">5 Players</option>
-              <option value="6">6 Players</option>
-            </select>
-            <select id="difficulty">
-              <option value="6">Beginner (6 Myths)</option>
-              <option value="12">Advanced (12 Myths)</option>
-            </select>
-            <button class="primary" onclick="startNewTable()">Deal Cards</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="active-table" class="hidden">
-        <div class="table-top">
-          <!-- Interactive Draw Pile -->
-          <div style="text-align:center;">
-            <div class="card-back" onclick="drawTopCard()">
-              <div class="card-back-inner">
-                <div class="mini-logo-top">GREEN</div>
-                <div class="mini-logo-bottom">Clicks</div>
-                <div style="font-size:0.7rem; font-weight:800; margin-top:0.65rem; background:rgba(0,0,0,0.35); padding:0.2rem 0.55rem; border-radius:99px;">TAP TO DRAW</div>
-              </div>
-            </div>
-            <div style="margin-top:0.55rem; font-size:0.85rem; font-weight:700;">
-              Draw Pile: <span id="pile-counter" style="color:var(--yellow);">0</span> cards
-            </div>
-          </div>
-
-          <!-- Turn & Multi-Phone Links -->
-          <div class="panel" style="flex:1; min-width:265px; margin-bottom:0;">
-            <div style="font-size:0.78rem; text-transform:uppercase; color:var(--yellow); font-weight:800;">Secret Draw &amp; Multi-Phone</div>
-            <div style="margin:0.55rem 0; display:flex; align-items:center; gap:0.5rem;">
-              <label for="active-player-sel">Player drawing:</label>
-              <select id="active-player-sel"></select>
-            </div>
-
-            <!-- Secret Draw Result (Hidden until player peeks) -->
-            <div id="drawn-feedback" class="hidden" style="margin:0.65rem 0; padding:0.7rem; background:var(--plum-deep); border:1px solid var(--yellow); border-radius:10px; font-size:0.86rem;"></div>
-
-            <div style="margin-top:0.65rem; border-top:1px solid rgba(255,255,255,0.18); padding-top:0.65rem;">
-              <div style="font-size:0.78rem; opacity:0.9; margin-bottom:0.4rem;">Send each player their private hand link (multi-phone):</div>
-              <div id="player-links" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
-            </div>
-          </div>
+          <div id="join-status" style="font-size:0.82rem; margin-top:0.6rem; color:var(--gold);"></div>
         </div>
 
-        <!-- Pass & Play Secret Hand Viewer -->
+        <!-- OPTION B: HOST THE TABLE (FOR PC / TABLET / HOST PHONE) -->
         <div class="panel">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-            <div>
-              <strong>Pass &amp; Play (Single Device)</strong>
-              <span id="host-hand-label" style="font-size:0.8rem; color:var(--yellow); margin-left:0.4rem;">All hands hidden</span>
-            </div>
-            <div id="host-hand-buttons" style="display:flex; gap:0.35rem; flex-wrap:wrap;"></div>
+          <div style="font-size:0.75rem; font-weight:800; color:var(--gold); text-transform:uppercase;">🎲 On Main Screen / Host</div>
+          <h2 style="margin:0.3rem 0;">Create Game Table</h2>
+          <p style="font-size:0.84rem; opacity:0.85; margin-bottom:0.85rem;">Host the draw pile &amp; table. Players join from their own phones and receive their secret cards automatically!</p>
+          <div style="display:flex; flex-direction:column; gap:0.55rem;">
+            <select id="host-difficulty">
+              <option value="6">Beginner Mode (6 Myths &amp; Facts)</option>
+              <option value="12">Advanced Mode (12 Myths &amp; Facts)</option>
+            </select>
+            <button class="primary" onclick="createHostRoom()">Create Room &amp; Get Code</button>
           </div>
-
-          <!-- Privacy Lock Screen before revealing hand -->
-          <div id="privacy-lock-screen" class="privacy-shield hidden">
-            <div style="font-size:2rem; margin-bottom:0.3rem;">🔒</div>
-            <h3 id="lock-player-name" style="margin-bottom:0.3rem;">Pass device to Player 1</h3>
-            <p style="font-size:0.82rem; opacity:0.9; margin-bottom:0.8rem;">Make sure other players are not looking at the screen!</p>
-            <button class="primary" onclick="unlockSelectedHand()">👁️ Reveal My Cards</button>
-          </div>
-
-          <div id="host-hand-cards" class="card-grid hidden"></div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         2. MYTHS & FACTS (PINK & ORANGE BRAND CARDS)
-         ========================================== -->
-    <section id="tab-myths" class="hidden">
-      <div id="myth-picker" class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-          <div>
-            <strong>Myths &amp; Facts Challenge Deck</strong>
-            <div style="font-size:0.82rem; opacity:0.85;">Pink (#e83c6b) = Beginner · Orange (#db6215) = Advanced (or scan QR <code>?card=1..12</code>)</div>
+    <!-- =========================================================
+         VIEW 2: HOST TABLE (LIVE MULTIPLAYER ROOM)
+         ========================================================= -->
+    <section id="view-host" class="hidden">
+      <div class="room-banner">
+        <div>
+          <div style="font-size:0.78rem; text-transform:uppercase; font-weight:800; color:var(--gold);">Room Code — Join on Phones</div>
+          <div class="room-code-big" id="display-room-code">----</div>
+          <div style="font-size:0.8rem; opacity:0.9;">Scan the QR code or open the site and enter the code above.</div>
+          <div style="margin-top:0.6rem;" id="connected-players-list">
+            <span style="font-size:0.82rem; opacity:0.75;">Waiting for players to join...</span>
           </div>
         </div>
-        <div id="myth-buttons-grid" class="card-grid"></div>
+        <div style="text-align:center;">
+          <div id="host-qr-box"></div>
+          <div style="font-size:0.7rem; margin-top:0.25rem; opacity:0.8;">Scan to Join</div>
+        </div>
+      </div>
+
+      <div class="panel" id="host-deal-bar">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <strong>Ready to start?</strong>
+            <span style="font-size:0.82rem; opacity:0.85;" id="player-count-label">(0 players connected — 2 to 6 required)</span>
+          </div>
+          <button class="green" id="btn-start-deal" onclick="hostDealCards()">🃏 Deal 6 Secret Cards to Everyone</button>
+        </div>
+      </div>
+
+      <div id="host-board-active" class="hidden">
+        <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+          <div style="text-align:center;">
+            <div class="card-back" onclick="hostClickDrawPile()">
+              <div class="card-back-inner">
+                <div style="font-size:1.8rem;">🌱</div>
+                <div style="font-weight:800; color:var(--gold); font-size:0.9rem;">DRAW PILE</div>
+                <div style="font-size:0.7rem; margin-top:0.2rem;">Send card to selected player</div>
+              </div>
+            </div>
+            <div style="margin-top:0.45rem; font-weight:800;">Remaining: <span id="host-pile-count" style="color:var(--gold);">0</span> cards</div>
+          </div>
+
+          <div class="panel" style="flex:1; min-width:260px; margin-bottom:0;">
+            <div style="font-size:0.78rem; text-transform:uppercase; color:var(--gold); font-weight:800;">Draw Action</div>
+            <p style="font-size:0.82rem; opacity:0.85; margin:0.3rem 0 0.6rem;">When a player is told <em>"Draw!"</em>, select them and tap the deck—the card goes straight to their phone secretly:</p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <select id="host-draw-target"></select>
+              <button class="primary" onclick="hostClickDrawPile()">Send Top Card</button>
+            </div>
+            <div id="host-table-log" style="margin-top:0.75rem; font-size:0.85rem; color:#8ce99a; font-weight:600;"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <strong>Completed Families on Table (<span id="host-comp-num">0</span> / 7)</strong>
+          <div id="host-completed-badges" style="margin-top:0.6rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <span style="font-size:0.82rem; opacity:0.7;">No families completed yet.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         VIEW 3: PLAYER PHONE VIEW (SECRET HAND + REAL-TIME ACTIONS)
+         ========================================================= -->
+    <section id="view-player" class="hidden">
+      <div class="panel" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+          <span class="dot-online"></span> <strong id="p-room-badge" style="color:var(--gold);">Room ----</strong>
+          <h2 id="p-welcome-name" style="margin-top:0.15rem;">My Secret Hand</h2>
+        </div>
+        <button class="small" onclick="playerRequestDraw()">🃏 Draw 1 Card from Pile</button>
+      </div>
+
+      <div id="p-notification" class="banner info hidden"></div>
+      <div id="p-happy-banner" class="banner ok hidden"></div>
+
+      <div class="panel" style="padding:0.75rem;">
+        <div style="font-size:0.8rem; opacity:0.9;">
+          🗣️ Ask out loud in English: <em>"In the <strong>[Family]</strong> family, I'd like the <strong>[Member]</strong>, please."</em>
+        </div>
+      </div>
+
+      <!-- SECRET CARDS IN HAND -->
+      <div id="p-hand-grid" class="card-grid">
+        <p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Waiting for the host to deal cards...</p>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         VIEW 4: MYTHS & FACTS QR CARD CHECKER
+         ========================================================= -->
+    <section id="view-myths" class="hidden">
+      <div id="myth-picker" class="panel">
+        <strong>Myths &amp; Facts Challenge (or scan QR ?card=1..12)</strong>
+        <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(115px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
       </div>
 
       <div id="myth-card-view" class="hidden">
         <div class="myth-card-large">
-          <div id="m-banner-top" class="myth-card-banner beginner">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-              <span id="m-tag" style="font-weight:800; font-size:0.75rem; background:rgba(0,0,0,0.25); padding:0.2rem 0.55rem; border-radius:99px;">BEGINNER · #1</span>
-              <button class="small" style="background:rgba(0,0,0,0.25); border-color:rgba(255,255,255,0.4);" onclick="closeMythCard()">← All Cards</button>
-            </div>
-            <div class="myths-logo-top">MYTHS</div>
-            <div class="myths-logo-bottom">&amp;Facts</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1b241e; padding-bottom:0.4rem; margin-bottom:0.75rem;">
+            <span id="m-tag" style="font-weight:800; font-size:0.78rem; color:#1e824c;">BEGINNER · #1</span>
+            <button class="small" style="color:#1b241e; border-color:#ccc;" onclick="closeMythCard()">All Cards</button>
+          </div>
+          <div style="text-align:center; font-size:2rem; margin-bottom:0.4rem;">❓</div>
+          <h2 id="m-question" style="font-size:1.08rem; text-align:center; line-height:1.35; margin-bottom:0.8rem;">Question</h2>
+          <p style="font-size:0.8rem; color:#5a695f; text-align:center; margin-bottom:0.8rem;">Say <strong>True</strong> or <strong>False</strong> in English, then tap:</p>
+
+          <div id="m-choices" style="display:flex; gap:0.6rem;">
+            <button style="flex:1; background:#1e824c; color:#fff; border:none;" onclick="answerMyth(true)">TRUE</button>
+            <button style="flex:1; background:#c0392b; color:#fff; border:none;" onclick="answerMyth(false)">FALSE</button>
           </div>
 
-          <div class="myth-card-body">
-            <h2 id="m-question" style="font-size:1.08rem; text-align:center; line-height:1.4; margin-bottom:0.85rem;">Question</h2>
-            <p style="font-family:Georgia, serif; font-style:italic; font-size:0.84rem; color:var(--charcoal); text-align:center; margin-bottom:0.85rem;">Say <strong>"True"</strong> or <strong>"False"</strong> out loud in English, then tap:</p>
-
-            <div id="m-choices" style="display:flex; gap:0.65rem;">
-              <button style="flex:1; background:var(--green-forest); color:#fff; border:none; font-size:0.95rem;" onclick="answerMyth(true)">TRUE</button>
-              <button style="flex:1; background:var(--red-brick); color:#fff; border:none; font-size:0.95rem;" onclick="answerMyth(false)">FALSE</button>
-            </div>
-
-            <div id="m-result" class="hidden">
-              <div id="m-banner" class="banner"></div>
-              <p id="m-exp" style="font-family:Georgia, serif; font-size:0.88rem; line-height:1.45; margin-bottom:0.45rem;"></p>
-              <p style="font-size:0.76rem; color:var(--charcoal);"><strong>Source:</strong> <span id="m-src"></span></p>
-              <div class="effect-ticket">
-                <div id="m-eff-type" style="font-size:0.72rem; font-weight:800; letter-spacing:0.06em; color:var(--yellow);">BONUS</div>
-                <div id="m-eff-title" style="font-family:Impact, sans-serif; font-size:1.25rem; letter-spacing:0.03em; margin:0.2rem 0;">PLAY AGAIN</div>
-                <div id="m-eff-desc" style="font-size:0.82rem; opacity:0.95;">Take an extra turn!</div>
-              </div>
+          <div id="m-result" class="hidden">
+            <div id="m-banner" class="banner"></div>
+            <p id="m-exp" style="font-size:0.86rem; line-height:1.4; margin-bottom:0.4rem;"></p>
+            <p style="font-size:0.76rem; color:#5a695f;"><strong>Source:</strong> <span id="m-src"></span></p>
+            <div class="effect-ticket">
+              <div id="m-eff-type" style="font-size:0.72rem; font-weight:800; letter-spacing:0.05em;">BONUS</div>
+              <div id="m-eff-title" style="font-size:1.1rem; font-weight:800; margin:0.15rem 0;">Play Again</div>
+              <div id="m-eff-desc" style="font-size:0.8rem;">Take an extra turn!</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         3. PRIVATE PLAYER HAND (MULTI-PHONE)
-         ========================================== -->
-    <section id="tab-hand" class="hidden">
-      <div class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-          <div>
-            <strong id="p-title" style="font-size:1.1rem; color:var(--yellow);">Player 1's Private Hand</strong>
-            <div style="font-family:Georgia, serif; font-style:italic; font-size:0.84rem; opacity:0.95;">Ask in English: "In the [Family] family, I'd like the [Member], please."</div>
-          </div>
-          <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap;">
-            <select id="add-fam"></select>
-            <select id="add-mem"></select>
-            <button class="primary small" onclick="addPrivateCard()">+ Receive Card</button>
-          </div>
-        </div>
-      </div>
-      <div id="p-happy-alert" class="banner ok hidden"></div>
-      <div id="private-cards-grid" class="card-grid"></div>
-    </section>
-
-    <!-- ==========================================
-         4. 7 FAMILIES OVERVIEW
-         ========================================== -->
-    <section id="tab-families" class="hidden">
+    <!-- =========================================================
+         VIEW 5: 7 FAMILIES OVERVIEW
+         ========================================================= -->
+    <section id="view-families" class="hidden">
       <div class="panel">
         <strong>The 7 Families (42 Cards)</strong>
-        <p style="font-size:0.82rem; opacity:0.88;">Color-coded with your official Green Clicks palette. Each family has 6 cards: Grandfather (Summary), Grandmother, Father, Mother, Son, Daughter.</p>
+        <p style="font-size:0.82rem; opacity:0.85;">Each family has 6 cards: Grandfather (Summary), Grandmother, Father, Mother, Son, Daughter.</p>
       </div>
       <div id="gallery-grid" class="card-grid"></div>
     </section>
   </div>
 
   <script>
-    // 7 FAMILIES USING OFFICIAL CHARTER HEX COLORS
+    // ==========================================
+    // GAME DATA
+    // ==========================================
     const FAMILIES = [
-      { id: 0, name: "Devices", color: "#336454", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
-      { id: 1, name: "Data centers", color: "#0084c0", icon: "🏢", tip: "Servers run 24/7 and need heavy cooling." },
-      { id: 2, name: "Eco-design", color: "#db6215", icon: "🌿", tip: "Light web pages save energy & data." },
-      { id: 3, name: "Everyday habits", color: "#e83c6b", icon: "🔌", tip: "Turn off devices instead of standby." },
-      { id: 4, name: "Cloud & storage", color: "#801b5d", icon: "☁️", tip: "Store locally & delete unused files." },
-      { id: 5, name: "Hidden costs", color: "#aa3021", icon: "⛏️", tip: "800 kg of raw materials for 1 laptop." },
-      { id: 6, name: "Networks", color: "#50504f", icon: "📡", tip: "Wi-Fi uses far less energy than 4G/5G." }
+      { id: 0, name: "Devices", color: "#1e824c", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
+      { id: 1, name: "Data centers", color: "#2980b9", icon: "🏢", tip: "Servers run 24/7 and need heavy cooling." },
+      { id: 2, name: "Eco-design", color: "#16a085", icon: "🌿", tip: "Light web pages save energy & data." },
+      { id: 3, name: "Everyday habits", color: "#d35400", icon: "🔌", tip: "Turn off devices instead of standby." },
+      { id: 4, name: "Cloud & storage", color: "#8e44ad", icon: "☁️", tip: "Store locally & delete unused files." },
+      { id: 5, name: "Hidden costs", color: "#c0392b", icon: "⛏️", tip: "800 kg of raw materials for 1 laptop." },
+      { id: 6, name: "Networks", color: "#2c3e50", icon: "📡", tip: "Wi-Fi uses far less energy than 4G/5G." }
     ];
 
     const MEMBERS = [
@@ -587,7 +475,7 @@
 
     const MYTHS = [
       { id: 1, level: "Beginner", q: "Sending an email with a large attachment uses as much energy as leaving a light bulb on for several hours.", ans: true, exp: "Storing and transmitting heavy attachments across servers and networks consumes significant electricity. Use links or compress files instead.", src: "ADEME" },
-      { id: 2, level: "Beginner", q: "Using Dark Mode saves a lot of battery on all types of smartphone and laptop screens.", ans: false, exp: "Dark Mode only saves significant energy on OLED/AMOLED screens where black pixels are turned off. On LCD screens, the backlight stays on.", src: "Purdue University / IEA" },
+      { id: 2, level: "Beginner", q: "Using Dark Mode saves a lot of battery on all types of smartphone and laptop screens.", ans: false, exp: "Dark Mode only saves significant energy on OLED/AMOLED screens where black pixels turn off. On LCD screens, the backlight stays on.", src: "Purdue University / IEA" },
       { id: 3, level: "Beginner", q: "Streaming a video on 4G/5G mobile data consumes much more energy than using Wi-Fi.", ans: true, exp: "Mobile cellular networks require far more energy per gigabyte transferred than fixed fiber/Wi-Fi connections.", src: "ADEME" },
       { id: 4, level: "Beginner", q: "Putting your computer or TV on standby uses almost zero electricity.", ans: false, exp: "Standby ('vampire') power can represent up to 10% of household electricity use. Turning devices completely off saves real energy.", src: "International Energy Agency (IEA)" },
       { id: 5, level: "Beginner", q: "Buying a refurbished smartphone avoids about 80% of its carbon footprint compared to a new one.", ans: true, exp: "Up to 80% of a smartphone's environmental impact happens during raw material extraction and manufacturing.", src: "ADEME" },
@@ -612,241 +500,373 @@
       { title: "Back to the Pile", desc: "Put 1 of your cards back into the draw pile and shuffle." }
     ];
 
-    let tableState = null;
+    // ==========================================
+    // MULTIPLAYER PEERJS STATE
+    // ==========================================
+    let peer = null;
+    let roomCode = "";
+    let hostConnections = []; // { conn, id, name }
+    let hostPile = [];
+    let hostCompleted = [];
+    let clientConn = null;
+    let myPlayerId = "";
+    let myName = "";
+    let myHand = [];
+    let otherPlayers = [];
     let activeMyth = null;
-    let privateHand = [];
-    let privateKey = null;
-    let selectedHostPlayer = null;
-    let isHostHandUnlocked = false;
-    let lastSecretDraw = null;
 
-    function createCardHTML(fIdx, mIdx, actionHtml = "") {
+    function createCardHTML(fIdx, mIdx, footerHtml = "") {
       const fam = FAMILIES[fIdx];
       const mem = MEMBERS[mIdx];
       return `
-        <div class="playing-card" style="border-top: 9px solid ${fam.color};">
+        <div class="playing-card" style="border-top: 8px solid ${fam.color};">
           <div class="card-header" style="color:${fam.color};">
             <span>${fam.name}</span>
             <span>${mIdx + 1}/6</span>
           </div>
           <div class="card-icon">${fam.icon}</div>
-          <div class="card-member">${mem.name}<span>${mem.role}</span></div>
+          <div class="card-member">${mem.name}<br><span style="font-size:0.68rem; font-weight:600; color:#666;">${mem.role}</span></div>
           <div class="card-tip">${fam.tip}</div>
-          <div class="card-footer">${actionHtml}</div>
+          <div class="card-footer">${footerHtml}</div>
         </div>
       `;
     }
 
+    function switchView(view) {
+      ["home", "host", "player", "myths", "families"].forEach(v => {
+        document.getElementById(`view-${v}`).classList.toggle("hidden", v !== view);
+      });
+      ["home", "myths", "families"].forEach(n => {
+        const btn = document.getElementById(`nav-${n}`);
+        if (btn) btn.classList.toggle("primary", n === view);
+      });
+    }
+
     function init() {
-      // Populate Myths Cards with Pink/Orange Brand Design
+      // Populate Myths buttons
       const mGrid = document.getElementById("myth-buttons-grid");
       MYTHS.forEach(m => {
-        const div = document.createElement("div");
-        const isAdv = m.level === "Advanced";
-        div.className = `myth-back-card ${isAdv ? "advanced" : "beginner"}`;
-        div.onclick = () => openMythCard(m.id);
-        div.innerHTML = `
-          <div style="font-size:0.7rem; font-weight:800; background:rgba(0,0,0,0.25); padding:0.15rem 0.5rem; border-radius:99px; margin-bottom:0.4rem;">CARD #${m.id} · ${m.level.toUpperCase()}</div>
-          <div class="myths-logo-top">MYTHS</div>
-          <div class="myths-logo-bottom">&amp;Facts</div>
-        `;
-        mGrid.appendChild(div);
+        const b = document.createElement("button");
+        b.textContent = `#${m.id} (${m.level})`;
+        b.onclick = () => openMythCard(m.id);
+        mGrid.appendChild(b);
       });
 
-      // Populate Dropdowns & 7 Families Gallery
-      const addFam = document.getElementById("add-fam");
-      const addMem = document.getElementById("add-mem");
+      // Populate 7 Families Gallery
       const gallery = document.getElementById("gallery-grid");
-
       FAMILIES.forEach(f => {
-        addFam.innerHTML += `<option value="${f.id}">${f.name}</option>`;
         MEMBERS.forEach((m, mIdx) => {
           gallery.innerHTML += createCardHTML(f.id, mIdx);
         });
       });
-      MEMBERS.forEach((m, idx) => {
-        addMem.innerHTML += `<option value="${idx}">${m.name}</option>`;
-      });
 
-      // URL Routing
+      // Check URL Parameters (?room=ABCD or ?card=1)
       const params = new URLSearchParams(window.location.search);
-      const cParam = parseInt(params.get("card"), 10);
-      const hParam = params.get("hand");
-      const pParam = params.get("p");
+      const roomParam = params.get("room");
+      const cardParam = parseInt(params.get("card"), 10);
 
-      if (hParam) {
-        loadPrivateHand(pParam || "1", hParam);
-        showTab("hand");
-      } else if (cParam >= 1 && cParam <= 12) {
-        showTab("myths");
-        openMythCard(cParam);
-      } else {
-        const saved = localStorage.getItem("gc_table_charter_v3");
-        if (saved) {
-          tableState = JSON.parse(saved);
-          renderTable();
-        }
+      if (roomParam) {
+        document.getElementById("join-code").value = roomParam.toUpperCase();
+        switchView("home");
+      } else if (cardParam >= 1 && cardParam <= 12) {
+        switchView("myths");
+        openMythCard(cardParam);
       }
     }
 
-    function showTab(name) {
-      ["play", "myths", "hand", "families"].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.toggle("hidden", t !== name);
-        document.getElementById(`tab-btn-${t}`).classList.toggle("primary", t === name);
+    // ==========================================
+    // HOST TABLE LOGIC (CREATES ROOM CODE)
+    // ==========================================
+    function generateRoomCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+      let code = "";
+      for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
+    }
+
+    function createHostRoom() {
+      roomCode = generateRoomCode();
+      const peerId = `greenclicks-room-${roomCode}`;
+      peer = new Peer(peerId);
+
+      peer.on("open", () => {
+        switchView("host");
+        document.getElementById("display-room-code").textContent = roomCode;
+
+        // Generate QR Code to join directly on phone
+        const joinUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+        const qrBox = document.getElementById("host-qr-box");
+        qrBox.innerHTML = "";
+        new QRCode(qrBox, { text: joinUrl, width: 110, height: 110 });
+      });
+
+      peer.on("error", err => {
+        alert("Connection error: " + err.type + ". Try again!");
+      });
+
+      peer.on("connection", conn => {
+        conn.on("data", data => handleHostData(conn, data));
+        conn.on("close", () => {
+          hostConnections = hostConnections.filter(p => p.conn !== conn);
+          updateHostPlayersUI();
+        });
       });
     }
 
-    // TABLE & SECRET HANDS LOGIC
-    function shuffle(a) {
-      for (let i = a.length - 1; i > 0; i--) {
+    function updateHostPlayersUI() {
+      const list = document.getElementById("connected-players-list");
+      const countLabel = document.getElementById("player-count-label");
+      const drawSel = document.getElementById("host-draw-target");
+
+      countLabel.textContent = `(${hostConnections.length} players connected — 2 to 6 required)`;
+      drawSel.innerHTML = "";
+
+      if (hostConnections.length === 0) {
+        list.innerHTML = `<span style="font-size:0.82rem; opacity:0.75;">Waiting for players to join...</span>`;
+        return;
+      }
+
+      list.innerHTML = hostConnections.map(p =>
+        `<span class="player-pill"><span class="dot-online"></span> ${p.name}</span>`
+      ).join(" ");
+
+      hostConnections.forEach(p => {
+        drawSel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+      });
+
+      // Broadcast player roster to all phones
+      const roster = hostConnections.map(p => ({ id: p.id, name: p.name }));
+      hostConnections.forEach(p => p.conn.send({ type: "ROSTER", players: roster }));
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
+        [arr[i], arr[j]] = [arr[j], arr[i]];
       }
-      return a;
+      return arr;
     }
 
-    function startNewTable() {
-      const n = parseInt(document.getElementById("num-players").value, 10);
-      const mythCount = parseInt(document.getElementById("difficulty").value, 10);
-      let cards = [];
+    function hostDealCards() {
+      const n = hostConnections.length;
+      if (n < 2 || n > 6) {
+        return alert("You need between 2 and 6 players connected on their phones to deal!");
+      }
+
+      const mythCount = parseInt(document.getElementById("host-difficulty").value, 10);
+      let deck = [];
       for (let f = 0; f < 7; f++) {
-        for (let m = 0; m < 6; m++) cards.push(`${f}-${m}`);
+        for (let m = 0; m < 6; m++) deck.push(`${f}-${m}`);
       }
-      shuffle(cards);
-      const hands = Array.from({ length: n }, () => cards.splice(0, 6));
-      for (let id = 1; id <= mythCount; id++) cards.push(`M-${id}`);
-      shuffle(cards);
+      shuffle(deck);
 
-      tableState = { n, hands, pile: cards };
-      selectedHostPlayer = null;
-      isHostHandUnlocked = false;
-      lastSecretDraw = null;
-      localStorage.setItem("gc_table_charter_v3", JSON.stringify(tableState));
-      document.getElementById("drawn-feedback").classList.add("hidden");
-      renderTable();
-    }
-
-    function renderTable() {
-      if (!tableState) return;
-      document.getElementById("active-table").classList.remove("hidden");
-      document.getElementById("pile-counter").textContent = tableState.pile.length;
-
-      const sel = document.getElementById("active-player-sel");
-      const linksDiv = document.getElementById("player-links");
-      const handBtns = document.getElementById("host-hand-buttons");
-      sel.innerHTML = "";
-      linksDiv.innerHTML = "";
-      handBtns.innerHTML = "";
-
-      const base = window.location.origin + window.location.pathname;
-
-      for (let i = 0; i < tableState.n; i++) {
-        sel.innerHTML += `<option value="${i}">Player ${i + 1}</option>`;
-        const enc = btoa(tableState.hands[i].join(","));
-        const url = `${base}?p=${i + 1}&hand=${encodeURIComponent(enc)}`;
-        linksDiv.innerHTML += `
-          <div style="display:inline-flex; gap:0.25rem; background:rgba(0,0,0,0.25); padding:0.25rem; border-radius:8px;">
-            <a href="${url}" target="_blank"><button class="small primary">📱 P${i + 1}</button></a>
-            <button class="small" onclick="copyLink('${url}', this)">Copy</button>
-          </div>
-        `;
-
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "small" + (selectedHostPlayer === i ? " plum" : "");
-        toggleBtn.textContent = (selectedHostPlayer === i && isHostHandUnlocked)
-          ? `🔒 Lock P${i + 1}`
-          : `Player ${i + 1} (${tableState.hands[i].length})`;
-        toggleBtn.onclick = () => {
-          if (selectedHostPlayer === i && isHostHandUnlocked) {
-            selectedHostPlayer = null;
-            isHostHandUnlocked = false;
-          } else {
-            selectedHostPlayer = i;
-            isHostHandUnlocked = false;
-          }
-          renderTable();
-        };
-        handBtns.appendChild(toggleBtn);
-      }
-
-      const lockScreen = document.getElementById("privacy-lock-screen");
-      const cardsDiv = document.getElementById("host-hand-cards");
-      const label = document.getElementById("host-hand-label");
-
-      if (selectedHostPlayer === null) {
-        lockScreen.classList.add("hidden");
-        cardsDiv.classList.add("hidden");
-        label.textContent = "All hands hidden";
-      } else if (!isHostHandUnlocked) {
-        lockScreen.classList.remove("hidden");
-        cardsDiv.classList.add("hidden");
-        document.getElementById("lock-player-name").textContent = `Pass device to Player ${selectedHostPlayer + 1}`;
-        label.textContent = `Locked for Player ${selectedHostPlayer + 1}`;
-      } else {
-        lockScreen.classList.add("hidden");
-        cardsDiv.classList.remove("hidden");
-        label.textContent = `Viewing Player ${selectedHostPlayer + 1} (Tap Lock when done)`;
-        const h = tableState.hands[selectedHostPlayer].sort();
-        cardsDiv.innerHTML = h.map((code, idx) => {
-          const [f, m] = code.split("-").map(Number);
-          return createCardHTML(f, m, `<button class="small danger" onclick="hostGiveCard(${selectedHostPlayer}, ${idx})">Give Card</button>`);
-        }).join("");
-      }
-    }
-
-    function unlockSelectedHand() {
-      isHostHandUnlocked = true;
-      renderTable();
-    }
-
-    function copyLink(url, btn) {
-      navigator.clipboard.writeText(url).then(() => {
-        const old = btn.textContent;
-        btn.textContent = "✓";
-        setTimeout(() => btn.textContent = old, 1400);
+      // Deal 6 secret cards to each connected phone
+      hostConnections.forEach(player => {
+        const hand = deck.splice(0, 6);
+        player.conn.send({ type: "DEAL_HAND", hand });
       });
+
+      // Remaining cards + Myths & Facts go to table draw pile
+      for (let id = 1; id <= mythCount; id++) deck.push(`M-${id}`);
+      hostPile = shuffle(deck);
+      hostCompleted = [];
+
+      document.getElementById("host-board-active").classList.remove("hidden");
+      document.getElementById("host-pile-count").textContent = hostPile.length;
+      document.getElementById("host-table-log").textContent = "✅ 6 secret cards dealt to every player's phone!";
     }
 
-    function drawTopCard() {
-      if (!tableState || tableState.pile.length === 0) return alert("Draw pile is empty!");
-      const pIdx = parseInt(document.getElementById("active-player-sel").value, 10);
-      const card = tableState.pile.pop();
-      const fb = document.getElementById("drawn-feedback");
-      fb.classList.remove("hidden");
+    function hostClickDrawPile() {
+      const targetId = document.getElementById("host-draw-target").value;
+      if (!targetId) return;
+      sendTopCardToPlayer(targetId);
+    }
+
+    function sendTopCardToPlayer(playerId) {
+      if (hostPile.length === 0) {
+        return alert("The draw pile is empty!");
+      }
+      const target = hostConnections.find(p => p.id === playerId);
+      if (!target) return;
+
+      const card = hostPile.pop();
+      document.getElementById("host-pile-count").textContent = hostPile.length;
 
       if (card.startsWith("M-")) {
-        const mId = parseInt(card.split("-")[1], 10);
-        fb.innerHTML = `⚡ <strong>Player ${pIdx + 1} drew Myths &amp; Facts #${mId}!</strong><br>
-          <button class="small primary" style="margin-top:0.4rem;" onclick="showTab('myths'); openMythCard(${mId});">Flip Challenge Card</button>`;
+        const mythId = parseInt(card.split("-"), 10);
+        document.getElementById("host-table-log").textContent = `⚡ ${target.name} drew Myths & Facts Card #${mythId}!`;
+        target.conn.send({ type: "DREW_MYTH", mythId });
       } else {
-        tableState.hands[pIdx].push(card);
-        const [f, m] = card.split("-").map(Number);
-        lastSecretDraw = `<strong>${FAMILIES[f].name}</strong> — ${MEMBERS[m].name}`;
-        fb.innerHTML = `🃏 <strong>Card added secretly to Player ${pIdx + 1}'s hand!</strong><br>
-          <button class="small primary" style="margin-top:0.4rem;" onclick="peekSecretDraw(this)">👁️ Player ${pIdx + 1}: Tap to Peek Secretly</button>`;
+        document.getElementById("host-table-log").textContent = `🃏 Sent 1 secret card from the pile to ${target.name}.`;
+        target.conn.send({ type: "RECEIVE_CARD", card, from: "Draw Pile" });
       }
-      localStorage.setItem("gc_table_charter_v3", JSON.stringify(tableState));
-      renderTable();
     }
 
-    function peekSecretDraw(btn) {
-      if (!lastSecretDraw) return;
-      btn.parentElement.innerHTML = `🤫 Your drawn card: ${lastSecretDraw} <button class="small" style="margin-left:0.4rem;" onclick="this.parentElement.classList.add('hidden')">Hide</button>`;
+    function handleHostData(conn, data) {
+      if (data.type === "JOIN") {
+        if (hostConnections.length >= 6) {
+          conn.send({ type: "ERROR", msg: "Room is full (max 6 players)." });
+          return;
+        }
+        const playerId = "p_" + Math.random().toString(36).slice(2, 8);
+        hostConnections.push({ conn, id: playerId, name: data.name });
+        conn.send({ type: "WELCOME", playerId, roomCode });
+        updateHostPlayersUI();
+      }
+      else if (data.type === "REQUEST_DRAW") {
+        sendTopCardToPlayer(data.playerId);
+      }
+      else if (data.type === "TRANSFER_CARD") {
+        const receiver = hostConnections.find(p => p.id === data.toId);
+        const sender = hostConnections.find(p => p.id === data.fromId);
+        if (receiver && sender) {
+          receiver.conn.send({ type: "RECEIVE_CARD", card: data.card, from: sender.name });
+          document.getElementById("host-table-log").textContent = `🔄 ${sender.name} gave a card to ${receiver.name}.`;
+        }
+      }
+      else if (data.type === "FAMILY_COMPLETED") {
+        const sender = hostConnections.find(p => p.id === data.playerId);
+        const famName = FAMILIES[data.familyIdx].name;
+        hostCompleted.push({ player: sender ? sender.name : "Player", family: famName });
+        document.getElementById("host-comp-num").textContent = hostCompleted.length;
+        document.getElementById("host-completed-badges").innerHTML = hostCompleted.map(c =>
+          `<span style="background:#3ddc84; color:#0e2417; padding:0.3rem 0.75rem; border-radius:99px; font-weight:800; font-size:0.82rem;">🏆 ${c.family} (${c.player})</span>`
+        ).join("");
+        document.getElementById("host-table-log").textContent = `🎉 Happy Family! ${sender.name} completed "${famName}"!`;
+      }
     }
 
-    function hostGiveCard(fromIdx, cardIdx) {
-      const to = prompt(`Give this card to which player? (1 to ${tableState.n})`);
-      const toIdx = parseInt(to, 10) - 1;
-      if (isNaN(toIdx) || toIdx < 0 || toIdx >= tableState.n || toIdx === fromIdx) return;
-      const [c] = tableState.hands[fromIdx].splice(cardIdx, 1);
-      tableState.hands[toIdx].push(c);
-      selectedHostPlayer = null;
-      isHostHandUnlocked = false;
-      localStorage.setItem("gc_table_charter_v3", JSON.stringify(tableState));
-      renderTable();
+    // ==========================================
+    // PLAYER PHONE LOGIC (JOINS ROOM)
+    // ==========================================
+    function joinRoom() {
+      const nameInput = document.getElementById("join-name").value.trim();
+      const codeInput = document.getElementById("join-code").value.trim().toUpperCase();
+      const status = document.getElementById("join-status");
+
+      if (!nameInput) return alert("Please enter your name!");
+      if (codeInput.length !== 4) return alert("Please enter the 4-letter Room Code!");
+
+      myName = nameInput;
+      status.textContent = "Connecting to game table...";
+
+      peer = new Peer();
+      peer.on("open", () => {
+        clientConn = peer.connect(`greenclicks-room-${codeInput}`);
+
+        clientConn.on("open", () => {
+          clientConn.send({ type: "JOIN", name: myName });
+        });
+
+        clientConn.on("data", data => handlePlayerData(data));
+
+        clientConn.on("error", () => {
+          status.textContent = "❌ Could not connect. Check the Room Code!";
+        });
+      });
     }
 
-    // MYTHS CARD LOGIC
+    function handlePlayerData(data) {
+      if (data.type === "ERROR") {
+        alert(data.msg);
+      }
+      else if (data.type === "WELCOME") {
+        myPlayerId = data.playerId;
+        roomCode = data.roomCode;
+        switchView("player");
+        document.getElementById("p-room-badge").textContent = `Room ${roomCode}`;
+        document.getElementById("p-welcome-name").textContent = `${myName}'s Private Hand`;
+      }
+      else if (data.type === "ROSTER") {
+        otherPlayers = data.players.filter(p => p.id !== myPlayerId);
+        renderPlayerHand();
+      }
+      else if (data.type === "DEAL_HAND") {
+        myHand = data.hand;
+        showPlayerAlert("🃏 Cards dealt! Only you can see your hand.");
+        renderPlayerHand();
+      }
+      else if (data.type === "RECEIVE_CARD") {
+        myHand.push(data.card);
+        const [f, m] = data.card.split("-").map(Number);
+        showPlayerAlert(`✨ You received: ${FAMILIES[f].name} — ${MEMBERS[m].name} (from ${data.from})`);
+        renderPlayerHand();
+      }
+      else if (data.type === "DREW_MYTH") {
+        showPlayerAlert(`⚡ You drew Myths & Facts Card #${data.mythId}! Opening challenge...`);
+        setTimeout(() => {
+          switchView("myths");
+          openMythCard(data.mythId);
+        }, 1200);
+      }
+    }
+
+    function showPlayerAlert(msg) {
+      const box = document.getElementById("p-notification");
+      box.textContent = msg;
+      box.classList.remove("hidden");
+    }
+
+    function playerRequestDraw() {
+      if (!clientConn) return;
+      clientConn.send({ type: "REQUEST_DRAW", playerId: myPlayerId });
+    }
+
+    function giveCardToPlayer(cardIdx, targetPlayerId) {
+      if (!targetPlayerId) return;
+      const [card] = myHand.splice(cardIdx, 1);
+      clientConn.send({ type: "TRANSFER_CARD", fromId: myPlayerId, toId: targetPlayerId, card });
+      renderPlayerHand();
+    }
+
+    function renderPlayerHand() {
+      myHand.sort();
+      const grid = document.getElementById("p-hand-grid");
+      if (myHand.length === 0) {
+        grid.innerHTML = `<p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Your hand is empty. Tap "Draw 1 Card from Pile"!</p>`;
+        return;
+      }
+
+      // Check for complete family (6 cards of same family)
+      const counts = {};
+      myHand.forEach(c => {
+        const f = c.split("-");
+        counts[f] = (counts[f] || 0) + 1;
+      });
+      const completeFam = Object.keys(counts).find(k => counts[k] === 6);
+      const happyBanner = document.getElementById("p-happy-banner");
+
+      if (completeFam !== undefined) {
+        happyBanner.classList.remove("hidden");
+        happyBanner.innerHTML = `🎉 Complete family: <strong>${FAMILIES[completeFam].name}</strong>! Say "Happy family!"
+          <button class="small green" style="margin-left:0.5rem;" onclick="claimCompleteFamily(${completeFam})">Lay Down Family</button>`;
+      } else {
+        happyBanner.classList.add("hidden");
+      }
+
+      const playerOptions = otherPlayers.map(p => `<option value="${p.id}">Give → ${p.name}</option>`).join("");
+
+      grid.innerHTML = myHand.map((code, idx) => {
+        const [f, m] = code.split("-").map(Number);
+        const selectHtml = otherPlayers.length > 0
+          ? `<select style="font-size:0.7rem; padding:0.2rem; width:100%;" onchange="giveCardToPlayer(${idx}, this.value)">
+               <option value="">Give card to...</option>
+               ${playerOptions}
+             </select>`
+          : "";
+        return createCardHTML(f, m, selectHtml);
+      }).join("");
+    }
+
+    function claimCompleteFamily(fIdx) {
+      myHand = myHand.filter(c => Number(c.split("-")) !== Number(fIdx));
+      clientConn.send({ type: "FAMILY_COMPLETED", playerId: myPlayerId, familyIdx: fIdx });
+      renderPlayerHand();
+    }
+
+    // ==========================================
+    // MYTHS & FACTS LOGIC
+    // ==========================================
     function openMythCard(id) {
       activeMyth = MYTHS.find(m => m.id === id);
       if (!activeMyth) return;
@@ -854,9 +874,6 @@
       document.getElementById("myth-card-view").classList.remove("hidden");
       document.getElementById("m-result").classList.add("hidden");
       document.getElementById("m-choices").classList.remove("hidden");
-
-      const bannerTop = document.getElementById("m-banner-top");
-      bannerTop.className = "myth-card-banner " + (activeMyth.level === "Advanced" ? "advanced" : "beginner");
       document.getElementById("m-tag").textContent = `${activeMyth.level.toUpperCase()} · CARD #${activeMyth.id}`;
       document.getElementById("m-question").textContent = `"${activeMyth.q}"`;
     }
@@ -874,7 +891,7 @@
       const list = ok ? BONUSES : PENALTIES;
       const eff = list[Math.floor(Math.random() * list.length)];
       document.getElementById("m-eff-type").textContent = ok ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
-      document.getElementById("m-eff-title").textContent = eff.title.toUpperCase();
+      document.getElementById("m-eff-title").textContent = eff.title;
       document.getElementById("m-eff-desc").textContent = eff.desc;
     }
 
@@ -884,64 +901,7 @@
       window.history.replaceState({}, "", u.pathname + u.search);
       document.getElementById("myth-card-view").classList.add("hidden");
       document.getElementById("myth-picker").classList.remove("hidden");
-    }
-
-    // PRIVATE HAND LOGIC
-    function loadPrivateHand(pNum, enc) {
-      document.getElementById("tab-btn-hand").classList.remove("hidden");
-      document.getElementById("p-title").textContent = `Player ${pNum}'s Private Hand`;
-      privateKey = `gc_priv_${pNum}_${enc.slice(0, 10)}`;
-      const saved = localStorage.getItem(privateKey);
-      if (saved) {
-        privateHand = JSON.parse(saved);
-      } else {
-        privateHand = atob(decodeURIComponent(enc)).split(",").filter(Boolean).map(c => {
-          const [f, m] = c.split("-").map(Number);
-          return { f, m };
-        });
-        localStorage.setItem(privateKey, JSON.stringify(privateHand));
-      }
-      renderPrivateHand();
-    }
-
-    function renderPrivateHand() {
-      privateHand.sort((a, b) => (a.f - b.f) || (a.m - b.m));
-      const grid = document.getElementById("private-cards-grid");
-      grid.innerHTML = privateHand.map((c, idx) =>
-        createCardHTML(c.f, c.m, `<button class="small danger" onclick="removePrivateCard(${idx})">Give Card</button>`)
-      ).join("");
-
-      const counts = {};
-      privateHand.forEach(c => counts[c.f] = (counts[c.f] || 0) + 1);
-      const done = Object.keys(counts).find(k => counts[k] === 6);
-      const alertBox = document.getElementById("p-happy-alert");
-      if (done !== undefined) {
-        alertBox.classList.remove("hidden");
-        alertBox.innerHTML = `🎉 Complete family: <strong>${FAMILIES[done].name}</strong>! Say "Happy family!" <button class="small primary" onclick="layDown(${done})">Lay Down</button>`;
-      } else {
-        alertBox.classList.add("hidden");
-      }
-    }
-
-    function addPrivateCard() {
-      const f = parseInt(document.getElementById("add-fam").value, 10);
-      const m = parseInt(document.getElementById("add-mem").value, 10);
-      if (privateHand.some(c => c.f === f && c.m === m)) return alert("Already in your hand!");
-      privateHand.push({ f, m });
-      localStorage.setItem(privateKey, JSON.stringify(privateHand));
-      renderPrivateHand();
-    }
-
-    function removePrivateCard(idx) {
-      privateHand.splice(idx, 1);
-      localStorage.setItem(privateKey, JSON.stringify(privateHand));
-      renderPrivateHand();
-    }
-
-    function layDown(fIdx) {
-      privateHand = privateHand.filter(c => c.f !== Number(fIdx));
-      localStorage.setItem(privateKey, JSON.stringify(privateHand));
-      renderPrivateHand();
+      if (myPlayerId) switchView("player");
     }
 
     init();

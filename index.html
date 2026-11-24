@@ -695,6 +695,8 @@
       hostConnections.forEach(player => {
         const hand = deck.splice(0, 6);
         player.conn.send({ type: "DEAL_HAND", hand });
+        // Explicit start signal: the phone must leave the waiting state.
+        player.conn.send({ type: "GAME_STARTED" });
       });
 
       // Remaining cards + Myths & Facts go to table draw pile
@@ -718,7 +720,7 @@
       if (!current) return;
       const roster = hostConnections.map(p => ({ id: p.id, name: p.name }));
       hostConnections.forEach(p => p.conn.send({
-        type: "TURN_UPDATE", currentPlayerId: current.id, currentPlayerName: current.name,
+        type: "TURN_UPDATE", gameStarted: true, currentPlayerId: current.id, currentPlayerName: current.name,
         players: roster, pileCount: hostPile.length
       }));
       document.getElementById("host-table-log").textContent = `🎯 It is ${current.name}'s turn: draw a card or give one card.`;
@@ -880,8 +882,15 @@
       else if (data.type === "PLAYER_NOTICE") {
         showPlayerAlert(data.message);
       }
+      else if (data.type === "GAME_STARTED") {
+        document.getElementById("p-turn-title").textContent = "🎮 Game started!";
+        document.getElementById("p-turn-hint").textContent = "The host has dealt the cards. Waiting for the first turn...";
+        document.getElementById("p-hand-grid").innerHTML = "";
+      }
       else if (data.type === "DEAL_HAND") {
-        myHand = data.hand;
+        myHand = Array.isArray(data.hand) ? data.hand : [];
+        document.getElementById("p-turn-title").textContent = "🎮 Cards received!";
+        document.getElementById("p-turn-hint").textContent = "The game is starting. Your turn will be announced here.";
         showPlayerAlert("🃏 Cards dealt! Only you can see your hand.");
         renderPlayerHand();
       }

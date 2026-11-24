@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Green Clicks — Multiplayer Card Game</title>
+  <!-- Green Clicks multiplayer rules update -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
@@ -417,6 +418,16 @@
         </div>
       </div>
 
+      <div class="panel" id="ask-card-panel">
+        <strong>Ask for a card</strong>
+        <p style="font-size:0.82rem;opacity:0.85;margin:0.35rem 0 0.6rem;">Choose a player and request a specific card from a family already in your hand.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.5rem;">
+          <select id="ask-player"><option value="">Choose player</option></select>
+          <select id="ask-family"><option value="">Choose family</option></select>
+          <select id="ask-member"><option value="">Choose member</option></select>
+          <button class="green" id="ask-submit" onclick="playerAskCard()">Ask for card</button>
+        </div>
+      </div>
       <!-- SECRET CARDS IN HAND -->
       <div id="p-hand-grid" class="card-grid">
         <p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Waiting for the host to deal cards...</p>
@@ -497,29 +508,29 @@
     ];
 
     const MYTHS = [
-      { id: 1, level: "Beginner", q: "Sending an email with a large attachment uses as much energy as leaving a light bulb on for several hours.", ans: true, exp: "Storing and transmitting heavy attachments across servers and networks consumes significant electricity. Use links or compress files instead.", src: "ADEME" },
-      { id: 2, level: "Beginner", q: "Using Dark Mode saves a lot of battery on all types of smartphone and laptop screens.", ans: false, exp: "Dark Mode only saves significant energy on OLED/AMOLED screens where black pixels turn off. On LCD screens, the backlight stays on.", src: "Purdue University / IEA" },
-      { id: 3, level: "Beginner", q: "Streaming a video on 4G/5G mobile data consumes much more energy than using Wi-Fi.", ans: true, exp: "Mobile cellular networks require far more energy per gigabyte transferred than fixed fiber/Wi-Fi connections.", src: "ADEME" },
-      { id: 4, level: "Beginner", q: "Putting your computer or TV on standby uses almost zero electricity.", ans: false, exp: "Standby ('vampire') power can represent up to 10% of household electricity use. Turning devices completely off saves real energy.", src: "International Energy Agency (IEA)" },
-      { id: 5, level: "Beginner", q: "Buying a refurbished smartphone avoids about 80% of its carbon footprint compared to a new one.", ans: true, exp: "Up to 80% of a smartphone's environmental impact happens during raw material extraction and manufacturing.", src: "ADEME" },
-      { id: 6, level: "Beginner", q: "Deleting old unread emails is the single most effective action to save the planet.", ans: false, exp: "Extending the lifespan of your devices (keeping a phone 4 years instead of 2) has a vastly bigger impact than deleting emails.", src: "ADEME" },
-      { id: 7, level: "Advanced", q: "Digital technology accounts for roughly 3% to 4% of global greenhouse gas emissions—more than civil aviation.", ans: true, exp: "Global digital infrastructure (devices, networks, data centers) generates around 3.5% to 4% of global GHG emissions.", src: "The Shift Project / ADEME" },
-      { id: 8, level: "Advanced", q: "Data centers consume more energy globally than manufacturing user devices (smartphones, laptops, TVs).", ans: false, exp: "User terminals (manufacturing and usage) account for the largest share (~60–70%) of digital carbon footprint.", src: "ADEME-ARCEP Study" },
-      { id: 9, level: "Advanced", q: "The average weight of a web page has more than doubled over the past 10 years.", ans: true, exp: "Unoptimized images, heavy JavaScript frameworks, and auto-playing videos have pushed median web pages past 2 MB.", src: "HTTP Archive" },
-      { id: 10, level: "Advanced", q: "Manufacturing a single 2 kg laptop requires around 800 kg of raw materials.", ans: true, exp: "Mining rare metals and refining components requires massive amounts of earth, water, and fossil fuels.", src: "ADEME" },
-      { id: 11, level: "Advanced", q: "Cloud storage means your files float virtually without physical hardware impact.", ans: false, exp: "'The Cloud' relies on physical data centers running 24/7 with redundant servers and heavy cooling systems.", src: "International Energy Agency (IEA)" },
-      { id: 12, level: "Advanced", q: "Less than 25% of global electronic waste (e-waste) is formally collected and properly recycled.", ans: true, exp: "According to the UN Global E-waste Monitor, only about 22.3% of e-waste is documented as formally collected and recycled.", src: "UN / ITU E-waste Monitor" }
+      {id:1,level:"Beginner",q:"Deleting your emails is one of the best ways to reduce your digital footprint.",ans:false,exp:"It helps a little, but keeping your phone longer has a much bigger effect.",src:"ADEME, La face cachée du numérique"},
+      {id:2,level:"Beginner",q:"Dark mode only saves energy on OLED screens.",ans:true,exp:"On OLED screens, black pixels are switched off. On LCD screens, the backlight stays on.",src:"Purdue University study on dark mode (2021)"},
+      {id:3,level:"Beginner",q:"Closing apps running in the background saves battery.",ans:false,exp:"iOS and Android pause apps, so they use almost nothing. Closing them can even use more energy when they restart.",src:"Apple and Google user guides"},
+      {id:4,level:"Beginner",q:"A refurbished phone emits much less greenhouse gas than a new one.",ans:true,exp:"A refurbished phone emits substantially less greenhouse gas than a new one.",src:"ADEME and Arcep study (2022)"},
+      {id:5,level:"Beginner",q:"Devices on standby can make up about 10% of a household's electricity bill.",ans:true,exp:"Standby uses 300 to 500 kWh per household per year, about 10% of the electricity bill.",src:"ADEME"},
+      {id:6,level:"Beginner",q:"A French household owns about 30 electrical devices.",ans:false,exp:"French people think they own 34, but they actually own 99.",src:"ADEME"},
+      {id:7,level:"Advanced",q:"Video makes up more than half of internet traffic.",ans:true,exp:"Video streaming is about 61% of global downstream traffic.",src:"Sandvine, Global Internet Phenomena Report"},
+      {id:8,level:"Advanced",q:"Making a smartphone pollutes more than using it.",ans:true,exp:"Manufacturing is about 70% of a smartphone's carbon footprint.",src:"ADEME"},
+      {id:9,level:"Advanced",q:"Data centers use more than half of the world's electricity.",ans:false,exp:"They used about 1.5% in 2024, but it could double by 2030.",src:"International Energy Agency, Energy and AI (2025)"},
+      {id:10,level:"Advanced",q:"An average web page is heavier than the video game Doom.",ans:true,exp:"The median web page weighs about 2.6 MB, compared with 2.39 MB for Doom in 1993.",src:"HTTP Archive"},
+      {id:11,level:"Advanced",q:"Most data stored online is used regularly.",ans:false,exp:"52% of company data is never used.",src:"Veritas, Databerg Report"},
+      {id:12,level:"Advanced",q:"Digital technology is less than 1% of France's carbon footprint.",ans:false,exp:"It was 4.4% of France's carbon footprint in 2022.",src:"ADEME and Arcep study"}
     ];
 
     const BONUSES = [
       { title: "Play Again", desc: "Take an extra turn right now!" },
       { title: "Steal a Card", desc: "Pick 1 random card from another player's hand." },
-      { title: "Shield", desc: "Block the next Steal a Card or Penalty against you!" }
+      { title: "Shield", desc: "Block one request for a card you hold. The requester’s turn ends." }
     ];
 
     const PENALTIES = [
       { title: "Skip Your Next Turn", desc: "You miss your next turn to ask for a card." },
-      { title: "Give a Card", desc: "Give 1 card of your choice to the player on your left." },
+      { title: "Give a Card", desc: "Give one card to the player on your left." },
       { title: "Back to the Pile", desc: "Put 1 of your cards back into the draw pile and shuffle." }
     ];
 
@@ -530,11 +541,14 @@
     let roomCode = "";
     let hostConnections = []; // { conn, id, name }
     let hostPile = [];
+    let hostHands = {};
     let hostCompleted = [];
+    let gameStarted = false;
     let currentTurnIndex = 0;
     let pendingMythPlayerId = null;
     let skipNextTurnIds = [];
     let shieldPlayerIds = [];
+    let pendingEffectChoice = null;
     let isMyTurn = false;
     let mythAnswerSent = false;
     let pendingMythLocal = false;
@@ -638,7 +652,10 @@
       peer.on("connection", conn => {
         conn.on("data", data => handleHostData(conn, data));
         conn.on("close", () => {
+          const disconnected = hostConnections.find(p => p.conn === conn);
+          if (disconnected && pendingEffectChoice?.playerId === disconnected.id) pendingEffectChoice = null;
           hostConnections = hostConnections.filter(p => p.conn !== conn);
+          if (gameStarted && hostConnections.length) { currentTurnIndex = Math.min(currentTurnIndex, hostConnections.length - 1); broadcastTurn(); }
           updateHostPlayersUI();
         });
       });
@@ -680,50 +697,44 @@
 
     function hostDealCards() {
       const n = hostConnections.length;
-      if (n < 2 || n > 4) {
-        return alert("You need between 2 and 4 players connected on their phones to deal!");
-      }
-
+      if (n < 2 || n > 4) return alert("You need between 2 and 4 players connected on their phones to deal!");
       const mythCount = parseInt(document.getElementById("host-difficulty").value, 10);
       let deck = [];
-      for (let f = 0; f < 7; f++) {
-        for (let m = 0; m < 6; m++) deck.push(`${f}-${m}`);
-      }
+      for (let f = 0; f < 7; f++) for (let m = 0; m < 6; m++) deck.push(`${f}-${m}`);
       shuffle(deck);
-
-      // Deal 6 secret cards to each connected phone
+      hostHands = {};
       hostConnections.forEach(player => {
         const hand = deck.splice(0, 6);
+        hostHands[player.id] = hand;
         player.conn.send({ type: "DEAL_HAND", hand });
-        // Explicit start signal: the phone must leave the waiting state.
         player.conn.send({ type: "GAME_STARTED" });
       });
-
-      // Remaining cards + Myths & Facts go to table draw pile
       for (let id = 1; id <= mythCount; id++) deck.push(`M-${id}`);
       hostPile = shuffle(deck);
-      hostCompleted = [];
-      currentTurnIndex = 0;
-      pendingMythPlayerId = null;
-      skipNextTurnIds = [];
-      shieldPlayerIds = [];
-
+      hostCompleted = []; currentTurnIndex = 0; pendingMythPlayerId = null;
+      skipNextTurnIds = []; shieldPlayerIds = []; pendingEffectChoice = null; gameStarted = true;
       document.getElementById("host-board-active").classList.remove("hidden");
       document.getElementById("host-pile-count").textContent = hostPile.length;
-      document.getElementById("host-table-log").textContent = "✅ 6 secret cards dealt to every player's phone!";
+      document.getElementById("host-table-log").textContent = "✅ Cards dealt. The youngest player starts!";
       broadcastTurn();
     }
 
     function broadcastTurn() {
-      if (!hostConnections.length) return;
+      if (!gameStarted || !hostConnections.length) return;
+      currentTurnIndex = ((currentTurnIndex % hostConnections.length) + hostConnections.length) % hostConnections.length;
       const current = hostConnections[currentTurnIndex];
-      if (!current) return;
       const roster = hostConnections.map(p => ({ id: p.id, name: p.name }));
       hostConnections.forEach(p => p.conn.send({
-        type: "TURN_UPDATE", gameStarted: true, currentPlayerId: current.id, currentPlayerName: current.name,
-        players: roster, pileCount: hostPile.length
+        type: "TURN_UPDATE", gameStarted: true, currentPlayerId: current.id,
+        currentPlayerName: current.name, players: roster, pileCount: hostPile.length,
+        hand: hostHands[p.id] || []
       }));
-      document.getElementById("host-table-log").textContent = `🎯 It is ${current.name}'s turn: draw a card or give one card.`;
+      document.getElementById("host-pile-count").textContent = hostPile.length;
+      document.getElementById("host-table-log").textContent = `🎯 It is ${current.name}'s turn: ask for a card, or draw when told "Draw!".`;
+      if ((hostHands[current.id] || []).length === 0 && hostPile.length && !pendingMythPlayerId) {
+        document.getElementById("host-table-log").textContent = `🃏 ${current.name} has no cards and must draw at the start of the turn.`;
+        sendTopCardToPlayer(current.id);
+      }
     }
 
     function advanceTurn(keepCurrent = false) {
@@ -741,87 +752,148 @@
     }
 
     function hostClickDrawPile() {
-      if (!hostConnections.length) return;
+      if (!hostConnections.length || !gameStarted) return;
       const current = hostConnections[currentTurnIndex];
-      if (!current) return;
+      if (!current || (hostHands[current.id] || []).length > 0) return;
       sendTopCardToPlayer(current.id);
     }
 
-    function sendTopCardToPlayer(playerId) {
-      if (hostPile.length === 0) return alert("The draw pile is empty!");
-      const target = hostConnections.find(p => p.id === playerId);
-      const current = hostConnections[currentTurnIndex];
+    function sendTopCardToPlayer(playerId, requestedCard = null) {
+      if (!hostPile.length) { document.getElementById("host-table-log").textContent = "The draw pile is empty. Your turn ends."; advanceTurn(false); return; }
+      const target = hostConnections.find(p => p.id === playerId), current = hostConnections[currentTurnIndex];
       if (!target || !current || target.id !== current.id || pendingMythPlayerId) return;
-
       const card = hostPile.pop();
       document.getElementById("host-pile-count").textContent = hostPile.length;
       if (card.startsWith("M-")) {
-        const mythId = parseInt(card.split("-")[1], 10);
-        pendingMythPlayerId = target.id;
-        document.getElementById("host-table-log").textContent = `⚡ ${target.name} drew Myths & Facts #${mythId}. Waiting for the answer...`;
-        target.conn.send({ type: "DREW_MYTH", mythId });
+        const mythId = Number(card.split("-")[1]); pendingMythPlayerId = target.id;
+        target.conn.send({ type: "DREW_MYTH", mythId, requestedCard });
+        document.getElementById("host-table-log").textContent = `⚡ ${target.name} drew Myths & Facts #${mythId}.`;
       } else {
-        target.conn.send({ type: "RECEIVE_CARD", card, from: "Draw Pile" });
-        document.getElementById("host-table-log").textContent = `🃏 ${target.name} drew a family card.`;
-        advanceTurn(false);
+        (hostHands[target.id] ||= []).push(card);
+        target.conn.send({ type: "RECEIVE_CARD", card, from: "Draw Pile", hand: hostHands[target.id] });
+        const lucky = requestedCard && card === requestedCard;
+        document.getElementById("host-table-log").textContent = lucky ? `🍀 Lucky draw! ${target.name} plays again.` : `🃏 ${target.name} drew a family card.`;
+        checkPlayerFamilies(target);
+        advanceTurn(!!lucky);
+      }
+    }
+
+    function cardLabel(code) {
+      if (String(code).startsWith("M-")) return "Myths & Facts";
+      const [f, m] = String(code).split("-").map(Number);
+      return `${FAMILIES[f]?.name || "Family"} — ${MEMBERS[m]?.name || "Member"}`;
+    }
+
+    function syncHand(player) { if (player) player.conn.send({ type: "HAND_UPDATE", hand: hostHands[player.id] || [] }); }
+
+    function checkGameEnd() {
+      if (hostCompleted.length < 7) return false;
+      gameStarted = false;
+      hostConnections.forEach(p => p.conn.send({ type: "GAME_OVER", completed: hostCompleted }));
+      const scores = {};
+      hostCompleted.forEach(c => scores[c.player] = (scores[c.player] || 0) + 1);
+      const winner = Object.entries(scores).sort((a,b) => b[1]-a[1])[0];
+      document.getElementById("host-table-log").textContent = winner ? `🏆 Game over! Winner: ${winner[0]} (${winner[1]} families).` : "Game over!";
+      return true;
+    }
+
+    function checkPlayerFamilies(player) {
+      const hand = hostHands[player.id] || [];
+      for (let f=0; f<7; f++) {
+        if (hand.filter(c => c.startsWith(`${f}-`)).length === 6) {
+          hostHands[player.id] = hostHands[player.id].filter(c => !c.startsWith(`${f}-`));
+          hostCompleted.push({ player: player.name, family: FAMILIES[f].name, familyIdx: f });
+          player.conn.send({ type: "FAMILY_LAID", familyIdx: f, hand: hostHands[player.id] });
+          player.conn.send({ type: "PLAYER_NOTICE", message: `🎉 Happy family! You completed ${FAMILIES[f].name}!` });
+        }
+      }
+      syncHand(player);
+      document.getElementById("host-comp-num").textContent = hostCompleted.length;
+      document.getElementById("host-completed-badges").innerHTML = hostCompleted.map(c => `<span style="background:#3ddc84;color:#0e2417;padding:0.3rem 0.75rem;border-radius:99px;font-weight:800;font-size:0.82rem;">🏆 ${c.family} (${c.player})</span>`).join("") || "No families completed yet.";
+      checkGameEnd();
+    }
+
+    function hostAskCard(senderId, targetId, card) {
+      const current = hostConnections[currentTurnIndex];
+      const sender = hostConnections.find(p=>p.id===senderId), target = hostConnections.find(p=>p.id===targetId);
+      const match = /^([0-6])-([0-5])$/.exec(card || "");
+      if (!gameStarted || !current || !sender || !target || current.id!==senderId || senderId===targetId || pendingMythPlayerId || !match) return;
+      const family = match[1], own = hostHands[senderId] || [], theirs = hostHands[targetId] || [];
+      if (!own.some(c=>c.startsWith(`${family}-`)) || own.includes(card)) {
+        sender.conn.send({type:"PLAYER_NOTICE",message:"You must own a card from that family and cannot ask for a card you already have."}); return;
+      }
+      if (theirs.includes(card)) {
+        const shieldIndex = shieldPlayerIds.indexOf(targetId);
+        if (shieldIndex !== -1) {
+          shieldPlayerIds.splice(shieldIndex,1);
+          sender.conn.send({type:"PLAYER_NOTICE",message:`${target.name} used a Shield. Your request failed and your turn ends.`});
+          target.conn.send({type:"PLAYER_NOTICE",message:"🛡️ Your Shield blocked the request!"}); advanceTurn(false); return;
+        }
+        theirs.splice(theirs.indexOf(card),1); own.push(card); syncHand(sender); syncHand(target);
+        sender.conn.send({type:"PLAYER_NOTICE",message:`🎉 ${target.name} had the card. You receive it and play again!`});
+        target.conn.send({type:"PLAYER_NOTICE",message:`You gave ${MEMBERS[Number(match[2])].name} to ${sender.name}.`});
+        checkPlayerFamilies(sender); advanceTurn(true);
+      } else {
+        sender.conn.send({type:"PLAYER_NOTICE",message:`${target.name} does not have it. Draw!`});
+        sendTopCardToPlayer(senderId, card);
       }
     }
 
     function handleHostData(conn, data) {
       if (data.type === "JOIN") {
-        if (hostConnections.length >= 4) {
-          conn.send({ type: "ERROR", msg: "Room is full (max 4 players)." });
-          return;
-        }
-        const playerId = "p_" + Math.random().toString(36).slice(2, 8);
-        hostConnections.push({ conn, id: playerId, name: data.name });
-        conn.send({ type: "WELCOME", playerId, roomCode });
-        updateHostPlayersUI();
-      }
-      else if (data.type === "REQUEST_DRAW") {
+        if (hostConnections.length >= 4 || gameStarted) { conn.send({type:"ERROR",msg:gameStarted?"The game has already started.":"Room is full (max 4 players)."}); return; }
+        const playerId = "p_" + Math.random().toString(36).slice(2,8);
+        hostConnections.push({conn,id:playerId,name:String(data.name||"Player").slice(0,16)});
+        conn.send({type:"WELCOME",playerId,roomCode}); updateHostPlayersUI();
+      } else if (data.type === "REQUEST_DRAW") {
+        const current=hostConnections[currentTurnIndex]; if(current&&data.playerId===current.id&&!pendingMythPlayerId&&(hostHands[current.id]||[]).length===0) sendTopCardToPlayer(data.playerId);
+      } else if (data.type === "ASK_CARD") {
+        hostAskCard(data.playerId,data.targetId,data.card);
+      } else if (data.type === "EFFECT_CARD_CHOICE") {
         const current = hostConnections[currentTurnIndex];
-        if (current && data.playerId === current.id && !pendingMythPlayerId) sendTopCardToPlayer(data.playerId);
-      }
-      else if (data.type === "TRANSFER_CARD") {
-        const receiver = hostConnections.find(p => p.id === data.toId);
-        const sender = hostConnections.find(p => p.id === data.fromId);
-        const current = hostConnections[currentTurnIndex];
-        if (receiver && sender && current && sender.id === current.id && !pendingMythPlayerId && typeof data.card === "string" && /^[0-6]-[0-5]$/.test(data.card)) {
-          receiver.conn.send({ type: "RECEIVE_CARD", card: data.card, from: sender.name });
-          document.getElementById("host-table-log").textContent = `🔄 ${sender.name} gave a card to ${receiver.name}.`;
-          advanceTurn(false);
+        if (!pendingEffectChoice || !current || data.playerId !== current.id || pendingEffectChoice.playerId !== current.id) return;
+        const hand = hostHands[current.id] || [];
+        const chosen = Number(data.cardIndex);
+        if (!Number.isInteger(chosen) || chosen < 0 || chosen >= hand.length || String(hand[chosen]).startsWith("M-")) return;
+        const effect = pendingEffectChoice.effect;
+        const card = hand.splice(chosen, 1)[0];
+        if (effect === "Give a Card") {
+          const idx = hostConnections.findIndex(p => p.id === current.id);
+          const left = hostConnections[(idx + 1) % hostConnections.length];
+          (hostHands[left.id] ||= []).push(card);
+          syncHand(current); syncHand(left); checkPlayerFamilies(left);
+          current.conn.send({type:"PLAYER_NOTICE",message:`You gave ${cardLabel(card)} to ${left.name} (player on your left).`});
+          left.conn.send({type:"PLAYER_NOTICE",message:`You received ${cardLabel(card)} from ${current.name}.`});
+        } else if (effect === "Back to the Pile") {
+          hostPile.push(card); shuffle(hostPile); syncHand(current);
+          current.conn.send({type:"PLAYER_NOTICE",message:`↩️ ${cardLabel(card)} was returned to the draw pile and shuffled.`});
         }
-      }
-      else if (data.type === "MYTH_RESOLVED") {
-        const current = hostConnections[currentTurnIndex];
-        if (!current || data.playerId !== current.id || pendingMythPlayerId !== data.playerId) return;
-        pendingMythPlayerId = null;
-        const effect = String(data.effect || "");
-        if (effect === "Play Again") {
-          current.conn.send({ type: "PLAYER_NOTICE", message: "🎁 Play Again! You keep your turn." });
-          advanceTurn(true);
-        } else if (effect === "Shield") {
-          shieldPlayerIds.push(current.id);
-          current.conn.send({ type: "PLAYER_NOTICE", message: "🛡️ Shield activated." });
+        pendingEffectChoice = null;
+        document.getElementById("host-pile-count").textContent = hostPile.length;
+        advanceTurn(false);
+      } else if (data.type === "MYTH_RESOLVED") {
+        const current=hostConnections[currentTurnIndex];
+        if(!current||data.playerId!==current.id||pendingMythPlayerId!==data.playerId) return;
+        pendingMythPlayerId=null; const effect=String(data.effect||"");
+        if(effect==="Play Again") { current.conn.send({type:"PLAYER_NOTICE",message:"🎁 Play Again! You keep your turn."}); advanceTurn(true); }
+        else if(effect==="Shield") { shieldPlayerIds.push(current.id); current.conn.send({type:"PLAYER_NOTICE",message:"🛡️ Shield saved until someone asks you for a card."}); advanceTurn(false); }
+        else if(effect==="Skip Your Next Turn") { skipNextTurnIds.push(current.id); current.conn.send({type:"PLAYER_NOTICE",message:"⚠️ Your next turn will be skipped."}); advanceTurn(false); }
+        else if(effect==="Steal a Card") {
+          const victims=hostConnections.filter(p=>p.id!==current.id&&(hostHands[p.id]||[]).length);
+          if(victims.length){const victim=victims[Math.floor(Math.random()*victims.length)],i=Math.floor(Math.random()*hostHands[victim.id].length),stolen=hostHands[victim.id].splice(i,1)[0];(hostHands[current.id]||=[]).push(stolen);syncHand(victim);syncHand(current);checkPlayerFamilies(current);current.conn.send({type:"PLAYER_NOTICE",message:`🃏 You stole a random card from ${victim.name}!`});}
+          else current.conn.send({type:"PLAYER_NOTICE",message:"No other player has a card to steal."}); advanceTurn(false);
+        } else if(effect==="Give a Card" || effect==="Back to the Pile") {
+          const hand = hostHands[current.id] || [];
+          if (hand.length) {
+            pendingEffectChoice = { playerId: current.id, effect };
+            current.conn.send({ type: "CHOOSE_EFFECT_CARD", effect, hand: hand.map((card, index) => ({ index, label: cardLabel(card) })) });
+            document.getElementById("host-table-log").textContent = `${current.name} must choose a card for: ${effect}.`;
+            return;
+          }
+          current.conn.send({type:"PLAYER_NOTICE",message:"No cards in your hand, so this penalty has no effect."});
           advanceTurn(false);
-        } else if (effect === "Skip Your Next Turn") {
-          skipNextTurnIds.push(current.id);
-          current.conn.send({ type: "PLAYER_NOTICE", message: "⚠️ Your next turn will be skipped." });
-          advanceTurn(false);
-        } else {
-          current.conn.send({ type: "PLAYER_NOTICE", message: `Myths & Facts effect: ${effect}.` });
-          advanceTurn(false);
-        }
-      }
-      else if (data.type === "FAMILY_COMPLETED") {
-        const sender = hostConnections.find(p => p.id === data.playerId);
-        const famName = FAMILIES[data.familyIdx].name;
-        hostCompleted.push({ player: sender ? sender.name : "Player", family: famName });
-        document.getElementById("host-comp-num").textContent = hostCompleted.length;
-        document.getElementById("host-completed-badges").innerHTML = hostCompleted.map(c =>
-          `<span style="background:#3ddc84; color:#0e2417; padding:0.3rem 0.75rem; border-radius:99px; font-weight:800; font-size:0.82rem;">🏆 ${c.family} (${c.player})</span>`
-        ).join("");
-        document.getElementById("host-table-log").textContent = `🎉 Happy Family! ${sender.name} completed "${famName}"!`;
+        } else advanceTurn(false);
+        document.getElementById("host-pile-count").textContent=hostPile.length;
       }
     }
 
@@ -872,12 +944,31 @@
       }
       else if (data.type === "TURN_UPDATE") {
         otherPlayers = data.players.filter(p => p.id !== myPlayerId);
+        if (Array.isArray(data.hand)) myHand = data.hand;
         isMyTurn = data.currentPlayerId === myPlayerId;
+        updateAskControls();
         document.getElementById("p-turn-title").textContent = isMyTurn ? "🟢 YOUR TURN" : `⏳ ${data.currentPlayerName}'s turn`;
-        document.getElementById("p-turn-hint").textContent = isMyTurn ? "Choose ONE action: draw a card or give one card." : "Wait until your turn to draw or give a card.";
+        document.getElementById("p-turn-hint").textContent = isMyTurn ? "Ask another player for a specific card. If they do not have it, you draw automatically." : "Wait until your turn to ask for a card.";
         const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
-        if (drawBtn) { drawBtn.disabled = !isMyTurn || !!pendingMythLocal; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
+        if (drawBtn) { drawBtn.disabled = !isMyTurn || !!pendingMythLocal || myHand.length > 0; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
         renderPlayerHand();
+      }
+      else if (data.type === "CHOOSE_EFFECT_CARD") {
+        const options = (data.hand || []).map(item => `${item.index + 1}. ${item.label}`).join("\n");
+        const answer = window.prompt(`${data.effect}: choose a card by number.\n\n${options}`);
+        if (answer === null) {
+          showPlayerAlert("Choose a card to apply the effect. The choice window will reopen.");
+          window.setTimeout(() => handlePlayerData(data), 100);
+          return;
+        }
+        const index = Number(answer) - 1;
+        if (!Number.isInteger(index) || index < 0 || index >= (data.hand || []).length) {
+          showPlayerAlert("Invalid choice. Please enter one of the listed numbers.");
+          window.setTimeout(() => handlePlayerData(data), 100);
+          return;
+        }
+        clientConn.send({ type: "EFFECT_CARD_CHOICE", playerId: myPlayerId, cardIndex: index });
+        showPlayerAlert("Your card choice has been sent. Waiting for the next turn...");
       }
       else if (data.type === "PLAYER_NOTICE") {
         showPlayerAlert(data.message);
@@ -894,8 +985,15 @@
         showPlayerAlert("🃏 Cards dealt! Only you can see your hand.");
         renderPlayerHand();
       }
+      else if (data.type === "HAND_UPDATE") {
+        myHand = Array.isArray(data.hand) ? data.hand : []; renderPlayerHand();
+      }
+      else if (data.type === "FAMILY_LAID") {
+        myHand = Array.isArray(data.hand) ? data.hand : []; showPlayerAlert(`🎉 Happy family! ${FAMILIES[data.familyIdx].name} completed!`); renderPlayerHand();
+      }
+      else if (data.type === "GAME_OVER") { showPlayerAlert("🏆 Game over! All seven families are complete."); }
       else if (data.type === "RECEIVE_CARD") {
-        myHand.push(data.card);
+        if (Array.isArray(data.hand)) myHand = data.hand; else myHand.push(data.card);
         const [f, m] = data.card.split("-").map(Number);
         showPlayerAlert(`✨ You received: ${FAMILIES[f].name} — ${MEMBERS[m].name} (from ${data.from})`);
         renderPlayerHand();
@@ -920,26 +1018,41 @@
       box.classList.remove("hidden");
     }
 
+    function updateAskControls() {
+      const ps=document.getElementById("ask-player"),fs=document.getElementById("ask-family"),ms=document.getElementById("ask-member");
+      if(!ps||!fs||!ms)return;
+      ps.innerHTML='<option value="">Choose player</option>'+otherPlayers.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+      const owned=[...new Set(myHand.map(c=>Number(c.split("-")[0])))];
+      fs.innerHTML='<option value="">Choose family</option>'+owned.map(f=>`<option value="${f}">${FAMILIES[f].name}</option>`).join("");
+      const fill=()=>{const f=fs.value,have=new Set(myHand.filter(c=>c.startsWith(`${f}-`)).map(c=>Number(c.split("-")[1])));ms.innerHTML='<option value="">Choose member</option>'+MEMBERS.map((m,i)=>({m,i})).filter(x=>!have.has(x.i)).map(x=>`<option value="${f}-${x.i}">${x.m.name}</option>`).join("");};
+      fs.onchange=fill;fill();
+      [ps,fs,ms].forEach(x=>x.disabled=!isMyTurn||pendingMythLocal);
+      document.getElementById("ask-submit").disabled=!isMyTurn||pendingMythLocal;
+    }
+
+    function playerAskCard() {
+      if(!clientConn||!isMyTurn||pendingMythLocal)return;
+      const targetId=document.getElementById("ask-player").value,card=document.getElementById("ask-member").value;
+      if(!targetId||!card)return showPlayerAlert("Choose a player, family and member first.");
+      clientConn.send({type:"ASK_CARD",playerId:myPlayerId,targetId,card});
+      document.getElementById("ask-submit").disabled=true; showPlayerAlert("📨 Card request sent. Waiting for the result...");
+    }
+
     function playerRequestDraw() {
       if (!clientConn || !isMyTurn || pendingMythLocal) return;
       clientConn.send({ type: "REQUEST_DRAW", playerId: myPlayerId });
     }
 
-    function giveCardToPlayer(cardIdx, targetPlayerId) {
-      if (!targetPlayerId || !clientConn || !isMyTurn || pendingMythLocal) return;
-      const card = myHand[cardIdx];
-      if (!card) return;
-      myHand.splice(cardIdx, 1);
-      clientConn.send({ type: "TRANSFER_CARD", fromId: myPlayerId, toId: targetPlayerId, card });
-      showPlayerAlert("🔄 Card sent. Your turn is over.");
-      renderPlayerHand();
-    }
+    function giveCardToPlayer() { showPlayerAlert("Use Ask for a card to follow the Happy Families rules."); }
 
     function renderPlayerHand() {
       myHand.sort();
       const grid = document.getElementById("p-hand-grid");
       if (myHand.length === 0) {
-        grid.innerHTML = `<p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Your hand is empty. Tap "Draw 1 Card from Pile"!</p>`;
+        grid.innerHTML = `<p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Your hand is empty. You will draw automatically at the start of your turn.</p>`;
+        updateAskControls();
+        const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
+        if (drawBtn) { drawBtn.disabled = true; drawBtn.style.opacity = "0.45"; }
         return;
       }
 
@@ -960,25 +1073,13 @@
         happyBanner.classList.add("hidden");
       }
 
-      const playerOptions = otherPlayers.map(p => `<option value="${p.id}">Give → ${p.name}</option>`).join("");
-
-      grid.innerHTML = myHand.map((code, idx) => {
-        const [f, m] = code.split("-").map(Number);
-        const selectHtml = otherPlayers.length > 0
-          ? `<select ${(!isMyTurn || pendingMythLocal) ? "disabled" : ""} style="font-size:0.7rem; padding:0.2rem; width:100%;" onchange="giveCardToPlayer(${idx}, this.value); this.value='';">
-               <option value="">${isMyTurn ? "Give card to..." : "Wait for your turn"}</option>
-               ${playerOptions}
-             </select>`
-          : "";
-        return createCardHTML(f, m, selectHtml);
-      }).join("");
+      grid.innerHTML = myHand.map(code => { const [f,m]=code.split("-").map(Number); return createCardHTML(f,m); }).join("");
+      updateAskControls();
+      const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
+      if (drawBtn) { drawBtn.disabled = !isMyTurn || !!pendingMythLocal || myHand.length > 0; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
     }
 
-    function claimCompleteFamily(fIdx) {
-      myHand = myHand.filter(c => Number(c.split("-")[0]) !== Number(fIdx));
-      clientConn.send({ type: "FAMILY_COMPLETED", playerId: myPlayerId, familyIdx: fIdx });
-      renderPlayerHand();
-    }
+    function claimCompleteFamily(fIdx) { showPlayerAlert("Completed families are registered automatically by the host."); }
 
     // ==========================================
     // MYTHS & FACTS LOGIC

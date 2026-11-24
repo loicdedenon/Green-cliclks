@@ -609,29 +609,32 @@
       { title: "Back to the Pile", desc: "Put one card of your choice back into the draw pile, then shuffle the pile. (Nothing happens if your hand is empty.)" }
     ];
 
+       // ==========================================
+    // MULTIPLAYER PEERJS STATE (CONNEXION FIABILISÉE)
     // ==========================================
-    // MULTIPLAYER PEERJS STATE
-    // ==========================================
-    // STUN + TURN relay servers: needed when a phone is on 4G/5G or another network than the host.
- const PEER_OPTS = {
-  config: {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      {
-        urls: [
-          "turn:openrelay.metered.ca:80",
-          "turn:openrelay.metered.ca:443",
-          "turn:openrelay.metered.ca:443?transport=tcp",
-          "turns:openrelay.metered.ca:443?transport=tcp"
+    const PEER_OPTS = {
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: "stun:://google.com" },
+          { urls: "stun:://google.com" },
+          { urls: "stun:://google.com" },
+          { urls: "stun:://google.com" },
+          { urls: "stun:://cloudflare.com" },
+          {
+            urls: [
+              "turn:openrelay.metered.ca:80",
+              "turn:openrelay.metered.ca:443",
+              "turn:openrelay.metered.ca:443?transport=tcp"
+            ],
+            username: "openrelayproject",
+            credential: "openrelayproject"
+          }
         ],
-        username: "openrelayproject",
-        credential: "openrelayproject"
+        iceCandidatePoolSize: 10
       }
-    ],
-    iceTransportPolicy: "all"
-  }
-};
+    };
+
 
     let peer = null;
     let roomCode = "";
@@ -1036,7 +1039,7 @@
       peer = new Peer(undefined, PEER_OPTS);
       peer.on("error", err => { status.textContent = err.type === "peer-unavailable" ? "❌ Room not found. Check the Room Code (and that the host table is still open)." : "❌ Connection error (" + err.type + "). Try again."; });
       peer.on("open", () => {
-        clientConn = peer.connect(`greenclicks-room-${codeInput}`, { reliable: true });
+               clientConn = peer.connect(`greenclicks-room-${codeInput}`);
         setTimeout(() => { if (!myPlayerId) status.textContent = "⏳ Still connecting… If it fails, check the code, or ask the host to reload and create a new room."; }, 12000);
 
         clientConn.on("open", () => {
@@ -1218,18 +1221,28 @@
 
     function claimCompleteFamily(fIdx) { showPlayerAlert("Completed families are registered automatically by the host."); }
 
-    // ==========================================
+        // ==========================================
     // MYTHS & FACTS LOGIC
     // ==========================================
+    let pendingMythEffect = null;
+
     function openMythCard(id) {
       activeMyth = MYTHS.find(m => m.id === id);
       if (!activeMyth) return;
+      pendingMythEffect = null;
       document.getElementById("myth-picker").classList.add("hidden");
       const cardView = document.getElementById("myth-card-view");
       cardView.classList.remove("hidden");
       cardView.classList.toggle("player-myth-overlay", mythFromGame);
+
+      // Consigne conforme à l'Article 6 du règlement (explication orale en anglais)
+      const hintEl = cardView.querySelector("p");
+      if (hintEl && hintEl.textContent.includes("True")) {
+        hintEl.innerHTML = 'Say <strong>True</strong> or <strong>False</strong> and explain why in English, then tap:';
+      }
+
       const closeButton = cardView.querySelector("button.small");
-      closeButton.textContent = mythFromGame ? "Return to Game" : "All Cards";
+      closeButton.textContent = mythFromGame ? "Continue Game" : "All Cards";
       document.getElementById("m-result").classList.add("hidden");
       document.getElementById("m-choices").classList.remove("hidden");
       document.getElementById("m-tag").textContent = `${activeMyth.level.toUpperCase()} · CARD #${activeMyth.id}`;
@@ -1237,6 +1250,7 @@
     }
 
     function answerMyth(guess) {
+      if (!activeMyth) return;
       const ok = guess === activeMyth.ans;
       document.getElementById("m-choices").classList.add("hidden");
       document.getElementById("m-result").classList.remove("hidden");
@@ -1251,9 +1265,11 @@
       document.getElementById("m-eff-type").textContent = ok ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
       document.getElementById("m-eff-title").textContent = eff.title;
       document.getElementById("m-eff-desc").textContent = eff.desc;
-      if (mythFromGame && clientConn && !mythAnswerSent) {
-        mythAnswerSent = true;
-        clientConn.send({ type: "MYTH_RESOLVED", playerId: myPlayerId, effect: eff.title, correct: ok });
+
+      // On mémorise l'effet pour l'envoyer au moment où le joueur clique sur "Continue Game"
+      // (évite que le prompt de défausse ne bloque la lecture de l'explication)
+      if (mythFromGame) {
+        pendingMythEffect = { effect: eff.title, correct: ok };
       }
     }
 
@@ -1266,14 +1282,18 @@
       cardView.classList.remove("player-myth-overlay");
 
       if (mythFromGame) {
-        // The player stays on the same connected game screen.
+        const toSend = pendingMythEffect;
+        pendingMythEffect = null;
         mythFromGame = false;
         pendingMythLocal = false;
-        document.getElementById("myth-picker").classList.add("hidden");
+        document.getElementById("myth-picker").classList.remove("hidden");
         document.getElementById("view-myths").appendChild(cardView);
-        showPlayerAlert("✅ Challenge completed. The turn order has been updated.");
-        const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
-        if (drawBtn) { drawBtn.disabled = !isMyTurn; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
+
+        if (toSend && clientConn && !mythAnswerSent) {
+          mythAnswerSent = true;
+          clientConn.send({ type: "MYTH_RESOLVED", playerId: myPlayerId, effect: toSend.effect, correct: toSend.correct });
+        }
+
         renderPlayerHand();
         return;
       }
@@ -1283,6 +1303,7 @@
     }
 
     init();
+
   </script>
 </body>
 </html>

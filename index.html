@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Green Clicks — Multiplayer Card Game</title>
-  <!-- Green Clicks multiplayer rules update -->
+  <!-- Green Clicks — aligned with rules sheet, card list and brand charter -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Fraunces:ital,wght@1,600;1,800&display=swap" rel="stylesheet">
   <style>
     :root {
       --felt: #26493a;
@@ -281,6 +283,34 @@
       gap: 0.4rem;
     }
     .dot-online { width: 9px; height: 9px; border-radius: 50%; background: #3ddc84; display: inline-block; }
+
+    /* ===== BRAND CHARTER (Green Clicks moodboard) =====
+       Palette: #db6215 #e83c6b #eecd00 #50504f #336454 #801b5d #aa3021 #0084c0
+       Fonts: Manihot (titles) + Redaction (text). If you own the font files, add @font-face
+       for "Manihot" / "Redaction": they are already first in the stacks below. */
+    :root {
+      --felt: #336454; --felt-dark: #1d3b30;
+      --gold: #eecd00; --accent: #336454; --danger: #aa3021;
+      --pink: #e83c6b; --orange: #db6215; --purple: #801b5d; --blue: #0084c0; --grey: #50504f;
+      --display: "Manihot", "Bowlby One", Impact, "Arial Black", sans-serif;
+      --serif: "Redaction", "Fraunces", Georgia, serif;
+    }
+    .logo-title, .room-code-big, h2, .card-title { font-family: var(--display); font-weight: 400; letter-spacing: 0.02em; }
+    .logo-title { font-size: 2.4rem; }
+    .logo-sub { font-family: var(--serif); color: var(--gold); font-size: 1.9rem; font-weight: 800; }
+    #m-question { font-family: var(--serif); font-style: italic; }
+    button.green { background: var(--pink); border-color: var(--pink); color: #fff; }
+    button:disabled { cursor: not-allowed; }
+    .card-grid { grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); }
+    .playing-card { gap: 0.3rem; padding: 0.6rem; }
+    .card-icon { font-size: 1.8rem; margin: 0; }
+    .card-role { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); text-align: center; }
+    .card-title { font-size: 1.02rem; text-align: center; line-height: 1.1; }
+    .card-desc { font-family: var(--serif); font-size: 0.74rem; line-height: 1.25; text-align: center; color: var(--ink); }
+    .card-q { font-family: var(--serif); font-style: italic; font-size: 0.72rem; text-align: center; font-weight: 700; }
+    .card-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 1px 6px; font-size: 0.54rem; line-height: 1.25; color: var(--muted); border-top: 1px solid rgba(0,0,0,0.15); padding-top: 0.25rem; }
+    .card-list li.me { font-weight: 800; color: var(--ink); text-decoration: underline; }
+    .card-list li::before { content: "• "; }
   </style>
 </head>
 <body>
@@ -303,8 +333,8 @@
     <section id="view-home">
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
         <!-- OPTION A: JOIN A GAME (FOR PHONES) -->
-        <div class="panel" style="border: 2px solid #3ddc84;">
-          <div style="font-size:0.75rem; font-weight:800; color:#3ddc84; text-transform:uppercase;">📱 On Your Smartphone</div>
+        <div class="panel" style="border: 2px solid var(--pink);">
+          <div style="font-size:0.75rem; font-weight:800; color:var(--pink); text-transform:uppercase;">📱 On Your Smartphone</div>
           <h2 style="margin:0.3rem 0;">Join a Game</h2>
           <p style="font-size:0.84rem; opacity:0.85; margin-bottom:0.85rem;">Enter your name and the 4-letter Room Code shown on the host screen (or scan the host QR code):</p>
           <div style="display:flex; flex-direction:column; gap:0.55rem;">
@@ -356,7 +386,12 @@
             <strong>Ready to start?</strong>
             <span style="font-size:0.82rem; opacity:0.85;" id="player-count-label">(0 players connected — 2 to 4 required)</span>
           </div>
-          <button class="green" id="btn-start-deal" onclick="hostDealCards()">🃏 Deal 6 Secret Cards to Everyone</button>
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <label style="font-size:0.8rem;">Youngest player (starts):
+              <select id="host-first"></select>
+            </label>
+            <button class="green" id="btn-start-deal" onclick="hostDealCards()">🃏 Deal 6 Secret Cards to Everyone</button>
+          </div>
         </div>
       </div>
 
@@ -374,12 +409,8 @@
           </div>
 
           <div class="panel" style="flex:1; min-width:260px; margin-bottom:0;">
-            <div style="font-size:0.78rem; text-transform:uppercase; color:var(--gold); font-weight:800;">Draw Action</div>
-            <p style="font-size:0.82rem; opacity:0.85; margin:0.3rem 0 0.6rem;">When a player is told <em>"Draw!"</em>, select them and tap the deck—the card goes straight to their phone secretly:</p>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-              <select id="host-draw-target"></select>
-              <button class="primary" onclick="hostClickDrawPile()">Send Top Card</button>
-            </div>
+            <div style="font-size:0.78rem; text-transform:uppercase; color:var(--gold); font-weight:800;">Table</div>
+            <p style="font-size:0.82rem; opacity:0.85; margin:0.3rem 0 0.6rem;">Cards are handled automatically. When a player does not get the card they asked for ("Draw!"), the top card of the pile is sent secretly to their phone. A player with no cards draws at the start of their turn.</p>
             <div id="host-table-log" style="margin-top:0.75rem; font-size:0.85rem; color:#8ce99a; font-weight:600;"></div>
           </div>
         </div>
@@ -402,7 +433,7 @@
           <span class="dot-online"></span> <strong id="p-room-badge" style="color:var(--gold);">Room ----</strong>
           <h2 id="p-welcome-name" style="margin-top:0.15rem;">My Secret Hand</h2>
         </div>
-        <button class="small" onclick="playerRequestDraw()">🃏 Draw 1 Card from Pile</button>
+        <button class="small" onclick="playerRequestDraw()">🃏 Draw (only if your hand is empty)</button>
       </div>
 
       <div id="p-turn-banner" class="panel" style="margin-bottom:0.8rem; text-align:center; border:2px solid var(--accent);">
@@ -454,8 +485,8 @@
           <p style="font-size:0.8rem; color:#5a695f; text-align:center; margin-bottom:0.8rem;">Say <strong>True</strong> or <strong>False</strong> in English, then tap:</p>
 
           <div id="m-choices" style="display:flex; gap:0.6rem;">
-            <button style="flex:1; background:#1e824c; color:#fff; border:none;" onclick="answerMyth(true)">TRUE</button>
-            <button style="flex:1; background:#c0392b; color:#fff; border:none;" onclick="answerMyth(false)">FALSE</button>
+            <button style="flex:1; background:#336454; color:#fff; border:none;" onclick="answerMyth(true)">TRUE</button>
+            <button style="flex:1; background:#aa3021; color:#fff; border:none;" onclick="answerMyth(false)">FALSE</button>
           </div>
 
           <div id="m-result" class="hidden">
@@ -489,29 +520,73 @@
     // GAME DATA
     // ==========================================
     const FAMILIES = [
-      { id: 0, name: "Devices", color: "#1e824c", icon: "📱", tip: "Keep devices 4+ years & buy refurbished." },
-      { id: 1, name: "Data centers", color: "#2980b9", icon: "🏢", tip: "Servers run 24/7 and need heavy cooling." },
-      { id: 2, name: "Eco-design", color: "#16a085", icon: "🌿", tip: "Light web pages save energy & data." },
-      { id: 3, name: "Everyday habits", color: "#d35400", icon: "🔌", tip: "Turn off devices instead of standby." },
-      { id: 4, name: "Cloud & storage", color: "#8e44ad", icon: "☁️", tip: "Store locally & delete unused files." },
-      { id: 5, name: "Hidden costs", color: "#c0392b", icon: "⛏️", tip: "800 kg of raw materials for 1 laptop." },
-      { id: 6, name: "Networks", color: "#2c3e50", icon: "📡", tip: "Wi-Fi uses far less energy than 4G/5G." }
+      { id: 0, name: "Devices", color: "#db6215", icon: "📱", theme: "Digital devices", cards: [
+        { title: "Explanatory card", desc: "Our phones, computers and tablets pollute most before we even use them: during manufacturing. Keeping them longer is the best green action.", q: "How old is your phone?" },
+        { title: "Smartphone", desc: "Making a phone has a big impact on the planet." },
+        { title: "Computer", desc: "Computers use energy every day." },
+        { title: "Tablet", desc: "One more device to make: do we really need it?" },
+        { title: "Battery", desc: "Charge it well to make it last longer." },
+        { title: "Repair & Refurbishing", desc: "Repair instead of replacing." } ] },
+      { id: 1, name: "Data centers", color: "#0084c0", icon: "🏢", theme: "Data centers", cards: [
+        { title: "Explanatory card", desc: "Every photo, video or message you send is stored in huge buildings full of servers running 24/7. They need a lot of electricity and cooling.", q: "Where do you think your photos are stored?" },
+        { title: "Servers", desc: "Servers are the heart of the digital world." },
+        { title: "Cooling", desc: "Air, water or outside air: the different ways to cool servers." },
+        { title: "Electricity & water", desc: "The electricity and water used by data centers." },
+        { title: "Renewable energy", desc: "Powering data centers with low-carbon energy." },
+        { title: "Server recycling", desc: "Renewing servers and managing their end of life." } ] },
+      { id: 2, name: "Eco-design", color: "#336454", icon: "🌿", theme: "Eco-design (print and digital)", cards: [
+        { title: "Explanatory card", desc: "Eco-design means thinking about the environment from the very start of a project, whether you design a poster or a website. Less ink, less paper, lighter files.", q: "Can a design be beautiful AND light?" },
+        { title: "Eco-typography", desc: "Choose fonts that use less ink." },
+        { title: "Eco-colours", desc: "Think carefully about colours and solid areas of ink." },
+        { title: "Recycled paper", desc: "Choose recycled or certified paper." },
+        { title: "Optimised images", desc: "Adapt the weight and resolution of images." },
+        { title: "Responsible formats", desc: "Choose formats that limit waste and unnecessary files." } ] },
+      { id: 3, name: "Everyday habits", color: "#e83c6b", icon: "🔌", theme: "Daily digital habits", cards: [
+        { title: "Explanatory card", desc: "Small actions, repeated by millions of people every day, make a big difference. Your daily digital habits count!", q: "Which of these habits do you already have?" },
+        { title: "Turn off your devices", desc: "Avoid wasting energy." },
+        { title: "Power-saving mode", desc: "Reduce electricity use." },
+        { title: "Clean your inbox", desc: "Delete the emails you don't need." },
+        { title: "Limit HD videos", desc: "Choose the video quality you really need." },
+        { title: "Background streaming", desc: "Don't leave a video playing if you're not watching it." } ] },
+      { id: 4, name: "Cloud & storage", color: "#801b5d", icon: "☁️", theme: "Online storage", cards: [
+        { title: "Explanatory card", desc: "The cloud is not in the sky! It is made of real servers, cables and buildings. Every file we keep online uses energy, even if we never open it again.", q: "How many photos do you have that you never look at?" },
+        { title: "Online storage", desc: "Understand how the cloud works." },
+        { title: "Backup", desc: "Only keep the data you need." },
+        { title: "Duplicates", desc: "Delete files you have saved more than once." },
+        { title: "File sharing", desc: "Share a link instead of several attachments." },
+        { title: "Local storage", desc: "Discover alternatives to online storage." } ] },
+      { id: 5, name: "Hidden costs", color: "#aa3021", icon: "⛏️", theme: "The hidden costs of digital technology", cards: [
+        { title: "Explanatory card", desc: "Behind our screens there are mines, factories, trucks and e-waste. These impacts are invisible to users, but very real for the planet.", q: "What is hidden inside your phone?" },
+        { title: "Metal extraction", desc: "The resources needed to make our devices." },
+        { title: "Carbon footprint", desc: "The greenhouse gas emissions of digital technology." },
+        { title: "Soil pollution", desc: "What happens when e-waste is badly managed." },
+        { title: "Transport", desc: "The impact of shipping devices and components around the world." },
+        { title: "Obsolescence", desc: "Replacing devices too early." } ] },
+      { id: 6, name: "Networks", color: "#50504f", icon: "📡", theme: "Internet networks", cards: [
+        { title: "Explanatory card", desc: "Every click travels through boxes, antennas and cables. Networks use energy too, and the way we connect makes a difference.", q: "Do you turn off your internet box at night?" },
+        { title: "Internet box", desc: "Turn it off at night or during holidays: it uses energy even when you don't use it." },
+        { title: "Wi-Fi rather than 4G/5G", desc: "Mobile networks use more energy than Wi-Fi." },
+        { title: "Fibre optic", desc: "It uses less energy than ADSL (copper)." },
+        { title: "5G and new phones", desc: "Each new network generation makes people change phones, but making phones is what pollutes most." },
+        { title: "Download rather than stream", desc: "If you listen to a song or watch a video often, download it once instead of streaming it every time." } ] }
     ];
 
+    // Index 0 = Grandfather (explanatory card). Cards are numbered 1-5 (Grandmother → Daughter), the Grandfather is 6/6.
     const MEMBERS = [
-      { name: "Grandfather", role: "Summary Card" },
+      { name: "Grandfather", role: "Explanatory card" },
       { name: "Grandmother", role: "Family Member" },
       { name: "Father", role: "Family Member" },
       { name: "Mother", role: "Family Member" },
       { name: "Son", role: "Family Member" },
       { name: "Daughter", role: "Family Member" }
     ];
+    const cardNumber = mIdx => mIdx === 0 ? 6 : mIdx;
 
     const MYTHS = [
       {id:1,level:"Beginner",q:"Deleting your emails is one of the best ways to reduce your digital footprint.",ans:false,exp:"It helps a little, but keeping your phone longer has a much bigger effect.",src:"ADEME, La face cachée du numérique"},
-      {id:2,level:"Beginner",q:"Dark mode only saves energy on OLED screens.",ans:true,exp:"On OLED screens, black pixels are switched off. On LCD screens, the backlight stays on.",src:"Purdue University study on dark mode (2021)"},
-      {id:3,level:"Beginner",q:"Closing apps running in the background saves battery.",ans:false,exp:"iOS and Android pause apps, so they use almost nothing. Closing them can even use more energy when they restart.",src:"Apple and Google user guides"},
-      {id:4,level:"Beginner",q:"A refurbished phone emits much less greenhouse gas than a new one.",ans:true,exp:"A refurbished phone emits substantially less greenhouse gas than a new one.",src:"ADEME and Arcep study (2022)"},
+      {id:2,level:"Beginner",q:"Dark mode only saves energy on OLED screens.",ans:true,exp:"On OLED screens, black pixels are switched off. On LCD screens, the backlight stays on, so dark mode saves almost nothing.",src:"Purdue University study on dark mode (2021)"},
+      {id:3,level:"Beginner",q:"Closing apps running in the background saves battery.",ans:false,exp:"iOS and Android pause apps, so they use almost nothing. Closing them can even use more energy when they restart.",src:"Apple and Google (Android) user guides"},
+      {id:4,level:"Beginner",q:"A refurbished phone emits much less greenhouse gas than a new one.",ans:true,exp:"A refurbished phone emits 87% less greenhouse gas than a new one.",src:"ADEME and Arcep study (2022)"},
       {id:5,level:"Beginner",q:"Devices on standby can make up about 10% of a household's electricity bill.",ans:true,exp:"Standby uses 300 to 500 kWh per household per year, about 10% of the electricity bill.",src:"ADEME"},
       {id:6,level:"Beginner",q:"A French household owns about 30 electrical devices.",ans:false,exp:"French people think they own 34, but they actually own 99.",src:"ADEME"},
       {id:7,level:"Advanced",q:"Video makes up more than half of internet traffic.",ans:true,exp:"Video streaming is about 61% of global downstream traffic.",src:"Sandvine, Global Internet Phenomena Report"},
@@ -523,15 +598,15 @@
     ];
 
     const BONUSES = [
-      { title: "Play Again", desc: "Take an extra turn right now!" },
-      { title: "Steal a Card", desc: "Pick 1 random card from another player's hand." },
-      { title: "Shield", desc: "Block one request for a card you hold. The requester’s turn ends." }
+      { title: "Play Again", desc: "When your turn ends, take one more turn straight away." },
+      { title: "Steal a Card", desc: "Take one card at random from another player's hand, without looking. Completed families cannot be stolen." },
+      { title: "Shield", desc: "Kept until used: when a player asks you for a card you have, the Shield keeps it. The asker does not draw and their turn ends. Used once." }
     ];
 
     const PENALTIES = [
-      { title: "Skip Your Next Turn", desc: "You miss your next turn to ask for a card." },
-      { title: "Give a Card", desc: "Give one card to the player on your left." },
-      { title: "Back to the Pile", desc: "Put 1 of your cards back into the draw pile and shuffle." }
+      { title: "Skip Your Next Turn", desc: "You miss your next turn." },
+      { title: "Give a Card", desc: "Give one card of your choice to the player on your left. (Nothing happens if your hand is empty.)" },
+      { title: "Back to the Pile", desc: "Put one card of your choice back into the draw pile, then shuffle the pile. (Nothing happens if your hand is empty.)" }
     ];
 
     // ==========================================
@@ -556,23 +631,31 @@
     let myPlayerId = "";
     let myName = "";
     let myHand = [];
+    let myLaid = [];
     let otherPlayers = [];
     let activeMyth = null;
     let mythFromGame = false;
 
+    function cardInfo(f, m) { return FAMILIES[f].cards[m]; }
+
     function createCardHTML(fIdx, mIdx, footerHtml = "") {
       const fam = FAMILIES[fIdx];
       const mem = MEMBERS[mIdx];
+      const c = fam.cards[mIdx];
+      const list = fam.cards.map((x, i) => `<li class="${i === mIdx ? "me" : ""}">${i === 0 ? "Summary" : x.title}</li>`).join("");
       return `
         <div class="playing-card" style="border-top: 8px solid ${fam.color};">
           <div class="card-header" style="color:${fam.color};">
             <span>${fam.name}</span>
-            <span>${mIdx + 1}/6</span>
+            <span>${cardNumber(mIdx)}/6</span>
           </div>
           <div class="card-icon">${fam.icon}</div>
-          <div class="card-member">${mem.name}<br><span style="font-size:0.68rem; font-weight:600; color:#666;">${mem.role}</span></div>
-          <div class="card-tip">${fam.tip}</div>
-          <div class="card-footer">${footerHtml}</div>
+          <div class="card-role">${mem.name}${mIdx === 0 ? " · Explanatory" : ""}</div>
+          <div class="card-title" style="color:${fam.color};">${mIdx === 0 ? fam.name : c.title}</div>
+          <div class="card-desc">${c.desc}</div>
+          ${c.q ? `<div class="card-q">❓ ${c.q}</div>` : ""}
+          <ul class="card-list">${list}</ul>
+          ${footerHtml ? `<div class="card-footer">${footerHtml}</div>` : ""}
         </div>
       `;
     }
@@ -664,7 +747,7 @@
     function updateHostPlayersUI() {
       const list = document.getElementById("connected-players-list");
       const countLabel = document.getElementById("player-count-label");
-      const drawSel = document.getElementById("host-draw-target");
+      const drawSel = document.getElementById("host-first"); const prevFirst = drawSel.value;
 
       countLabel.textContent = `(${hostConnections.length} players connected — 2 to 4 required)`;
       drawSel.innerHTML = "";
@@ -681,6 +764,7 @@
       hostConnections.forEach(p => {
         drawSel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
       });
+      if ([...drawSel.options].some(o => o.value === prevFirst)) drawSel.value = prevFirst;
 
       // Broadcast player roster to all phones
       const roster = hostConnections.map(p => ({ id: p.id, name: p.name }));
@@ -711,11 +795,14 @@
       });
       for (let id = 1; id <= mythCount; id++) deck.push(`M-${id}`);
       hostPile = shuffle(deck);
-      hostCompleted = []; currentTurnIndex = 0; pendingMythPlayerId = null;
+      const firstId = document.getElementById("host-first").value;
+      hostCompleted = []; currentTurnIndex = Math.max(0, hostConnections.findIndex(p => p.id === firstId)); pendingMythPlayerId = null;
       skipNextTurnIds = []; shieldPlayerIds = []; pendingEffectChoice = null; gameStarted = true;
       document.getElementById("host-board-active").classList.remove("hidden");
       document.getElementById("host-pile-count").textContent = hostPile.length;
-      document.getElementById("host-table-log").textContent = "✅ Cards dealt. The youngest player starts!";
+      document.getElementById("host-comp-num").textContent = 0;
+      document.getElementById("host-completed-badges").innerHTML = "No families completed yet.";
+      document.getElementById("host-table-log").textContent = "✅ Cards dealt.";
       broadcastTurn();
     }
 
@@ -723,6 +810,18 @@
       if (!gameStarted || !hostConnections.length) return;
       currentTurnIndex = ((currentTurnIndex % hostConnections.length) + hostConnections.length) % hostConnections.length;
       const current = hostConnections[currentTurnIndex];
+      // Empty hand + empty pile: nothing to do this turn (rules: the game continues without drawing).
+      if ((hostHands[current.id] || []).length === 0 && !hostPile.length && !pendingMythPlayerId) {
+        if (hostConnections.every(p => (hostHands[p.id] || []).length === 0)) {
+          gameStarted = false;
+          hostConnections.forEach(p => p.conn.send({ type: "GAME_OVER", completed: hostCompleted, winner: null }));
+          document.getElementById("host-table-log").textContent = "Game over: no cards left.";
+          return;
+        }
+        current.conn.send({ type: "PLAYER_NOTICE", message: "You have no cards and the pile is empty: your turn is skipped." });
+        currentTurnIndex = (currentTurnIndex + 1) % hostConnections.length;
+        return broadcastTurn();
+      }
       const roster = hostConnections.map(p => ({ id: p.id, name: p.name }));
       hostConnections.forEach(p => p.conn.send({
         type: "TURN_UPDATE", gameStarted: true, currentPlayerId: current.id,
@@ -733,7 +832,7 @@
       document.getElementById("host-table-log").textContent = `🎯 It is ${current.name}'s turn: ask for a card, or draw when told "Draw!".`;
       if ((hostHands[current.id] || []).length === 0 && hostPile.length && !pendingMythPlayerId) {
         document.getElementById("host-table-log").textContent = `🃏 ${current.name} has no cards and must draw at the start of the turn.`;
-        sendTopCardToPlayer(current.id);
+        sendTopCardToPlayer(current.id, null, true);
       }
     }
 
@@ -758,7 +857,7 @@
       sendTopCardToPlayer(current.id);
     }
 
-    function sendTopCardToPlayer(playerId, requestedCard = null) {
+    function sendTopCardToPlayer(playerId, requestedCard = null, startOfTurn = false) {
       if (!hostPile.length) { document.getElementById("host-table-log").textContent = "The draw pile is empty. Your turn ends."; advanceTurn(false); return; }
       const target = hostConnections.find(p => p.id === playerId), current = hostConnections[currentTurnIndex];
       if (!target || !current || target.id !== current.id || pendingMythPlayerId) return;
@@ -774,14 +873,14 @@
         const lucky = requestedCard && card === requestedCard;
         document.getElementById("host-table-log").textContent = lucky ? `🍀 Lucky draw! ${target.name} plays again.` : `🃏 ${target.name} drew a family card.`;
         checkPlayerFamilies(target);
-        advanceTurn(!!lucky);
+        advanceTurn(!!lucky || startOfTurn); // drawing because the hand is empty does not end the turn
       }
     }
 
     function cardLabel(code) {
       if (String(code).startsWith("M-")) return "Myths & Facts";
       const [f, m] = String(code).split("-").map(Number);
-      return `${FAMILIES[f]?.name || "Family"} — ${MEMBERS[m]?.name || "Member"}`;
+      return `${FAMILIES[f]?.name || "Family"} — ${MEMBERS[m]?.name || "Member"} (${FAMILIES[f]?.cards[m]?.title || ""})`;
     }
 
     function syncHand(player) { if (player) player.conn.send({ type: "HAND_UPDATE", hand: hostHands[player.id] || [] }); }
@@ -789,10 +888,11 @@
     function checkGameEnd() {
       if (hostCompleted.length < 7) return false;
       gameStarted = false;
-      hostConnections.forEach(p => p.conn.send({ type: "GAME_OVER", completed: hostCompleted }));
-      const scores = {};
-      hostCompleted.forEach(c => scores[c.player] = (scores[c.player] || 0) + 1);
-      const winner = Object.entries(scores).sort((a,b) => b[1]-a[1])[0];
+      // Most complete families wins; on a tie, whoever completed a family first (array order = completion order).
+      const scoreList = [];
+      hostCompleted.forEach(c => { let e = scoreList.find(x => x[0] === c.player); if (!e) scoreList.push(e = [c.player, 0]); e[1]++; });
+      const winner = scoreList.slice().sort((a, b) => b[1] - a[1])[0];
+      hostConnections.forEach(p => p.conn.send({ type: "GAME_OVER", completed: hostCompleted, winner: winner ? { name: winner[0], count: winner[1] } : null }));
       document.getElementById("host-table-log").textContent = winner ? `🏆 Game over! Winner: ${winner[0]} (${winner[1]} families).` : "Game over!";
       return true;
     }
@@ -912,6 +1012,7 @@
       status.textContent = "Connecting to game table...";
 
       peer = new Peer();
+      peer.on("error", err => { status.textContent = "❌ Connection error (" + err.type + "). Check the Room Code!"; });
       peer.on("open", () => {
         clientConn = peer.connect(`greenclicks-room-${codeInput}`);
 
@@ -977,6 +1078,7 @@
         document.getElementById("p-turn-title").textContent = "🎮 Game started!";
         document.getElementById("p-turn-hint").textContent = "The host has dealt the cards. Waiting for the first turn...";
         document.getElementById("p-hand-grid").innerHTML = "";
+        myLaid = [];
       }
       else if (data.type === "DEAL_HAND") {
         myHand = Array.isArray(data.hand) ? data.hand : [];
@@ -989,13 +1091,17 @@
         myHand = Array.isArray(data.hand) ? data.hand : []; renderPlayerHand();
       }
       else if (data.type === "FAMILY_LAID") {
-        myHand = Array.isArray(data.hand) ? data.hand : []; showPlayerAlert(`🎉 Happy family! ${FAMILIES[data.familyIdx].name} completed!`); renderPlayerHand();
+        myHand = Array.isArray(data.hand) ? data.hand : []; myLaid.push(data.familyIdx); showPlayerAlert(`🎉 Happy family! ${FAMILIES[data.familyIdx].name} completed!`); renderPlayerHand();
       }
-      else if (data.type === "GAME_OVER") { showPlayerAlert("🏆 Game over! All seven families are complete."); }
+      else if (data.type === "GAME_OVER") {
+        isMyTurn = false; updateAskControls();
+        document.getElementById("p-turn-title").textContent = "🏁 Game over";
+        showPlayerAlert(data.winner ? `🏆 Game over! Winner: ${data.winner.name} (${data.winner.count} complete ${data.winner.count > 1 ? "families" : "family"}).` : "🏁 Game over!");
+      }
       else if (data.type === "RECEIVE_CARD") {
         if (Array.isArray(data.hand)) myHand = data.hand; else myHand.push(data.card);
         const [f, m] = data.card.split("-").map(Number);
-        showPlayerAlert(`✨ You received: ${FAMILIES[f].name} — ${MEMBERS[m].name} (from ${data.from})`);
+        showPlayerAlert(`✨ You received: ${FAMILIES[f].name} — ${MEMBERS[m].name} (${FAMILIES[f].cards[m].title}) from ${data.from}`);
         renderPlayerHand();
       }
       else if (data.type === "DREW_MYTH") {
@@ -1021,11 +1127,21 @@
     function updateAskControls() {
       const ps=document.getElementById("ask-player"),fs=document.getElementById("ask-family"),ms=document.getElementById("ask-member");
       if(!ps||!fs||!ms)return;
+      const prevP=ps.value, prevF=fs.value, prevM=ms.value;
       ps.innerHTML='<option value="">Choose player</option>'+otherPlayers.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
-      const owned=[...new Set(myHand.map(c=>Number(c.split("-")[0])))];
+      const owned=[...new Set(myHand.map(c=>Number(c.split("-")[0])))].sort((a,b)=>a-b);
       fs.innerHTML='<option value="">Choose family</option>'+owned.map(f=>`<option value="${f}">${FAMILIES[f].name}</option>`).join("");
-      const fill=()=>{const f=fs.value,have=new Set(myHand.filter(c=>c.startsWith(`${f}-`)).map(c=>Number(c.split("-")[1])));ms.innerHTML='<option value="">Choose member</option>'+MEMBERS.map((m,i)=>({m,i})).filter(x=>!have.has(x.i)).map(x=>`<option value="${f}-${x.i}">${x.m.name}</option>`).join("");};
-      fs.onchange=fill;fill();
+      const fill=()=>{
+        const f=fs.value;
+        if(f===""){ms.innerHTML='<option value="">Choose member</option>';return;}
+        const have=new Set(myHand.filter(c=>c.startsWith(`${f}-`)).map(c=>Number(c.split("-")[1])));
+        ms.innerHTML='<option value="">Choose member</option>'+MEMBERS.map((m,i)=>({m,i})).filter(x=>!have.has(x.i)).map(x=>`<option value="${f}-${x.i}">${x.m.name} — ${x.i===0?"Explanatory card":FAMILIES[f].cards[x.i].title}</option>`).join("");
+      };
+      fs.onchange=fill;
+      if([...ps.options].some(o=>o.value===prevP)) ps.value=prevP;
+      if([...fs.options].some(o=>o.value===prevF)) fs.value=prevF;
+      fill();
+      if([...ms.options].some(o=>o.value===prevM)) ms.value=prevM;
       [ps,fs,ms].forEach(x=>x.disabled=!isMyTurn||pendingMythLocal);
       document.getElementById("ask-submit").disabled=!isMyTurn||pendingMythLocal;
     }
@@ -1056,19 +1172,11 @@
         return;
       }
 
-      // Check for complete family (6 cards of same family)
-      const counts = {};
-      myHand.forEach(c => {
-        const f = c.split("-");
-        counts[f] = (counts[f] || 0) + 1;
-      });
-      const completeFam = Object.keys(counts).find(k => counts[k] === 6);
+      // Families already laid down (registered automatically by the host)
       const happyBanner = document.getElementById("p-happy-banner");
-
-      if (completeFam !== undefined) {
+      if (myLaid.length) {
         happyBanner.classList.remove("hidden");
-        happyBanner.innerHTML = `🎉 Complete family: <strong>${FAMILIES[completeFam].name}</strong>! Say "Happy family!"
-          <button class="small green" style="margin-left:0.5rem;" onclick="claimCompleteFamily(${completeFam})">Lay Down Family</button>`;
+        happyBanner.innerHTML = `🏆 Happy families on the table: <strong>${myLaid.map(f => FAMILIES[f].name).join(", ")}</strong>`;
       } else {
         happyBanner.classList.add("hidden");
       }

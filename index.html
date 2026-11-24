@@ -613,11 +613,26 @@
     // MULTIPLAYER PEERJS STATE
     // ==========================================
     // STUN + TURN relay servers: needed when a phone is on 4G/5G or another network than the host.
-    const PEER_OPTS = { config: { iceServers: [
+ const PEER_OPTS = {
+  config: {
+    iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" },
-      { urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turn:openrelay.metered.ca:443?transport=tcp"], username: "openrelayproject", credential: "openrelayproject" }
-    ] } };
+      {
+        urls: [
+          "turn:openrelay.metered.ca:80",
+          "turn:openrelay.metered.ca:443",
+          "turn:openrelay.metered.ca:443?transport=tcp",
+          "turns:openrelay.metered.ca:443?transport=tcp"
+        ],
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ],
+    iceTransportPolicy: "all"
+  }
+};
+
     let peer = null;
     let roomCode = "";
     let hostConnections = []; // { conn, id, name }

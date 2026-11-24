@@ -68,21 +68,9 @@
     button:hover:not(:disabled) { background: rgba(255,255,255,0.22); }
     button:active:not(:disabled) { transform: scale(0.96); }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
-    button.primary {
-      background: var(--gold);
-      color: #152419;
-      border-color: var(--gold);
-    }
-    button.green {
-      background: var(--accent);
-      color: #0d2418;
-      border-color: var(--accent);
-    }
-    button.danger {
-      background: var(--danger);
-      color: #fff;
-      border-color: var(--danger);
-    }
+    button.primary { background: var(--gold); color: #152419; border-color: var(--gold); }
+    button.green { background: var(--accent); color: #0d2418; border-color: var(--accent); }
+    button.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
     button.small { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
     .hidden { display: none !important; }
 
@@ -104,6 +92,7 @@
       font-size: 0.92rem;
     }
 
+    /* TURN BANNER */
     .turn-banner {
       background: linear-gradient(90deg, rgba(230,194,91,0.25), rgba(46,204,113,0.25));
       border: 2px solid var(--gold);
@@ -118,6 +107,7 @@
       box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
     }
 
+    /* PLAYING CARDS */
     .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
@@ -135,10 +125,8 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.2s ease;
       user-select: none;
     }
-    .playing-card:hover { transform: translateY(-5px); }
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -159,32 +147,38 @@
       border-radius: 6px;
     }
 
-    .room-code {
-      font-size: 2.2rem;
-      font-weight: 900;
-      letter-spacing: 0.2em;
-      color: var(--gold);
-      background: rgba(0,0,0,0.4);
-      padding: 0.4rem 1rem;
-      border-radius: 10px;
-      display: inline-block;
-      margin: 0.4rem 0;
+    /* POPUP MODAL FOR MYTHS & FACTS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 15, 10, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 999;
     }
-
-    .myth-card-large {
+    .myth-card-modal {
       background: var(--cream);
       color: var(--ink);
-      border: 6px solid #fff;
+      border: 6px solid var(--gold);
       border-radius: 16px;
-      max-width: 400px;
-      margin: 0 auto;
+      width: 100%;
+      max-width: 420px;
+      max-height: 92vh;
+      overflow-y: auto;
       padding: 1.25rem;
-      box-shadow: 0 14px 32px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.7);
+      animation: popIn 0.22s ease-out;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.88); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
     .banner {
-      padding: 0.75rem;
+      padding: 0.7rem;
       border-radius: 8px;
-      margin: 0.75rem 0;
+      margin: 0.65rem 0;
       font-weight: 700;
       font-size: 0.9rem;
     }
@@ -197,10 +191,10 @@
       padding: 0.75rem;
       border-radius: 10px;
       text-align: center;
-      margin-top: 0.75rem;
+      margin-top: 0.65rem;
     }
     .log-feed {
-      max-height: 150px;
+      max-height: 160px;
       overflow-y: auto;
       font-size: 0.83rem;
       display: flex;
@@ -228,144 +222,119 @@
       background: var(--gold);
       color: #152419;
     }
-    .privacy-veil {
-      text-align: center;
-      padding: 2rem 1rem;
-      background: rgba(0,0,0,0.45);
+    .privacy-screen {
+      background: rgba(0,0,0,0.55);
       border: 2px dashed var(--gold);
       border-radius: 12px;
-      margin-top: 0.75rem;
+      padding: 2rem 1rem;
+      text-align: center;
+      margin-top: 0.8rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <span class="badge-top">Serious Card Game · Turn-Based</span>
+      <span class="badge-top">Serious Card Game · Automatic Turn-Based</span>
       <h1>🃏 Green Clicks</h1>
     </header>
 
     <nav>
-      <button id="nav-lobby" class="primary" onclick="switchView('lobby')">🎲 Table Setup</button>
+      <button id="nav-setup" class="primary" onclick="switchView('setup')">🎲 New Game</button>
       <button id="nav-game" class="hidden" onclick="switchView('game')">✋ Game Board</button>
       <button id="nav-myths" onclick="switchView('myths')">❓ Myths &amp; Facts (QR)</button>
       <button id="nav-deck" onclick="switchView('deck')">📖 7 Families</button>
     </nav>
 
-    <section id="view-lobby">
+    <!-- VIEW 1: SETUP -->
+    <section id="view-setup">
       <div class="panel">
-        <h2 style="margin-bottom:0.4rem;">🎲 Start a Turn-Based Match (2 to 6 Players)</h2>
-        <p style="font-size:0.85rem; opacity:0.85; margin-bottom:0.85rem;">
-          Add each player's name, choose Beginner or Advanced mode, and deal 6 secret cards per player.
-        </p>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
-          <input type="text" id="new-player-name" placeholder="Player name (e.g. Alex)" maxlength="16" onkeydown="if(event.key==='Enter') addPlayerToLobby()">
-          <button class="primary" onclick="addPlayerToLobby()">+ Add Player</button>
-        </div>
-        <div id="lobby-players-list" style="margin-bottom:0.85rem;"></div>
-        <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
-          <select id="host-mode">
+        <h2 style="margin-bottom:0.4rem;">🎲 Setup a Turn-Based Table</h2>
+        <p style="font-size:0.84rem; opacity:0.85; margin-bottom:0.8rem;">Enter player names (2 to 6 players). Secret hands are locked between each turn!</p>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.8rem;">
+          <select id="player-count" onchange="renderNameInputs()">
+            <option value="2">2 Players</option>
+            <option value="3">3 Players</option>
+            <option value="4" selected>4 Players</option>
+            <option value="5">5 Players</option>
+            <option value="6">6 Players</option>
+          </select>
+          <select id="myth-mode">
             <option value="6">Beginner Mode (6 Myths &amp; Facts)</option>
             <option value="12">Advanced Mode (12 Myths &amp; Facts)</option>
           </select>
-          <button class="green" id="btn-start-match" onclick="startTurnBasedMatch()" disabled>Deal 6 Secret Cards &amp; Start Turn 1</button>
         </div>
+        <div id="name-inputs" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.5rem; margin-bottom:0.9rem;"></div>
+        <button class="green" style="width:100%;" onclick="startMatch()">Deal 6 Secret Cards &amp; Start Turn 1 →</button>
       </div>
     </section>
 
+    <!-- VIEW 2: TURN-BASED GAME BOARD -->
     <section id="view-game" class="hidden">
       <div class="turn-banner my-turn" id="turn-banner">
         <div style="font-size:0.78rem; text-transform:uppercase; font-weight:800; opacity:0.9;">Current Turn</div>
-        <div style="font-size:1.35rem; font-weight:900;" id="turn-player-name">Player 1's Turn</div>
-        <div style="font-size:0.85rem; margin-top:0.2rem;" id="turn-instruction">Ask another player for a card in English!</div>
+        <div style="font-size:1.35rem; font-weight:900;" id="turn-player-name">Player 1</div>
+        <div style="font-size:0.84rem; margin-top:0.2rem;" id="turn-instruction">Ask another player for a card in English!</div>
       </div>
 
       <div class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.6rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
           <div><strong>Players &amp; Completed Families:</strong></div>
-          <div style="font-weight:800; color:var(--gold);">🃏 Draw Pile: <span id="game-pile-count">0</span> cards</div>
+          <div style="font-weight:800; color:var(--gold);">🃏 Draw Pile: <span id="pile-count">0</span> cards</div>
         </div>
-        <div id="game-players-bar"></div>
+        <div id="players-bar"></div>
       </div>
 
-      <div id="my-turn-actions" class="panel" style="border: 2px solid var(--accent);">
+      <!-- ASK CARD ACTION -->
+      <div id="ask-box" class="panel" style="border: 2px solid var(--accent);">
         <h3 style="color:var(--accent); margin-bottom:0.4rem;">🎯 Ask for a Card in English</h3>
         <p style="font-size:0.85rem; margin-bottom:0.75rem; background:rgba(255,255,255,0.08); padding:0.5rem 0.75rem; border-radius:8px;">
-          Say out loud: <em>"In the <strong id="preview-fam">Devices</strong> family, I'd like the <strong id="preview-mem">Father</strong>, please."</em>
+          Say out loud: <em>"In the <strong id="preview-fam">Devices</strong> family, I'd like the <strong id="preview-mem">Grandfather</strong>, please."</em>
         </p>
         <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
           <select id="ask-target"></select>
           <select id="ask-fam" onchange="updateAskPreview()"></select>
           <select id="ask-mem" onchange="updateAskPreview()"></select>
-          <button class="green" onclick="submitCardRequest()">Ask Player</button>
+          <button class="green" onclick="submitCardRequest()">Ask &amp; Auto-Resolve</button>
         </div>
       </div>
 
-      <div id="special-action-box" class="panel hidden" style="border: 2px solid var(--gold);">
-        <h3 id="special-action-title" style="color:var(--gold); margin-bottom:0.4rem;">🎁 Bonus Action</h3>
-        <p id="special-action-desc" style="font-size:0.85rem; margin-bottom:0.6rem;"></p>
-        <div id="special-action-controls" style="display:flex; gap:0.5rem; flex-wrap:wrap;"></div>
-      </div>
-
+      <!-- AUTOMATIC LOG -->
       <div class="panel">
-        <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; opacity:0.8; margin-bottom:0.4rem;">Table Log</div>
+        <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; opacity:0.8; margin-bottom:0.4rem;">Automatic Action Feed</div>
         <div class="log-feed" id="table-log"></div>
       </div>
 
-      <div class="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-          <h2>✋ Secret Hand (<span id="hand-owner-label">Player</span>)</h2>
-          <div style="display:flex; gap:0.4rem; align-items:center;">
+      <!-- SECRET HAND WITH PRIVACY LOCK -->
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h2>✋ <span id="hand-owner-title">Player 1</span>'s Secret Hand (<span id="my-card-count">0</span> cards)</h2>
+          <div>
             <span id="my-shield-badge" class="badge-top hidden">🛡️ Shield Active</span>
-            <button class="primary small" id="btn-toggle-privacy" onclick="toggleHandPrivacy()">👁️ Reveal My Cards</button>
+            <button class="small" id="btn-toggle-privacy" onclick="toggleHandPrivacy()">🔒 Hide Hand</button>
           </div>
         </div>
-        <div id="privacy-veil" class="privacy-veil">
-          <div style="font-size:2rem; margin-bottom:0.4rem;">🙈</div>
-          <strong id="veil-text">Pass the device to Player 1</strong>
-          <p style="font-size:0.82rem; opacity:0.85; margin:0.35rem 0 0.75rem;">Keep your cards hidden from other players!</p>
-          <button class="primary" onclick="toggleHandPrivacy()">Tap to View My Secret Cards</button>
+
+        <div id="privacy-lock-box" class="privacy-screen hidden">
+          <div style="font-size:2rem; margin-bottom:0.4rem;">🔒</div>
+          <h3 id="privacy-prompt">Pass screen to Player 1</h3>
+          <p style="font-size:0.84rem; opacity:0.85; margin:0.4rem 0 0.8rem;">Make sure other players are not looking before revealing your cards.</p>
+          <button class="primary" onclick="unlockHand()">👀 Reveal My Secret Cards</button>
         </div>
-        <div id="my-cards-grid" class="card-grid hidden"></div>
+
+        <div id="my-cards-grid" class="card-grid"></div>
       </div>
     </section>
 
+    <!-- VIEW 3: STANDALONE MYTHS & FACTS (QR CODES ?card=1..12) -->
     <section id="view-myths" class="hidden">
-      <div id="myth-picker" class="panel">
-        <strong>Myths &amp; Facts Cards (Scan QR <code>?card=1..12</code> or tap a card)</strong>
+      <div class="panel">
+        <strong>Standalone Myths &amp; Facts Cards (Physical QR Codes <code>?card=1..12</code>)</strong>
         <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
       </div>
-
-      <div id="myth-card-view" class="hidden">
-        <div class="myth-card-large">
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1b241e; padding-bottom:0.4rem; margin-bottom:0.75rem;">
-            <span id="m-tag" style="font-weight:800; font-size:0.78rem; color:#1e824c;">BEGINNER · #1</span>
-            <button id="m-close-btn" class="small" style="color:#1b241e; border-color:#ccc;" onclick="closeMythCard()">All Cards</button>
-          </div>
-          <div style="text-align:center; font-size:2rem; margin-bottom:0.4rem;">❓</div>
-          <h2 id="m-question" style="font-size:1.08rem; text-align:center; line-height:1.35; margin-bottom:0.8rem;">Question</h2>
-          <p style="font-size:0.8rem; color:#5a695f; text-align:center; margin-bottom:0.8rem;">Say <strong>True</strong> or <strong>False</strong> out loud in English, then tap:</p>
-
-          <div id="m-choices" style="display:flex; gap:0.6rem;">
-            <button style="flex:1; background:#1e824c; color:#fff; border:none;" onclick="answerMyth(true)">TRUE</button>
-            <button style="flex:1; background:#c0392b; color:#fff; border:none;" onclick="answerMyth(false)">FALSE</button>
-          </div>
-
-          <div id="m-result" class="hidden">
-            <div id="m-banner" class="banner"></div>
-            <p id="m-exp" style="font-size:0.88rem; line-height:1.4; margin-bottom:0.4rem;"></p>
-            <p style="font-size:0.76rem; color:#5a695f;"><strong>Source:</strong> <span id="m-src"></span></p>
-            <div class="effect-ticket">
-              <div id="m-eff-type" style="font-size:0.72rem; font-weight:800;">BONUS</div>
-              <div id="m-eff-title" style="font-size:1.1rem; font-weight:800; margin:0.15rem 0;">Play Again</div>
-              <div id="m-eff-desc" style="font-size:0.8rem;">Description</div>
-            </div>
-            <button id="m-continue-btn" class="primary hidden" style="width:100%; margin-top:0.75rem;" onclick="applyMythOutcomeAndReturn()">Apply Effect &amp; Continue Turn →</button>
-          </div>
-        </div>
-      </div>
     </section>
 
+    <!-- VIEW 4: 7 FAMILIES GALLERY -->
     <section id="view-deck" class="hidden">
       <div class="panel">
         <strong>The 7 Families (42 Cards)</strong>
@@ -373,6 +342,42 @@
       </div>
       <div id="gallery-grid" class="card-grid"></div>
     </section>
+  </div>
+
+  <!-- =========================================================
+       POPUP MODAL FOR MYTHS & FACTS
+       ========================================================= -->
+  <div id="myth-popup-overlay" class="modal-overlay hidden">
+    <div class="myth-card-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1b241e; padding-bottom:0.4rem; margin-bottom:0.65rem;">
+        <span id="pop-tag" style="font-weight:800; font-size:0.78rem; color:#1e824c;">⚡ MYTHS &amp; FACTS #1</span>
+        <button id="pop-close-standalone" class="small hidden" style="color:#1b241e; border-color:#ccc;" onclick="closeStandalonePopup()">Close ✕</button>
+      </div>
+      <div style="text-align:center; font-size:2rem; margin-bottom:0.35rem;">❓</div>
+      <h2 id="pop-question" style="font-size:1.05rem; text-align:center; line-height:1.35; margin-bottom:0.7rem;">Question</h2>
+      <p style="font-size:0.78rem; color:#5a695f; text-align:center; margin-bottom:0.75rem;">Say <strong>True</strong> or <strong>False</strong> out loud in English, then tap:</p>
+
+      <div id="pop-choices" style="display:flex; gap:0.6rem;">
+        <button style="flex:1; background:#1e824c; color:#fff; border:none;" onclick="answerPopupMyth(true)">TRUE</button>
+        <button style="flex:1; background:#c0392b; color:#fff; border:none;" onclick="answerPopupMyth(false)">FALSE</button>
+      </div>
+
+      <div id="pop-result" class="hidden">
+        <div id="pop-banner" class="banner"></div>
+        <p id="pop-exp" style="font-size:0.85rem; line-height:1.38; margin-bottom:0.35rem;"></p>
+        <p style="font-size:0.74rem; color:#5a695f;"><strong>Source:</strong> <span id="pop-src"></span></p>
+
+        <div class="effect-ticket">
+          <div id="pop-eff-type" style="font-size:0.72rem; font-weight:800;">BONUS</div>
+          <div id="pop-eff-title" style="font-size:1.08rem; font-weight:800; margin:0.15rem 0;">Play Again</div>
+          <div id="pop-eff-desc" style="font-size:0.8rem;">Description</div>
+
+          <div id="pop-extra-picker" class="hidden" style="margin-top:0.65rem; padding-top:0.55rem; border-top:1px dashed #d39e00;"></div>
+        </div>
+
+        <button id="pop-apply-btn" class="primary" style="width:100%; margin-top:0.75rem;" onclick="confirmPopupEffect()">Apply Effect &amp; Continue →</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -411,24 +416,29 @@
     ];
 
     const BONUSES = [
-      { code: "PLAY_AGAIN", title: "Play Again", desc: "Take an extra turn right now!" },
-      { code: "STEAL", title: "Steal a Card", desc: "Pick 1 random card from another player!" },
-      { code: "SHIELD", title: "Shield", desc: "Blocks the next Steal or Penalty against you!" }
+      { code: "PLAY_AGAIN", title: "Play Again", desc: "You automatically get an extra turn right now!" },
+      { code: "STEAL", title: "Steal a Card", desc: "Steal 1 random card from another player!" },
+      { code: "SHIELD", title: "Shield", desc: "Automatically blocks the next Steal or Penalty against you!" }
     ];
 
     const PENALTIES = [
-      { code: "SKIP", title: "Skip Your Next Turn", desc: "You will miss your next turn." },
+      { code: "SKIP", title: "Skip Your Next Turn", desc: "Your next turn will be automatically skipped." },
       { code: "GIVE", title: "Give a Card", desc: "Give 1 of your cards to another player." },
-      { code: "BACK_PILE", title: "Back to the Pile", desc: "1 of your cards goes back into the draw pile." }
+      { code: "BACK_PILE", title: "Back to the Pile", desc: "1 of your cards automatically returns to the draw pile." }
     ];
 
-    let lobbyNames = ["Player 1", "Player 2", "Player 3"];
-    let state = null;
-    let handRevealed = false;
-    let activeMyth = null;
-    let isInMatchMyth = false;
-    let lastMythCorrect = false;
-    let currentMythEffect = null;
+    let state = {
+      players: [],
+      pile: [],
+      turnIndex: 0,
+      logs: [],
+      handLocked: true
+    };
+
+    let popupMyth = null;
+    let popupIsInGame = false;
+    let popupCorrect = false;
+    let popupEffect = null;
 
     function createCardHTML(fIdx, mIdx) {
       const fam = FAMILIES[fIdx];
@@ -447,11 +457,13 @@
     }
 
     function init() {
+      renderNameInputs();
+
       const mGrid = document.getElementById("myth-buttons-grid");
       MYTHS.forEach(m => {
         const b = document.createElement("button");
         b.textContent = `#${m.id} (${m.level})`;
-        b.onclick = () => openMythCard(m.id, false);
+        b.onclick = () => openMythPopup(m.id, false);
         mGrid.appendChild(b);
       });
 
@@ -469,26 +481,24 @@
         askMem.innerHTML += `<option value="${idx}">${m.name}</option>`;
       });
 
-      renderLobbyNames();
-
       const params = new URLSearchParams(window.location.search);
       const cardParam = parseInt(params.get("card"), 10);
       if (cardParam >= 1 && cardParam <= 12) {
-        switchView("myths");
-        openMythCard(cardParam, false);
-      } else {
-        const saved = localStorage.getItem("gc_turn_state_v1");
-        if (saved) {
-          state = JSON.parse(saved);
-          document.getElementById("nav-game").classList.remove("hidden");
-          switchView("game");
-          renderBoard();
-        }
+        openMythPopup(cardParam, false);
+      }
+    }
+
+    function renderNameInputs() {
+      const count = parseInt(document.getElementById("player-count").value, 10);
+      const box = document.getElementById("name-inputs");
+      box.innerHTML = "";
+      for (let i = 1; i <= count; i++) {
+        box.innerHTML += `<input type="text" id="p-name-${i}" value="Player ${i}" placeholder="Player ${i} name">`;
       }
     }
 
     function switchView(view) {
-      ["lobby", "game", "myths", "deck"].forEach(v => {
+      ["setup", "game", "myths", "deck"].forEach(v => {
         document.getElementById(`view-${v}`).classList.toggle("hidden", v !== view);
         document.getElementById(`nav-${v}`).classList.toggle("primary", v === view);
       });
@@ -499,28 +509,6 @@
       document.getElementById("preview-mem").textContent = MEMBERS[document.getElementById("ask-mem").value].name;
     }
 
-    // LOBBY
-    function addPlayerToLobby() {
-      const input = document.getElementById("new-player-name");
-      const name = input.value.trim();
-      if (!name || lobbyNames.length >= 6) return;
-      lobbyNames.push(name);
-      input.value = "";
-      renderLobbyNames();
-    }
-
-    function removeLobbyName(idx) {
-      lobbyNames.splice(idx, 1);
-      renderLobbyNames();
-    }
-
-    function renderLobbyNames() {
-      document.getElementById("lobby-players-list").innerHTML = lobbyNames.map((n, idx) =>
-        `<span class="player-pill">👤 ${n} <button class="small danger" style="padding:0.1rem 0.4rem;" onclick="removeLobbyName(${idx})">×</button></span>`
-      ).join("");
-      document.getElementById("btn-start-match").disabled = lobbyNames.length < 2;
-    }
-
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -529,55 +517,53 @@
       return arr;
     }
 
-    function startTurnBasedMatch() {
-      const mythLimit = parseInt(document.getElementById("host-mode").value, 10);
+    function addLog(text) {
+      state.logs.unshift(text);
+      if (state.logs.length > 25) state.logs.pop();
+    }
+
+    function startMatch() {
+      const count = parseInt(document.getElementById("player-count").value, 10);
+      const mythLimit = parseInt(document.getElementById("myth-mode").value, 10);
+
       let deck = [];
       for (let f = 0; f < 7; f++) {
         for (let m = 0; m < 6; m++) deck.push(`${f}-${m}`);
       }
       shuffle(deck);
 
-      const players = lobbyNames.map((name, idx) => ({
-        id: idx,
-        name,
-        hand: deck.splice(0, 6),
-        completed: [],
-        shield: false,
-        skipNext: false
-      }));
+      state.players = [];
+      for (let i = 1; i <= count; i++) {
+        const name = document.getElementById(`p-name-${i}`).value.trim() || `Player ${i}`;
+        const p = {
+          id: i - 1,
+          name,
+          hand: deck.splice(0, 6),
+          completed: [],
+          shield: false,
+          skipNext: false
+        };
+        checkHappyFamilies(p);
+        state.players.push(p);
+      }
 
       for (let id = 1; id <= mythLimit; id++) deck.push(`M-${id}`);
       shuffle(deck);
 
-      state = {
-        players,
-        pile: deck,
-        turnIndex: 0,
-        logs: [`🎲 Game started! ${players.name} plays first.`],
-        pendingMyth: null,
-        pendingSpecial: null
-      };
+      state.pile = deck;
+      state.turnIndex = 0;
+      state.handLocked = true;
+      state.logs = [`🎲 Game started! ${state.players[0].name} goes first.`];
 
-      players.forEach(p => checkHappyFamilies(p));
-      handRevealed = false;
-      saveState();
       document.getElementById("nav-game").classList.remove("hidden");
       switchView("game");
-      renderBoard();
-    }
-
-    function saveState() {
-      localStorage.setItem("gc_turn_state_v1", JSON.stringify(state));
-    }
-
-    function addLog(txt) {
-      state.logs.unshift(txt);
-      if (state.logs.length > 25) state.logs.pop();
+      renderGameBoard();
     }
 
     function checkHappyFamilies(player) {
       for (let f = 0; f < 7; f++) {
-        if (player.hand.filter(c => c.startsWith(`${f}-`)).length === 6) {
+        const count = player.hand.filter(c => c.startsWith(`${f}-`)).length;
+        if (count === 6) {
           player.hand = player.hand.filter(c => !c.startsWith(`${f}-`));
           player.completed.push(f);
           addLog(`🏆 HAPPY FAMILY! ${player.name} completed ${FAMILIES[f].name}!`);
@@ -586,261 +572,254 @@
     }
 
     function advanceTurn() {
-      handRevealed = false;
       const total = state.players.length;
       for (let step = 1; step <= total; step++) {
         const nextIdx = (state.turnIndex + step) % total;
         const candidate = state.players[nextIdx];
         if (candidate.skipNext) {
           candidate.skipNext = false;
-          addLog(`⏭️ ${candidate.name}'s turn was skipped!`);
+          addLog(`⏭️ ${candidate.name}'s turn was automatically skipped!`);
           continue;
         }
         state.turnIndex = nextIdx;
+        state.handLocked = true;
         return;
       }
     }
 
-    function toggleHandPrivacy() {
-      handRevealed = !handRevealed;
-      renderBoard();
-    }
-
-    function renderBoard() {
-      if (!state) return;
+    function renderGameBoard() {
       const current = state.players[state.turnIndex];
-
       document.getElementById("turn-player-name").textContent = `🎯 ${current.name}'s Turn`;
-      document.getElementById("game-pile-count").textContent = state.pile.length;
+      document.getElementById("pile-count").textContent = state.pile.length;
 
-      document.getElementById("game-players-bar").innerHTML = state.players.map((p, idx) => {
+      document.getElementById("players-bar").innerHTML = state.players.map((p, idx) => {
         const active = idx === state.turnIndex ? "active-turn" : "";
         const trophies = p.completed.map(f => FAMILIES[f].icon).join("");
         return `<span class="player-pill ${active}">${p.name} (${p.hand.length}🃏) ${trophies} ${p.shield ? "🛡️" : ""}</span>`;
       }).join("");
 
-      const actionBox = document.getElementById("my-turn-actions");
-      const specBox = document.getElementById("special-action-box");
+      const targetSel = document.getElementById("ask-target");
+      targetSel.innerHTML = state.players
+        .filter((_, idx) => idx !== state.turnIndex)
+        .map(p => `<option value="${p.id}">Ask ${p.name} (${p.hand.length} cards)</option>`)
+        .join("");
+      updateAskPreview();
 
-      if (state.pendingMyth) {
-        actionBox.classList.add("hidden");
-        specBox.classList.add("hidden");
-        switchView("myths");
-        openMythCard(state.pendingMyth.mythId, true);
-        return;
-      }
+      document.getElementById("table-log").innerHTML = state.logs
+        .map(l => `<div class="log-item">${l}</div>`).join("");
 
-      if (state.pendingSpecial) {
-        actionBox.classList.add("hidden");
-        specBox.classList.remove("hidden");
-        const ctrl = document.getElementById("special-action-controls");
-        if (state.pendingSpecial.type === "STEAL") {
-          document.getElementById("special-action-title").textContent = `🕵️ ${current.name}: Steal a Card!`;
-          document.getElementById("special-action-desc").textContent = "Choose a player to steal 1 random card from:";
-          ctrl.innerHTML = state.players
-            .filter((p, idx) => idx !== state.turnIndex && p.hand.length > 0)
-            .map(p => `<button class="primary" onclick="resolveSpecial(${p.id}, null)">Steal from ${p.name}</button>`)
-            .join("");
-        } else {
-          document.getElementById("special-action-title").textContent = `⚠️ ${current.name}: Give a Card!`;
-          document.getElementById("special-action-desc").textContent = "Choose a player and 1 card to give away:";
-          const optsP = state.players.filter((p, idx) => idx !== state.turnIndex).map(p => `<option value="${p.id}">${p.name}</option>`).join("");
-          const optsC = current.hand.map(c => {
-            const [f, m] = c.split("-").map(Number);
-            return `<option value="${c}">${FAMILIES[f].name} - ${MEMBERS[m].name}</option>`;
-          }).join("");
-          ctrl.innerHTML = `<select id="give-p">${optsP}</select><select id="give-c">${optsC}</select>
-            <button class="danger" onclick="resolveSpecial(parseInt(document.getElementById('give-p').value,10), document.getElementById('give-c').value)">Give Card</button>`;
-        }
-      } else {
-        specBox.classList.add("hidden");
-        actionBox.classList.remove("hidden");
-        const targetSel = document.getElementById("ask-target");
-        const prev = targetSel.value;
-        targetSel.innerHTML = state.players
-          .filter((p, idx) => idx !== state.turnIndex)
-          .map(p => `<option value="${p.id}">Ask ${p.name} (${p.hand.length} cards)</option>`)
-          .join("");
-        if (prev && [...targetSel.options].some(o => o.value === prev)) targetSel.value = prev;
-        updateAskPreview();
-      }
-
-      document.getElementById("table-log").innerHTML = state.logs.map(l => `<div class="log-item">${l}</div>`).join("");
-
-      // Secret Hand Privacy Control
-      document.getElementById("hand-owner-label").textContent = `${current.name} (${current.hand.length} cards)`;
-      document.getElementById("veil-text").textContent = `Pass the device to ${current.name}`;
+      document.getElementById("hand-owner-title").textContent = current.name;
+      document.getElementById("my-card-count").textContent = current.hand.length;
       document.getElementById("my-shield-badge").classList.toggle("hidden", !current.shield);
-      document.getElementById("btn-toggle-privacy").textContent = handRevealed ? "🙈 Hide My Cards" : "👁️ Reveal My Cards";
-      document.getElementById("privacy-veil").classList.toggle("hidden", handRevealed);
 
-      const grid = document.getElementById("my-cards-grid");
-      grid.classList.toggle("hidden", !handRevealed);
-      if (handRevealed) {
+      const lockBox = document.getElementById("privacy-lock-box");
+      const cardsGrid = document.getElementById("my-cards-grid");
+      const toggleBtn = document.getElementById("btn-toggle-privacy");
+
+      if (state.handLocked) {
+        lockBox.classList.remove("hidden");
+        cardsGrid.classList.add("hidden");
+        document.getElementById("privacy-prompt").textContent = `Pass screen to ${current.name}`;
+        toggleBtn.textContent = "👀 Reveal Hand";
+      } else {
+        lockBox.classList.add("hidden");
+        cardsGrid.classList.remove("hidden");
+        toggleBtn.textContent = "🔒 Hide Hand";
         const sorted = [...current.hand].sort();
-        grid.innerHTML = sorted.map(code => {
+        cardsGrid.innerHTML = sorted.map(code => {
           const [f, m] = code.split("-").map(Number);
           return createCardHTML(f, m);
         }).join("");
       }
     }
 
+    function unlockHand() {
+      state.handLocked = false;
+      renderGameBoard();
+    }
+
+    function toggleHandPrivacy() {
+      state.handLocked = !state.handLocked;
+      renderGameBoard();
+    }
+
     function submitCardRequest() {
       const current = state.players[state.turnIndex];
       const targetId = parseInt(document.getElementById("ask-target").value, 10);
-      const target = state.players.find(p => p.id === targetId);
-      const f = document.getElementById("ask-fam").value;
-      const m = document.getElementById("ask-mem").value;
-      const cardCode = `${f}-${m}`;
-      const label = `${FAMILIES[f].name} — ${MEMBERS[m].name}`;
+      const target = state.players[targetId];
+      const fIdx = parseInt(document.getElementById("ask-fam").value, 10);
+      const mIdx = parseInt(document.getElementById("ask-mem").value, 10);
+      const cardCode = `${fIdx}-${mIdx}`;
+      const cardLabel = `${FAMILIES[fIdx].name} — ${MEMBERS[mIdx].name}`;
 
       const foundIdx = target.hand.indexOf(cardCode);
       if (foundIdx !== -1) {
         target.hand.splice(foundIdx, 1);
         current.hand.push(cardCode);
-        addLog(`✅ ${current.name} got [${label}] from ${target.name} and plays again!`);
+        addLog(`✅ ${current.name} got [${cardLabel}] from ${target.name} and plays again!`);
         checkHappyFamilies(current);
+        renderGameBoard();
       } else {
-        addLog(`❌ ${target.name} didn't have [${label}]. ${current.name} draws a card!`);
         if (state.pile.length > 0) {
           const drawn = state.pile.pop();
           if (drawn.startsWith("M-")) {
             const mythId = parseInt(drawn.split("-")[1], 10);
-            state.pendingMyth = { mythId };
-            addLog(`⚡ ${current.name} drew Myths & Facts Card #${mythId}!`);
+            addLog(`❌ ${target.name} didn't have [${cardLabel}]. ${current.name} drew Myths & Facts #${mythId}!`);
+            renderGameBoard();
+            openMythPopup(mythId, true);
+            return;
           } else {
             current.hand.push(drawn);
+            addLog(`❌ ${target.name} didn't have [${cardLabel}]. ${current.name} automatically drew a card.`);
             checkHappyFamilies(current);
             advanceTurn();
+            renderGameBoard();
           }
         } else {
+          addLog(`❌ ${target.name} didn't have [${cardLabel}]. Draw pile is empty!`);
           advanceTurn();
+          renderGameBoard();
         }
       }
-      saveState();
-      renderBoard();
     }
 
-    function openMythCard(id, inMatch) {
-      activeMyth = MYTHS.find(m => m.id === id);
-      if (!activeMyth) return;
-      isInMatchMyth = inMatch;
-      document.getElementById("myth-picker").classList.add("hidden");
-      document.getElementById("myth-card-view").classList.remove("hidden");
-      document.getElementById("m-result").classList.add("hidden");
-      document.getElementById("m-choices").classList.remove("hidden");
-      document.getElementById("m-close-btn").classList.toggle("hidden", inMatch);
-      document.getElementById("m-tag").textContent = `${activeMyth.level.toUpperCase()} · CARD #${activeMyth.id}`;
-      document.getElementById("m-question").textContent = `"${activeMyth.q}"`;
+    // POPUP MODAL LOGIC
+    function openMythPopup(id, inGame) {
+      popupMyth = MYTHS.find(m => m.id === id);
+      if (!popupMyth) return;
+      popupIsInGame = inGame;
+
+      document.getElementById("myth-popup-overlay").classList.remove("hidden");
+      document.getElementById("pop-choices").classList.remove("hidden");
+      document.getElementById("pop-result").classList.add("hidden");
+      document.getElementById("pop-close-standalone").classList.toggle("hidden", inGame);
+      document.getElementById("pop-apply-btn").classList.toggle("hidden", !inGame);
+
+      document.getElementById("pop-tag").textContent = `⚡ ${popupMyth.level.toUpperCase()} · CARD #${popupMyth.id}`;
+      document.getElementById("pop-question").textContent = `"${popupMyth.q}"`;
     }
 
-    function answerMyth(guess) {
-      lastMythCorrect = (guess === activeMyth.ans);
-      document.getElementById("m-choices").classList.add("hidden");
-      document.getElementById("m-result").classList.remove("hidden");
+    function answerPopupMyth(guess) {
+      popupCorrect = (guess === popupMyth.ans);
+      document.getElementById("pop-choices").classList.add("hidden");
+      document.getElementById("pop-result").classList.remove("hidden");
 
-      const b = document.getElementById("m-banner");
-      b.className = "banner " + (lastMythCorrect ? "ok" : "ko");
-      b.textContent = lastMythCorrect ? `✅ Correct! (${activeMyth.ans ? "TRUE" : "FALSE"})` : `❌ Wrong! (${activeMyth.ans ? "TRUE" : "FALSE"})`;
-      document.getElementById("m-exp").textContent = activeMyth.exp;
-      document.getElementById("m-src").textContent = activeMyth.src;
+      const b = document.getElementById("pop-banner");
+      b.className = "banner " + (popupCorrect ? "ok" : "ko");
+      b.textContent = popupCorrect
+        ? `✅ Correct! (${popupMyth.ans ? "TRUE" : "FALSE"})`
+        : `❌ Wrong! It is ${popupMyth.ans ? "TRUE" : "FALSE"}`;
 
-      const list = lastMythCorrect ? BONUSES : PENALTIES;
-      currentMythEffect = list[Math.floor(Math.random() * list.length)];
-      document.getElementById("m-eff-type").textContent = lastMythCorrect ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
-      document.getElementById("m-eff-title").textContent = currentMythEffect.title;
-      document.getElementById("m-eff-desc").textContent = currentMythEffect.desc;
-      document.getElementById("m-continue-btn").classList.toggle("hidden", !isInMatchMyth);
-    }
+      document.getElementById("pop-exp").textContent = popupMyth.exp;
+      document.getElementById("pop-src").textContent = popupMyth.src;
 
-    function applyMythOutcomeAndReturn() {
-      const current = state.players[state.turnIndex];
-      state.pendingMyth = null;
-      const code = currentMythEffect.code;
+      const pool = popupCorrect ? BONUSES : PENALTIES;
+      popupEffect = pool[Math.floor(Math.random() * pool.length)];
 
-      if (lastMythCorrect) {
-        if (code === "PLAY_AGAIN") {
-          addLog(`🎁 ${current.name} answered right → Bonus: Play Again!`);
-        } else if (code === "SHIELD") {
-          current.shield = true;
-          addLog(`🛡️ ${current.name} activated a Shield!`);
-          advanceTurn();
-        } else if (code === "STEAL") {
+      document.getElementById("pop-eff-type").textContent = popupCorrect ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";
+      document.getElementById("pop-eff-title").textContent = popupEffect.title;
+      document.getElementById("pop-eff-desc").textContent = popupEffect.desc;
+
+      const extraDiv = document.getElementById("pop-extra-picker");
+      extraDiv.classList.add("hidden");
+      extraDiv.innerHTML = "";
+
+      if (popupIsInGame) {
+        const current = state.players[state.turnIndex];
+        if (popupEffect.code === "STEAL") {
           const victims = state.players.filter((p, idx) => idx !== state.turnIndex && p.hand.length > 0);
           if (victims.length > 0) {
-            state.pendingSpecial = { type: "STEAL" };
-          } else {
-            advanceTurn();
+            extraDiv.classList.remove("hidden");
+            extraDiv.innerHTML = `<div style="font-size:0.78rem; font-weight:700; margin-bottom:0.35rem;">Choose who to steal from:</div>
+              <select id="pop-target-sel" style="width:100%;">${victims.map(v => `<option value="${v.id}">${v.name} (${v.hand.length} cards)</option>`).join("")}</select>`;
           }
+        } else if (popupEffect.code === "GIVE" && !current.shield) {
+          const others = state.players.filter((_, idx) => idx !== state.turnIndex);
+          if (others.length > 0 && current.hand.length > 0) {
+            extraDiv.classList.remove("hidden");
+            extraDiv.innerHTML = `
+              <div style="font-size:0.78rem; font-weight:700; margin-bottom:0.35rem;">Choose player &amp; card to give:</div>
+              <select id="pop-target-sel" style="width:100%; margin-bottom:0.4rem;">${others.map(o => `<option value="${o.id}">${o.name}</option>`).join("")}</select>
+              <select id="pop-card-sel" style="width:100%;">${current.hand.map(c => {
+                const [f, m] = c.split("-").map(Number);
+                return `<option value="${c}">${FAMILIES[f].name} - ${MEMBERS[m].name}</option>`;
+              }).join("")}</select>`;
+          }
+        }
+      }
+    }
+
+    function confirmPopupEffect() {
+      const current = state.players[state.turnIndex];
+      const targetSel = document.getElementById("pop-target-sel");
+      const cardSel = document.getElementById("pop-card-sel");
+      document.getElementById("myth-popup-overlay").classList.add("hidden");
+
+      if (popupCorrect) {
+        if (popupEffect.code === "PLAY_AGAIN") {
+          addLog(`🎁 ${current.name} answered right → Bonus: Play Again!`);
+        } else if (popupEffect.code === "SHIELD") {
+          current.shield = true;
+          addLog(`🛡️ ${current.name} answered right → Bonus: Shield active!`);
+          advanceTurn();
+        } else if (popupEffect.code === "STEAL") {
+          if (targetSel) {
+            const target = state.players[parseInt(targetSel.value, 10)];
+            if (target && target.hand.length > 0) {
+              if (target.shield) {
+                target.shield = false;
+                addLog(`🛡️ ${target.name}'s Shield blocked ${current.name}'s steal!`);
+              } else {
+                const rnd = Math.floor(Math.random() * target.hand.length);
+                const [stolen] = target.hand.splice(rnd, 1);
+                current.hand.push(stolen);
+                checkHappyFamilies(current);
+                addLog(`🕵️ ${current.name} stole 1 random card from ${target.name}!`);
+              }
+            }
+          }
+          advanceTurn();
         }
       } else {
         if (current.shield) {
           current.shield = false;
           addLog(`🛡️ ${current.name}'s Shield blocked the penalty!`);
           advanceTurn();
-        } else if (code === "SKIP") {
+        } else if (popupEffect.code === "SKIP") {
           current.skipNext = true;
-          addLog(`⚠️ ${current.name} will skip next turn!`);
+          addLog(`⚠️ ${current.name} missed → Penalty: Skip Next Turn!`);
           advanceTurn();
-        } else if (code === "BACK_PILE") {
+        } else if (popupEffect.code === "BACK_PILE") {
           if (current.hand.length > 0) {
             const rnd = Math.floor(Math.random() * current.hand.length);
             const [ret] = current.hand.splice(rnd, 1);
             state.pile.push(ret);
             shuffle(state.pile);
           }
-          addLog(`⚠️ ${current.name} returned 1 card to the draw pile!`);
+          addLog(`⚠️ ${current.name} missed → 1 card returned automatically to the pile!`);
           advanceTurn();
-        } else if (code === "GIVE") {
-          if (current.hand.length > 0) {
-            state.pendingSpecial = { type: "GIVE" };
-          } else {
-            advanceTurn();
+        } else if (popupEffect.code === "GIVE") {
+          if (targetSel && cardSel) {
+            const target = state.players[parseInt(targetSel.value, 10)];
+            const idx = current.hand.indexOf(cardSel.value);
+            if (target && idx !== -1) {
+              current.hand.splice(idx, 1);
+              target.hand.push(cardSel.value);
+              checkHappyFamilies(target);
+              addLog(`🎁 ${current.name} gave 1 card to ${target.name}.`);
+            }
           }
+          advanceTurn();
         }
       }
-      saveState();
-      switchView("game");
-      renderBoard();
+      renderGameBoard();
     }
 
-    function resolveSpecial(targetId, cardCode) {
-      const current = state.players[state.turnIndex];
-      const target = state.players.find(p => p.id === targetId);
-      const type = state.pendingSpecial.type;
-      state.pendingSpecial = null;
-
-      if (type === "STEAL" && target && target.hand.length > 0) {
-        if (target.shield) {
-          target.shield = false;
-          addLog(`🛡️ ${target.name}'s Shield blocked ${current.name}'s steal!`);
-        } else {
-          const rnd = Math.floor(Math.random() * target.hand.length);
-          const [stolen] = target.hand.splice(rnd, 1);
-          current.hand.push(stolen);
-          checkHappyFamilies(current);
-          addLog(`🕵️ ${current.name} stole a random card from ${target.name}!`);
-        }
-      } else if (type === "GIVE" && target && cardCode) {
-        const idx = current.hand.indexOf(cardCode);
-        if (idx !== -1) {
-          current.hand.splice(idx, 1);
-          target.hand.push(cardCode);
-          checkHappyFamilies(target);
-          addLog(`🎁 ${current.name} gave a card to ${target.name}.`);
-        }
-      }
-      advanceTurn();
-      saveState();
-      renderBoard();
-    }
-
-    function closeMythCard() {
+    function closeStandalonePopup() {
       const u = new URL(window.location.href);
       u.searchParams.delete("card");
       window.history.replaceState({}, "", u.pathname + u.search);
-      document.getElementById("myth-card-view").classList.add("hidden");
-      document.getElementById("myth-picker").classList.remove("hidden");
+      document.getElementById("myth-popup-overlay").classList.add("hidden");
     }
 
     init();

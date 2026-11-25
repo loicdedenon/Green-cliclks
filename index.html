@@ -429,6 +429,28 @@
     .host-mode .logo-img { height: 150px; }
     @media (max-width: 600px) { .logo-img { height: 100px; } }
 
+    /* ===== TAP-TO-ASK + WAITING VIEW ===== */
+    .ask-steps { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; opacity: 0.8; }
+    .ask-label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin: 0.6rem 0 0.3rem; }
+    .ask-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .ask-chip { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem; border-radius: 12px; font-size: 0.9rem; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2); color: #fff; font-weight: 800; }
+    .ask-chip small { font-weight: 600; opacity: 0.8; font-size: 0.72rem; }
+    .ask-chip.fam { border-left: 8px solid var(--c); }
+    .ask-chip.sel { background: var(--gold); border-color: var(--gold); color: #18241d; }
+    .ask-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+    .ask-card { text-align: left; background: var(--cream); color: var(--ink); border: 2px solid #fff; border-top: 6px solid var(--c); border-radius: 10px; padding: 0.4rem 0.55rem; font-weight: 400; }
+    .ask-card .r { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .ask-card .t { font-family: var(--display); font-size: 0.95rem; line-height: 1.1; color: var(--c); }
+    .ask-card.sel { outline: 4px solid var(--gold); background: #fff8d6; }
+    .ask-say { margin-top: 0.7rem; padding: 0.6rem 0.75rem; border-radius: 12px; background: rgba(238,205,0,0.15); border: 2px dashed var(--gold); font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 1rem; }
+    .ask-say small { display: block; font-family: system-ui, sans-serif; font-style: normal; font-weight: 800; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.15rem; }
+    .ask-go { width: 100%; margin-top: 0.6rem; padding: 0.8rem; font-size: 1.05rem; }
+    .ask-go:disabled { opacity: 0.45; }
+    #p-wait { text-align: center; padding: 1rem; border: 2px dashed rgba(255,255,255,0.3); }
+    .wait-title { font-family: var(--display); font-size: 1.5rem; line-height: 1.1; }
+    .wait-last { margin-top: 0.6rem; font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 1.15rem; line-height: 1.3; color: var(--gold); }
+    .wait-sub { margin-top: 0.4rem; font-size: 0.85rem; opacity: 0.85; }
+
     /* ===== PHONE: smaller cards, 2 per row ===== */
     @media (max-width: 600px) {
       body { padding: 0.6rem; }
@@ -600,16 +622,14 @@
       <div id="p-notification" class="banner info hidden" onclick="this.classList.add('hidden')"></div>
       <div id="p-happy-banner" class="banner ok hidden"></div>
 
-      <div class="panel" id="ask-card-panel">
-        <strong>Ask for a card</strong>
-        <p style="font-size:0.78rem;opacity:0.85;margin:0.25rem 0 0.5rem;">🗣️ Say it out loud in English, then tap: <em>“In the [Family] family, I'd like the [Member], please.”</em></p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.5rem;">
-          <select id="ask-player"><option value="">Choose player</option></select>
-          <select id="ask-family"><option value="">Choose family</option></select>
-          <select id="ask-member"><option value="">Choose member</option></select>
-          <button class="green" id="ask-submit" onclick="playerAskCard()">Ask for card</button>
+      <div class="panel hidden" id="ask-card-panel">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;">
+          <strong>Ask for a card</strong>
+          <span id="ask-steps" class="ask-steps"></span>
         </div>
+        <div id="ask-body"></div>
       </div>
+      <div class="panel" id="p-wait"><div class="wait-title">⏳ Waiting for the host to deal the cards…</div></div>
       <details class="panel" id="p-families-panel" style="padding:0.75rem;">
         <summary>🏆 Families on the table (<span id="p-fam-count">0</span>/7)</summary>
         <div id="p-families" style="margin-top:0.4rem;"><span class="fam-empty">No families completed yet.</span></div>
@@ -985,7 +1005,7 @@
     function hostSnapshot() {
       return { v: 1, t: Date.now(), roomCode, difficulty: document.getElementById("host-difficulty").value, gameStarted, hostPile, hostHands, hostCompleted, currentTurnIndex,
         pendingMythPlayerId, pendingMythId, pendingMythEffect, skipNextTurnIds, shieldPlayerIds, pendingEffectChoice, hostLog, hostStats, hostEnd, hostMythsDrawn, pileEmptyLogged,
-        players: hostConnections.map(p => ({ id: p.id, name: p.name })) };
+        players: hostConnections.map(p => ({ id: p.id, name: p.name, token: p.token })) };
     }
     function saveHostState() {
       if (!hostActive || !roomCode) return;
@@ -1000,7 +1020,7 @@
       currentTurnIndex = st.currentTurnIndex || 0; pendingMythPlayerId = st.pendingMythPlayerId || null; pendingMythId = st.pendingMythId || null; pendingMythEffect = st.pendingMythEffect || null;
       skipNextTurnIds = st.skipNextTurnIds || []; shieldPlayerIds = st.shieldPlayerIds || []; pendingEffectChoice = st.pendingEffectChoice || null;
       hostLog = st.hostLog || []; hostStats = st.hostStats || {}; hostEnd = st.hostEnd || null; hostMythsDrawn = st.hostMythsDrawn || 0; pileEmptyLogged = !!st.pileEmptyLogged;
-      hostConnections = (st.players || []).map(pl => ({ id: pl.id, name: pl.name, offline: true, conn: { open: false, send() {}, close() {} } }));
+      hostConnections = (st.players || []).map(pl => ({ id: pl.id, name: pl.name, token: pl.token, offline: true, conn: { open: false, send() {}, close() {} } }));
       const d = document.getElementById("host-difficulty"); if (st.difficulty) d.value = st.difficulty;
     }
     function resumeHostRoom() {
@@ -1047,11 +1067,11 @@
       }
 
       list.innerHTML = hostConnections.map(p =>
-        `<span class="player-pill"><span class="dot-online" style="${p.offline ? "background:#aa3021" : ""}"></span> ${p.name}${p.offline ? " (offline)" : ""}</span>`
+        `<span class="player-pill"><span class="dot-online" style="${p.offline ? "background:#aa3021" : ""}"></span> ${esc(p.name)}${p.offline ? " (offline)" : ""}</span>`
       ).join(" ");
 
       hostConnections.forEach(p => {
-        drawSel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        drawSel.innerHTML += `<option value="${esc(p.id)}">${esc(p.name)}</option>`;
       });
       if ([...drawSel.options].some(o => o.value === prevFirst)) drawSel.value = prevFirst;
 
@@ -1369,7 +1389,29 @@
       player.conn.send({ type: "CHOOSE_EFFECT_CARD", effect, leftName: left ? left.name : "", hand: hand.map((card, index) => ({ index, label: cardLabel(card), card })) });
     }
 
-    function handleHostData(conn, data) { try { handleHostDataInner(conn, data); } finally { saveHostState(); } }
+    // ---- Anti-cheat gate: every message goes through here ----
+    let internalCall = false; // true only while the host code itself applies a resolved effect (never set by network data)
+    function cleanName(raw) {
+      let n = String(raw == null ? "" : raw).replace(/[<>&"'`\\]/g, "").replace(/\s+/g, " ").trim().slice(0, 16) || "Player";
+      const taken = new Set(hostConnections.map(p => p.name.toLowerCase()));
+      let out = n, i = 2;
+      while (taken.has(out.toLowerCase())) out = (n.slice(0, 13) + " " + i++).trim();
+      return out;
+    }
+    function newToken() { const a = new Uint8Array(12); (window.crypto || window.msCrypto).getRandomValues(a); return [...a].map(x => x.toString(16).padStart(2, "0")).join(""); }
+    function handleHostData(conn, data) {
+      if (!data || typeof data !== "object" || typeof data.type !== "string") return;
+      const now = Date.now();
+      if (!conn._rl || now - conn._rl.t > 1000) conn._rl = { t: now, n: 0 };
+      if (++conn._rl.n > 25) return; // flooding
+      if (data.type !== "JOIN") {
+        // The sender is the player bound to THIS connection: a phone cannot act as someone else.
+        const owner = hostConnections.find(p => p.conn === conn);
+        if (!owner) return;
+        data = Object.assign({}, data, { playerId: owner.id });
+      }
+      try { handleHostDataInner(conn, data); } catch (e) { console.error("host message error", e); } finally { saveHostState(); }
+    }
 
     function handleHostDataInner(conn, data) {
       if (data.type === "JOIN") {
@@ -1377,10 +1419,13 @@
         const wantedId = /^p_[a-z0-9]{1,8}$/.test(String(data.playerId || "")) ? data.playerId : null;
         const existing = wantedId && hostConnections.find(p => p.id === wantedId);
         if (existing) {
+          // Reconnection requires the secret token given only to that player (ids are visible to everybody).
+          if (existing.token && data.token !== existing.token) { conn.send({ type: "ERROR", msg: "This seat belongs to another player." }); return; }
+          if (!existing.token) existing.token = newToken();
           const old = existing.conn;
           existing.conn = conn; existing.offline = false;
           try { old.close && old.close(); } catch (e) {}
-          conn.send({type:"WELCOME",playerId:existing.id,roomCode,rejoined:true});
+          conn.send({type:"WELCOME",playerId:existing.id,roomCode,rejoined:true,token:existing.token,name:existing.name});
           updateHostPlayersUI();
           if (gameStarted) {
             conn.send({ type: "RESYNC", hand: hostHands[existing.id] || [], laid: hostCompleted.filter(c => c.pid === existing.id).map(c => c.familyIdx) });
@@ -1395,9 +1440,11 @@
           return;
         }
         if (hostConnections.length >= 4 || gameStarted) { conn.send({type:"ERROR",msg:gameStarted?"The game has already started.":"Room is full (max 4 players)."}); return; }
-        const playerId = wantedId || ("p_" + Math.random().toString(36).slice(2,8));
-        hostConnections.push({conn,id:playerId,name:String(data.name||"Player").slice(0,16)});
-        conn.send({type:"WELCOME",playerId,roomCode}); updateHostPlayersUI();
+        let playerId = "p_" + Math.random().toString(36).slice(2,8);
+        while (hostConnections.some(p => p.id === playerId)) playerId = "p_" + Math.random().toString(36).slice(2,8);
+        const token = newToken(), name = cleanName(data.name);
+        hostConnections.push({conn,id:playerId,name,token});
+        conn.send({type:"WELCOME",playerId,roomCode,token,name}); updateHostPlayersUI();
       } else if (data.type === "REQUEST_DRAW") {
         const current=hostConnections[currentTurnIndex]; if(current&&data.playerId===current.id&&!pendingMythPlayerId&&(hostHands[current.id]||[]).length===0) sendTopCardToPlayer(data.playerId);
       } else if (data.type === "ASK_CARD") {
@@ -1441,7 +1488,8 @@
         const current = hostConnections[currentTurnIndex];
         if (!current || !pendingMythEffect || data.playerId !== current.id || pendingMythEffect.playerId !== current.id) return;
         const pe = pendingMythEffect; pendingMythEffect = null;
-        handleHostData(conn, { type: "MYTH_RESOLVED", playerId: current.id, effect: pe.effect, correct: pe.correct, internal: true });
+        internalCall = true;
+        try { handleHostDataInner(conn, { type: "MYTH_RESOLVED", playerId: current.id, effect: pe.effect, correct: pe.correct }); } finally { internalCall = false; }
       } else if (data.type === "STEAL_TARGET") {
         const current = hostConnections[currentTurnIndex];
         if (!current || !pendingEffectChoice || pendingEffectChoice.effect !== "Steal a Card" || data.playerId !== current.id || pendingEffectChoice.playerId !== current.id) return;
@@ -1449,7 +1497,7 @@
         if (!victim) return;
         pendingEffectChoice = null; doSteal(current, victim); advanceTurn(false);
       } else if (data.type === "MYTH_RESOLVED") {
-        if (data.internal !== true) return; // only the host itself applies effects (no cheating from a phone)
+        if (!internalCall) return; // only the host itself applies effects (a phone cannot send this)
         const current=hostConnections[currentTurnIndex];
         if(!current||data.playerId!==current.id||pendingMythPlayerId!==data.playerId) return;
         pendingMythPlayerId=null; const effect=String(data.effect||"");
@@ -1490,7 +1538,8 @@
     function loadSession() {
       try { const x = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); return x && Date.now() - x.t < 12 * 3600 * 1000 ? x : null; } catch (e) { return null; }
     }
-    function saveSession() { try { localStorage.setItem(SESSION_KEY, JSON.stringify({ name: myName, code: roomCode, id: myPlayerId, t: Date.now() })); } catch (e) {} }
+    let myToken = "";
+    function saveSession() { try { localStorage.setItem(SESSION_KEY, JSON.stringify({ name: myName, code: roomCode, id: myPlayerId, token: myToken, t: Date.now() })); } catch (e) {} }
     function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
     function leaveRoom() {
       if (!confirm("Leave the game? You will not be able to come back to your hand.")) return;
@@ -1508,7 +1557,8 @@
       const status = document.getElementById("join-status");
       if (resume === true && !saved) return;
       if (resume === true) { document.getElementById("join-name").value = nameInput; document.getElementById("join-code").value = codeInput; }
-      const wantedId = saved && saved.code === codeInput && saved.name === nameInput ? saved.id : undefined;
+      const sameSeat = saved && saved.code === codeInput && (saved.name === nameInput || resume === true);
+      const wantedId = sameSeat ? saved.id : undefined, wantedToken = sameSeat ? saved.token : undefined;
       try { if (peer) peer.destroy(); } catch (e) {}
 
       if (!nameInput) return alert("Please enter your name!");
@@ -1532,7 +1582,7 @@
         setTimeout(() => { if (!myPlayerId) status.textContent = "⏳ Still connecting… If it fails, check the code, or ask the host to reload and create a new room."; }, 12000);
 
         clientConn.on("open", () => {
-          clientConn.send({ type: "JOIN", name: myName, playerId: wantedId });
+          clientConn.send({ type: "JOIN", name: myName, playerId: wantedId, token: wantedToken });
         });
 
         clientConn.on("data", data => handlePlayerData(data));
@@ -1558,14 +1608,17 @@
 
     function handlePlayerData(data) {
       if (data.type === "ERROR") {
+        if (/seat belongs/i.test(data.msg || "")) { clearSession(); myPlayerId = ""; }
         alert(data.msg);
       }
       else if (data.type === "WELCOME") {
         myPlayerId = data.playerId;
         roomCode = data.roomCode;
+        if (data.token) myToken = data.token;
+        if (data.name) myName = data.name;
         saveSession(); keepScreenAwake(); resumeTries = 0;
         if (data.rejoined) showPlayerAlert("✅ Reconnected!");
-        switchView("player");
+        switchView("player"); updateAskControls();
         document.getElementById("p-room-badge").textContent = `Room ${roomCode}`;
         document.getElementById("p-welcome-name").textContent = myName;
       }
@@ -1573,7 +1626,9 @@
         document.getElementById("p-fam-count").textContent = (data.completed || []).length;
         document.getElementById("p-families").innerHTML = familiesHTML(data.completed || []);
         document.getElementById("p-log").innerHTML = logHTML((data.log || []).slice(0, 12));
-        if (data.players) document.getElementById("p-players").innerHTML = playersStripHTML(data.players, data.pile || 0, myPlayerId);
+        if (data.players) { lastPlayersInfo = data.players; document.getElementById("p-players").innerHTML = playersStripHTML(data.players, data.pile || 0, myPlayerId); }
+        lastLogLine = (data.log && data.log[0]) || lastLogLine;
+        updateAskControls();
       }
       else if (data.type === "RESYNC") {
         myHand = Array.isArray(data.hand) ? data.hand : []; myLaid = Array.isArray(data.laid) ? data.laid : [];
@@ -1586,10 +1641,13 @@
       else if (data.type === "TURN_UPDATE") {
         otherPlayers = data.players.filter(p => p.id !== myPlayerId);
         if (Array.isArray(data.hand)) myHand = data.hand;
+        const wasMine = isMyTurn;
         isMyTurn = data.currentPlayerId === myPlayerId;
+        isGameOn = true; gameOverLocal = false; currentTurnName = data.currentPlayerName || ""; askSent = false;
+        if (!wasMine && isMyTurn) askSel = { player: null, family: null, card: null };
         updateAskControls();
         document.getElementById("p-turn-title").textContent = isMyTurn ? "🟢 YOUR TURN" : `⏳ ${data.currentPlayerName}'s turn`;
-        document.getElementById("p-turn-hint").textContent = isMyTurn ? "Ask another player for a specific card. If they do not have it, you draw automatically." : "Wait until your turn to ask for a card.";
+        document.getElementById("p-turn-hint").textContent = isMyTurn ? "Pick a player, a family, then the card you need. If they do not have it, you draw automatically." : "Wait until your turn to ask for a card.";
         const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
         if (drawBtn) { drawBtn.disabled = !isMyTurn || !!pendingMythLocal || myHand.length > 0; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
         renderPlayerHand();
@@ -1611,7 +1669,7 @@
         document.getElementById("p-turn-title").textContent = "🎮 Game started!";
         document.getElementById("p-turn-hint").textContent = "The host has dealt the cards. Waiting for the first turn...";
         document.getElementById("p-hand-grid").innerHTML = "";
-        myLaid = []; pendingMythLocal = false; mythFromGame = false;
+        myLaid = []; pendingMythLocal = false; mythFromGame = false; isGameOn = false; gameOverLocal = false; askSel = { player: null, family: null, card: null };
         document.getElementById("end-screen").classList.add("hidden");
         document.getElementById("p-notification").classList.add("hidden");
       }
@@ -1629,7 +1687,7 @@
         myHand = Array.isArray(data.hand) ? data.hand : []; myLaid.push(data.familyIdx); showPlayerAlert(`🎉 Happy family! ${FAMILIES[data.familyIdx].name} completed!`); renderPlayerHand();
       }
       else if (data.type === "GAME_OVER") {
-        isMyTurn = false; updateAskControls();
+        isMyTurn = false; isGameOn = false; gameOverLocal = true; updateAskControls();
         if (data.ranking) showEndScreen(data.ranking, false);
         document.getElementById("p-turn-title").textContent = "🏁 Game over";
         showPlayerAlert(data.winner ? `🏆 Game over! Winner: ${data.winner.name} (${data.winner.count} complete ${data.winner.count > 1 ? "families" : "family"}).` : "🏁 Game over!");
@@ -1775,34 +1833,78 @@
         <p>When all 7 families are complete. The player with the most families wins. Tie: the player who completed a family first wins.</p>`;
     }
 
+    // ---- Ask for a card: 3 taps (player → family → card) ----
+    let askSel = { player: null, family: null, card: null }, askSent = false;
+    let isGameOn = false, gameOverLocal = false, currentTurnName = "", lastLogLine = "", lastPlayersInfo = [];
+
+    function askPick(kind, val) {
+      if (askSent) return;
+      if (kind === "player") askSel.player = val;
+      else if (kind === "family") { if (askSel.family !== val) askSel.card = null; askSel.family = val; }
+      else askSel.card = val;
+      updateAskControls();
+    }
+
+    function renderWait() {
+      const w = document.getElementById("p-wait");
+      let html;
+      if (gameOverLocal) html = `<div class="wait-title">🏁 Game over</div>`;
+      else if (!isGameOn) {
+        const names = [myName, ...otherPlayers.map(p => p.name)].filter(Boolean).map(esc).join(", ");
+        html = `<div class="wait-title">⏳ Waiting for the host to deal the cards…</div><div class="wait-sub">In the room: ${names}</div>`;
+      } else if (isMyTurn) html = `<div class="wait-title">⚡ Your turn is on hold</div><div class="wait-sub">Finish your Myths &amp; Facts challenge to continue.</div>`;
+      else html = (lastLogLine ? `<div class="wait-sub" style="margin:0 0 0.2rem;">Last action</div><div class="wait-last" style="margin-top:0;">${esc(lastLogLine)}</div>` : `<div class="wait-title">⏳ ${esc(currentTurnName)}'s turn</div>`) + `<div class="wait-sub">Listen to the others and wait for your turn.</div>`;
+      w.innerHTML = html;
+    }
+
     function updateAskControls() {
-      const ps=document.getElementById("ask-player"),fs=document.getElementById("ask-family"),ms=document.getElementById("ask-member");
-      if(!ps||!fs||!ms)return;
-      const prevP=ps.value, prevF=fs.value, prevM=ms.value;
-      ps.innerHTML='<option value="">Choose player</option>'+otherPlayers.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
-      const owned=[...new Set(myHand.map(c=>Number(c.split("-")[0])))].sort((a,b)=>a-b);
-      fs.innerHTML='<option value="">Choose family</option>'+owned.map(f=>`<option value="${f}">${FAMILIES[f].name}</option>`).join("");
-      const fill=()=>{
-        const f=fs.value;
-        if(f===""){ms.innerHTML='<option value="">Choose member</option>';return;}
-        const have=new Set(myHand.filter(c=>c.startsWith(`${f}-`)).map(c=>Number(c.split("-")[1])));
-        ms.innerHTML='<option value="">Choose member</option>'+MEMBERS.map((m,i)=>({m,i})).filter(x=>!have.has(x.i)).map(x=>`<option value="${f}-${x.i}">${x.m.name} — ${x.i===0?"Explanatory card":FAMILIES[f].cards[x.i].title}</option>`).join("");
-      };
-      fs.onchange=fill;
-      if([...ps.options].some(o=>o.value===prevP)) ps.value=prevP;
-      if([...fs.options].some(o=>o.value===prevF)) fs.value=prevF;
-      fill();
-      if([...ms.options].some(o=>o.value===prevM)) ms.value=prevM;
-      [ps,fs,ms].forEach(x=>x.disabled=!isMyTurn||pendingMythLocal);
-      document.getElementById("ask-submit").disabled=!isMyTurn||pendingMythLocal;
+      const panel = document.getElementById("ask-card-panel"), wait = document.getElementById("p-wait");
+      if (!panel || !wait) return;
+      const canAsk = isGameOn && isMyTurn && !pendingMythLocal && !gameOverLocal;
+      panel.classList.toggle("hidden", !canAsk);
+      wait.classList.toggle("hidden", canAsk);
+      if (!canAsk) { renderWait(); return; }
+
+      // keep selections valid
+      if (askSel.player && !otherPlayers.some(p => p.id === askSel.player)) askSel.player = null;
+      if (!askSel.player && otherPlayers.length === 1) askSel.player = otherPlayers[0].id;
+      const owned = {}; myHand.forEach(c => { const f = c.split("-")[0]; owned[f] = (owned[f] || 0) + 1; });
+      if (askSel.family !== null && !owned[askSel.family]) { askSel.family = null; askSel.card = null; }
+      if (askSel.card && (askSel.family === null || !askSel.card.startsWith(askSel.family + "-") || myHand.includes(askSel.card))) askSel.card = null;
+
+      const info = id => lastPlayersInfo.find(x => x.id === id);
+      const players = otherPlayers.map(pl => { const i = info(pl.id); return `<button class="ask-chip ${askSel.player === pl.id ? "sel" : ""}" onclick="askPick('player','${pl.id}')">${esc(pl.name)}${i ? ` <small>🃏 ${i.count}</small>` : ""}</button>`; }).join("");
+      const fams = Object.keys(owned).map(Number).sort((a, b) => a - b).map(f => `<button class="ask-chip fam ${askSel.family === String(f) ? "sel" : ""}" style="--c:${FAMILIES[f].color}" onclick="askPick('family','${f}')">${FAMILIES[f].icon} ${FAMILIES[f].name} <small>${owned[f]}/6</small></button>`).join("");
+      let cards = "";
+      if (askSel.family !== null) {
+        const f = Number(askSel.family), have = new Set(myHand.filter(c => c.startsWith(`${f}-`)).map(c => Number(c.split("-")[1])));
+        cards = `<div class="ask-label">3 · Which card?</div><div class="ask-cards">` + MEMBERS.map((m, i) => ({ m, i })).filter(x => !have.has(x.i)).map(x => {
+          const code = `${f}-${x.i}`;
+          return `<button class="ask-card ${askSel.card === code ? "sel" : ""}" style="--c:${FAMILIES[f].color}" onclick="askPick('card','${code}')"><div class="r">${x.m.name}</div><div class="t">${x.i === 0 ? "Explanatory card" : FAMILIES[f].cards[x.i].title}</div></button>`;
+        }).join("") + `</div>`;
+      }
+      let say = "";
+      const target = otherPlayers.find(p => p.id === askSel.player);
+      if (target && askSel.card) {
+        const [f, m] = askSel.card.split("-").map(Number);
+        say = `<div class="ask-say"><small>🗣️ Say it out loud, then tap</small>“${esc(target.name)}, in the ${FAMILIES[f].name} family, I'd like the ${MEMBERS[m].name}, please.”</div>`;
+      }
+      const ready = !!(target && askSel.card);
+      const step = !askSel.player ? 1 : askSel.family === null ? 2 : !askSel.card ? 3 : 4;
+      document.getElementById("ask-steps").textContent = step < 4 ? `STEP ${step}/3` : "READY";
+      document.getElementById("ask-body").innerHTML =
+        `<div class="ask-label">1 · Who do you ask?</div><div class="ask-chips">${players}</div>` +
+        `<div class="ask-label">2 · Which family?</div><div class="ask-chips">${fams}</div>` + cards + say +
+        `<button class="green ask-go" ${ready && !askSent ? "" : "disabled"} onclick="playerAskCard()">${askSent ? "📨 Sent… waiting for the result" : ready ? `📨 Ask ${esc(target.name)}` : "Pick a player, a family and a card"}</button>`;
     }
 
     function playerAskCard() {
-      if(!clientConn||!isMyTurn||pendingMythLocal)return;
-      const targetId=document.getElementById("ask-player").value,card=document.getElementById("ask-member").value;
-      if(!targetId||!card)return showPlayerAlert("Choose a player, family and member first.");
-      clientConn.send({type:"ASK_CARD",playerId:myPlayerId,targetId,card});
-      document.getElementById("ask-submit").disabled=true; showPlayerAlert("📨 Card request sent. Waiting for the result...");
+      if (!clientConn || !isMyTurn || pendingMythLocal || askSent) return;
+      const targetId = askSel.player, card = askSel.card;
+      if (!targetId || !card) return showPlayerAlert("Choose a player, a family and a card first.");
+      clientConn.send({ type: "ASK_CARD", playerId: myPlayerId, targetId, card });
+      askSent = true; updateAskControls();
+      setTimeout(() => { if (askSent) { askSent = false; updateAskControls(); } }, 4000);
     }
 
     function playerRequestDraw() {

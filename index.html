@@ -311,6 +311,22 @@
     .card-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 1px 6px; font-size: 0.54rem; line-height: 1.25; color: var(--muted); border-top: 1px solid rgba(0,0,0,0.15); padding-top: 0.25rem; }
     .card-list li.me { font-weight: 800; color: var(--ink); text-decoration: underline; }
     .card-list li::before { content: "• "; }
+
+    /* ===== PHONE: smaller cards, 2 per row ===== */
+    @media (max-width: 600px) {
+      body { padding: 0.6rem; }
+      .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+      .playing-card { aspect-ratio: auto; padding: 0.4rem; gap: 0.2rem; border-width: 2px; border-radius: 8px; }
+      .playing-card:hover { transform: none; }
+      .card-header { font-size: 0.55rem; padding-bottom: 0.15rem; }
+      .card-icon { font-size: 1.2rem; }
+      .card-role { font-size: 0.5rem; }
+      .card-title { font-size: 0.78rem; }
+      .card-desc { font-size: 0.6rem; line-height: 1.2; }
+      .card-q { font-size: 0.56rem; }
+      .card-list { display: none; }
+      .logo-title { font-size: 1.9rem; }
+    }
   </style>
 </head>
 <body>

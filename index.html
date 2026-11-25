@@ -489,6 +489,12 @@
               <option value="12">Advanced Mode (12 Myths &amp; Facts)</option>
             </select>
             <button class="primary" onclick="createHostRoom()">Create Room &amp; Get Code</button>
+            <div id="host-resume" class="hidden" style="margin-top:0.4rem; padding:0.6rem 0.7rem; border:2px dashed var(--gold); border-radius:10px; background:rgba(238,205,0,0.1);">
+              <div style="font-size:0.72rem; font-weight:800; letter-spacing:0.08em; color:var(--gold); text-transform:uppercase;">♻️ Saved game found</div>
+              <div id="host-resume-text" style="font-size:0.84rem; margin:0.2rem 0 0.5rem;"></div>
+              <button class="green" onclick="resumeHostRoom()">▶ Resume this game</button>
+              <div id="host-resume-status" style="font-size:0.8rem; margin-top:0.4rem; color:var(--gold);"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -510,6 +516,7 @@
         <div style="text-align:center;">
           <div id="host-qr-box"></div>
           <div style="font-size:0.7rem; margin-top:0.25rem; opacity:0.8;">Scan to Join</div>
+          <button class="small" style="margin-top:0.4rem;" onclick="closeHostRoom()">✖ Close room</button>
         </div>
       </div>
 
@@ -916,11 +923,17 @@
     }
 
     function createHostRoom() {
-      roomCode = generateRoomCode();
+      clearHostState();
+      openHostRoom(generateRoomCode(), false, 0);
+    }
+
+    function openHostRoom(code, resumeMode, tries) {
+      roomCode = code;
       const peerId = `greenclicks-room-${roomCode}`;
       peer = new Peer(peerId, PEER_OPTS);
 
       peer.on("open", () => {
+        hostActive = true;
         switchView("host");
         document.getElementById("display-room-code").textContent = roomCode;
 
@@ -931,9 +944,18 @@
         qrBox.innerHTML = "";
         new QRCode(qrBox, { text: joinUrl, width: 150, height: 150 });
         document.body.classList.add("host-mode");
+        if (resumeMode) afterHostResume(); else saveHostState();
       });
 
       peer.on("error", err => {
+        // After a refresh the previous registration of the room code can take a few seconds to expire: retry.
+        if (resumeMode && err.type === "unavailable-id" && tries < 30) {
+          const st = document.getElementById("host-resume-status");
+          if (st) st.textContent = `⏳ Reconnecting room ${roomCode}… (${tries + 1}/30)`;
+          try { peer.destroy(); } catch (e) {}
+          setTimeout(() => openHostRoom(code, true, tries + 1), 3000);
+          return;
+        }
         alert("Connection error: " + err.type + ". Try again!");
       });
 
@@ -954,6 +976,62 @@
         });
       });
     }
+
+    // ==========================================
+    // HOST SAVE / RESUME (survives a refresh or a closed tab)
+    // ==========================================
+    const HOST_KEY = "greenclicks-host";
+    let hostActive = false;
+    function hostSnapshot() {
+      return { v: 1, t: Date.now(), roomCode, difficulty: document.getElementById("host-difficulty").value, gameStarted, hostPile, hostHands, hostCompleted, currentTurnIndex,
+        pendingMythPlayerId, pendingMythId, pendingMythEffect, skipNextTurnIds, shieldPlayerIds, pendingEffectChoice, hostLog, hostStats, hostEnd, hostMythsDrawn, pileEmptyLogged,
+        players: hostConnections.map(p => ({ id: p.id, name: p.name })) };
+    }
+    function saveHostState() {
+      if (!hostActive || !roomCode) return;
+      try { localStorage.setItem(HOST_KEY, JSON.stringify(hostSnapshot())); } catch (e) {}
+    }
+    function loadHostState() {
+      try { const x = JSON.parse(localStorage.getItem(HOST_KEY) || "null"); return x && x.v === 1 && Date.now() - x.t < 12 * 3600 * 1000 ? x : null; } catch (e) { return null; }
+    }
+    function clearHostState() { try { localStorage.removeItem(HOST_KEY); } catch (e) {} }
+    function applyHostState(st) {
+      roomCode = st.roomCode; gameStarted = !!st.gameStarted; hostPile = st.hostPile || []; hostHands = st.hostHands || {}; hostCompleted = st.hostCompleted || [];
+      currentTurnIndex = st.currentTurnIndex || 0; pendingMythPlayerId = st.pendingMythPlayerId || null; pendingMythId = st.pendingMythId || null; pendingMythEffect = st.pendingMythEffect || null;
+      skipNextTurnIds = st.skipNextTurnIds || []; shieldPlayerIds = st.shieldPlayerIds || []; pendingEffectChoice = st.pendingEffectChoice || null;
+      hostLog = st.hostLog || []; hostStats = st.hostStats || {}; hostEnd = st.hostEnd || null; hostMythsDrawn = st.hostMythsDrawn || 0; pileEmptyLogged = !!st.pileEmptyLogged;
+      hostConnections = (st.players || []).map(pl => ({ id: pl.id, name: pl.name, offline: true, conn: { open: false, send() {}, close() {} } }));
+      const d = document.getElementById("host-difficulty"); if (st.difficulty) d.value = st.difficulty;
+    }
+    function resumeHostRoom() {
+      const st = loadHostState(); if (!st) return;
+      applyHostState(st);
+      document.getElementById("host-resume-status").textContent = `⏳ Reconnecting room ${st.roomCode}…`;
+      openHostRoom(st.roomCode, true, 0);
+    }
+    function afterHostResume() {
+      document.getElementById("display-room-code").textContent = roomCode;
+      document.getElementById("host-board-active").classList.toggle("hidden", !gameStarted && !hostEnd);
+      document.getElementById("host-deal-bar").classList.toggle("hidden", gameStarted);
+      document.getElementById("host-pile-count").textContent = hostPile.length;
+      renderHostTable(); updateHostPlayersUI(); broadcastTable();
+      if (gameStarted) updateTvBanner(false);
+      if (hostEnd) { updateTvBanner(true); showEndScreen(hostEnd.ranking, true); }
+      logEvent("♻️ The host screen was reloaded: the game was restored. Players are reconnecting…");
+    }
+    function showResumeOffer() {
+      const st = loadHostState(), box = document.getElementById("host-resume");
+      if (!st || !box) return;
+      const mins = Math.max(1, Math.round((Date.now() - st.t) / 60000));
+      document.getElementById("host-resume-text").textContent = `Room ${st.roomCode} · ${st.players.length} player${st.players.length > 1 ? "s" : ""} · ${st.gameStarted ? "game in progress" : st.hostEnd ? "finished game" : "lobby"} · saved ${mins} min ago`;
+      box.classList.remove("hidden");
+    }
+    function closeHostRoom() {
+      if (!confirm("Close this room for everyone? The saved game will be deleted.")) return;
+      clearHostState(); hostActive = false;
+      window.location.href = window.location.pathname;
+    }
+    window.addEventListener("beforeunload", e => { if (hostActive && gameStarted) { e.preventDefault(); e.returnValue = ""; } });
 
     function updateHostPlayersUI() {
       const list = document.getElementById("connected-players-list");
@@ -1044,7 +1122,7 @@
       }));
       document.getElementById("host-pile-count").textContent = hostPile.length;
       document.getElementById("host-table-log").textContent = `🎯 It is ${current.name}'s turn: ask for a card, or draw when told "Draw!".`;
-      updateTvBanner(false); broadcastTable();
+      updateTvBanner(false); broadcastTable(); saveHostState();
       if ((hostHands[current.id] || []).length === 0 && hostPile.length && !pendingMythPlayerId) {
         document.getElementById("host-table-log").textContent = `🃏 ${current.name} has no cards and must draw at the start of the turn.`;
         logEvent(`🃏 ${current.name} has no cards and draws one at the start of the turn`);
@@ -1189,7 +1267,7 @@
       updateHostPlayersUI();
       hostDealCards();
     }
-    function logEvent(text) { hostLog.unshift(text); if (hostLog.length > 60) hostLog.pop(); renderHostTable(); broadcastTable(); }
+    function logEvent(text) { hostLog.unshift(text); if (hostLog.length > 60) hostLog.pop(); renderHostTable(); broadcastTable(); saveHostState(); }
 
     function cardLabel(code) {
       if (String(code).startsWith("M-")) return "Myths & Facts";
@@ -1291,7 +1369,9 @@
       player.conn.send({ type: "CHOOSE_EFFECT_CARD", effect, leftName: left ? left.name : "", hand: hand.map((card, index) => ({ index, label: cardLabel(card), card })) });
     }
 
-    function handleHostData(conn, data) {
+    function handleHostData(conn, data) { try { handleHostDataInner(conn, data); } finally { saveHostState(); } }
+
+    function handleHostDataInner(conn, data) {
       if (data.type === "JOIN") {
         // Reconnection: same playerId (saved on the phone) takes its seat back.
         const wantedId = /^p_[a-z0-9]{1,8}$/.test(String(data.playerId || "")) ? data.playerId : null;
@@ -1418,9 +1498,10 @@
       try { clientConn && clientConn.close(); peer && peer.destroy(); } catch (e) {}
       window.location.href = window.location.pathname;
     }
-    let intentionalLeave = false, reconnectTimer = null;
+    let intentionalLeave = false, reconnectTimer = null, resumeTries = 0;
 
     function joinRoom(resume) {
+      if (resume !== true) { clearTimeout(reconnectTimer); resumeTries = 0; }
       const saved = loadSession();
       const nameInput = resume && saved ? saved.name : document.getElementById("join-name").value.trim();
       const codeInput = resume && saved ? saved.code : document.getElementById("join-code").value.trim().toUpperCase();
@@ -1437,7 +1518,15 @@
       status.textContent = resume === true ? "🔄 Reconnecting to your game..." : "Connecting to game table...";
 
       peer = new Peer(undefined, PEER_OPTS);
-      peer.on("error", err => { if (err.type === "peer-unavailable" && resume === true) { clearSession(); myPlayerId = ""; } status.textContent = err.type === "peer-unavailable" ? "❌ Room not found. Check the Room Code (and that the host table is still open)." : "❌ Connection error (" + err.type + "). Try again."; });
+      peer.on("error", err => {
+        if (err.type === "peer-unavailable" && resume === true) {
+          if (++resumeTries <= 40) { // host screen may just be reloading: keep trying for about 2 minutes
+            status.textContent = "⏳ Waiting for the host… (" + resumeTries + ")"; showPlayerAlert("⏳ Host unreachable, retrying…");
+            clearTimeout(reconnectTimer); reconnectTimer = setTimeout(() => joinRoom(true), 3000); return;
+          }
+          clearSession(); myPlayerId = "";
+        }
+        status.textContent = err.type === "peer-unavailable" ? "❌ Room not found. Check the Room Code (and that the host table is still open)." : "❌ Connection error (" + err.type + "). Try again."; });
       peer.on("open", () => {
         clientConn = peer.connect(`greenclicks-room-${codeInput}`, { reliable: true });
         setTimeout(() => { if (!myPlayerId) status.textContent = "⏳ Still connecting… If it fails, check the code, or ask the host to reload and create a new room."; }, 12000);
@@ -1474,7 +1563,7 @@
       else if (data.type === "WELCOME") {
         myPlayerId = data.playerId;
         roomCode = data.roomCode;
-        saveSession(); keepScreenAwake();
+        saveSession(); keepScreenAwake(); resumeTries = 0;
         if (data.rejoined) showPlayerAlert("✅ Reconnected!");
         switchView("player");
         document.getElementById("p-room-badge").textContent = `Room ${roomCode}`;
@@ -1837,6 +1926,7 @@
     }
 
     init();
+    showResumeOffer();
     // Resume automatically after a refresh (unless a different room is requested in the URL)
     (function autoResume() {
       const s = loadSession(); if (!s) return;

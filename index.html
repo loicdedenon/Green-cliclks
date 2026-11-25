@@ -412,6 +412,14 @@
     .help-fam b { color: var(--c); font-family: var(--display); font-weight: 400; font-size: 1rem; }
     .help-fam div { font-size: 0.78rem; color: var(--muted); }
 
+    /* ===== PLAYER MODE: compact in-game layout ===== */
+    .player-mode header, .player-mode #top-nav { display: none; }
+    .player-mode body, body.player-mode { padding-top: 0.5rem; }
+    body.player-mode .panel { margin-bottom: 0.55rem; }
+    body.player-mode #p-turn-banner { padding: 0.55rem 0.8rem; margin-bottom: 0.55rem !important; }
+    body.player-mode .pl-strip { margin-bottom: 0.55rem; gap: 0.4rem; }
+    body.player-mode .pl-chip { padding: 0.35rem 0.6rem; }
+
     /* ===== PHONE: smaller cards, 2 per row ===== */
     @media (max-width: 600px) {
       body { padding: 0.6rem; }
@@ -557,13 +565,15 @@
          VIEW 3: PLAYER PHONE VIEW (SECRET HAND + REAL-TIME ACTIONS)
          ========================================================= -->
     <section id="view-player" class="hidden">
-      <div class="panel" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-        <div>
+      <div class="panel" style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; padding:0.45rem 0.7rem;">
+        <div style="min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
           <span class="dot-online"></span> <strong id="p-room-badge" style="color:var(--gold);">Room ----</strong>
-          <h2 id="p-welcome-name" style="margin-top:0.15rem;">My Secret Hand</h2>
+          <span style="opacity:0.6;"> · </span><span id="p-welcome-name" style="font-weight:800;">Player</span>
         </div>
-        <button class="small" onclick="leaveRoom()" style="margin-right:0.4rem;">🚪 Leave</button>
-        <button class="small" onclick="openHelp()">❓ Help</button>
+        <div style="display:flex; gap:0.3rem; flex-shrink:0;">
+          <button class="small" onclick="openHelp()" title="How to play">❓ Help</button>
+          <button class="small" onclick="leaveRoom()" title="Leave the game">🚪</button>
+        </div>
       </div>
 
       <div id="p-turn-banner" class="panel" style="margin-bottom:0.8rem; text-align:center; border:2px solid var(--accent);">
@@ -574,15 +584,9 @@
       <div id="p-notification" class="banner info hidden" onclick="this.classList.add('hidden')"></div>
       <div id="p-happy-banner" class="banner ok hidden"></div>
 
-      <div class="panel" style="padding:0.75rem;">
-        <div style="font-size:0.8rem; opacity:0.9;">
-          🗣️ Ask out loud in English: <em>"In the <strong>[Family]</strong> family, I'd like the <strong>[Member]</strong>, please."</em>
-        </div>
-      </div>
-
       <div class="panel" id="ask-card-panel">
         <strong>Ask for a card</strong>
-        <p style="font-size:0.82rem;opacity:0.85;margin:0.35rem 0 0.6rem;">Choose a player and request a specific card from a family already in your hand.</p>
+        <p style="font-size:0.78rem;opacity:0.85;margin:0.25rem 0 0.5rem;">🗣️ Say it out loud in English, then tap: <em>“In the [Family] family, I'd like the [Member], please.”</em></p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.5rem;">
           <select id="ask-player"><option value="">Choose player</option></select>
           <select id="ask-family"><option value="">Choose family</option></select>
@@ -594,7 +598,7 @@
         <summary>🏆 Families on the table (<span id="p-fam-count">0</span>/7)</summary>
         <div id="p-families" style="margin-top:0.4rem;"><span class="fam-empty">No families completed yet.</span></div>
       </details>
-      <details class="panel" id="p-history-panel" open style="padding:0.75rem;">
+      <details class="panel" id="p-history-panel" style="padding:0.75rem;">
         <summary>📜 Recent actions</summary>
         <div id="p-log" class="log-list" style="max-height:170px;"><div class="log-line">Waiting for the game to start...</div></div>
       </details>
@@ -847,6 +851,7 @@
     }
 
     function switchView(view) {
+      document.body.classList.toggle("player-mode", view === "player");
       ["home", "host", "player", "myths", "families"].forEach(v => {
         document.getElementById(`view-${v}`).classList.toggle("hidden", v !== view);
       });
@@ -1403,7 +1408,7 @@
         if (data.rejoined) showPlayerAlert("✅ Reconnected!");
         switchView("player");
         document.getElementById("p-room-badge").textContent = `Room ${roomCode}`;
-        document.getElementById("p-welcome-name").textContent = `${myName}'s Private Hand`;
+        document.getElementById("p-welcome-name").textContent = myName;
       }
       else if (data.type === "TABLE") {
         document.getElementById("p-fam-count").textContent = (data.completed || []).length;

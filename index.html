@@ -433,6 +433,7 @@
           <span class="dot-online"></span> <strong id="p-room-badge" style="color:var(--gold);">Room ----</strong>
           <h2 id="p-welcome-name" style="margin-top:0.15rem;">My Secret Hand</h2>
         </div>
+        <button class="small" onclick="leaveRoom()" style="margin-right:0.4rem;">🚪 Leave</button>
         <button class="small" onclick="playerRequestDraw()">🃏 Draw (only if your hand is empty)</button>
       </div>
 
@@ -627,6 +628,7 @@
     let gameStarted = false;
     let currentTurnIndex = 0;
     let pendingMythPlayerId = null;
+    let pendingMythId = null;
     let skipNextTurnIds = [];
     let shieldPlayerIds = [];
     let pendingEffectChoice = null;
@@ -743,9 +745,15 @@
         conn.on("data", data => handleHostData(conn, data));
         conn.on("close", () => {
           const disconnected = hostConnections.find(p => p.conn === conn);
-          if (disconnected && pendingEffectChoice?.playerId === disconnected.id) pendingEffectChoice = null;
+          if (!disconnected) return; // old connection already replaced by a reconnection
+          if (gameStarted) {
+            // Keep the player (hand, turn order, effects) so they can come back after a refresh.
+            disconnected.offline = true;
+            disconnected.conn = { open: false, send() {}, close() {} };
+            updateHostPlayersUI();
+            return;
+          }
           hostConnections = hostConnections.filter(p => p.conn !== conn);
-          if (gameStarted && hostConnections.length) { currentTurnIndex = Math.min(currentTurnIndex, hostConnections.length - 1); broadcastTurn(); }
           updateHostPlayersUI();
         });
       });
@@ -765,7 +773,7 @@
       }
 
       list.innerHTML = hostConnections.map(p =>
-        `<span class="player-pill"><span class="dot-online"></span> ${p.name}</span>`
+        `<span class="player-pill"><span class="dot-online" style="${p.offline ? "background:#aa3021" : ""}"></span> ${p.name}${p.offline ? " (offline)" : ""}</span>`
       ).join(" ");
 
       hostConnections.forEach(p => {
@@ -871,7 +879,7 @@
       const card = hostPile.pop();
       document.getElementById("host-pile-count").textContent = hostPile.length;
       if (card.startsWith("M-")) {
-        const mythId = Number(card.split("-")[1]); pendingMythPlayerId = target.id;
+        const mythId = Number(card.split("-")[1]); pendingMythPlayerId = target.id; pendingMythId = mythId;
         target.conn.send({ type: "DREW_MYTH", mythId, requestedCard });
         document.getElementById("host-table-log").textContent = `⚡ ${target.name} drew Myths & Facts #${mythId}.`;
       } else {
@@ -909,7 +917,7 @@
       for (let f=0; f<7; f++) {
         if (hand.filter(c => c.startsWith(`${f}-`)).length === 6) {
           hostHands[player.id] = hostHands[player.id].filter(c => !c.startsWith(`${f}-`));
-          hostCompleted.push({ player: player.name, family: FAMILIES[f].name, familyIdx: f });
+          hostCompleted.push({ player: player.name, pid: player.id, family: FAMILIES[f].name, familyIdx: f });
           player.conn.send({ type: "FAMILY_LAID", familyIdx: f, hand: hostHands[player.id] });
           player.conn.send({ type: "PLAYER_NOTICE", message: `🎉 Happy family! You completed ${FAMILIES[f].name}!` });
         }
@@ -948,8 +956,28 @@
 
     function handleHostData(conn, data) {
       if (data.type === "JOIN") {
+        // Reconnection: same playerId (saved on the phone) takes its seat back.
+        const wantedId = /^p_[a-z0-9]{1,8}$/.test(String(data.playerId || "")) ? data.playerId : null;
+        const existing = wantedId && hostConnections.find(p => p.id === wantedId);
+        if (existing) {
+          const old = existing.conn;
+          existing.conn = conn; existing.offline = false;
+          try { old.close && old.close(); } catch (e) {}
+          conn.send({type:"WELCOME",playerId:existing.id,roomCode,rejoined:true});
+          updateHostPlayersUI();
+          if (gameStarted) {
+            conn.send({ type: "RESYNC", hand: hostHands[existing.id] || [], laid: hostCompleted.filter(c => c.pid === existing.id).map(c => c.familyIdx) });
+            broadcastTurn();
+            if (pendingMythPlayerId === existing.id && pendingMythId) conn.send({ type: "DREW_MYTH", mythId: pendingMythId, requestedCard: null });
+            if (pendingEffectChoice && pendingEffectChoice.playerId === existing.id) {
+              const hand = hostHands[existing.id] || [];
+              conn.send({ type: "CHOOSE_EFFECT_CARD", effect: pendingEffectChoice.effect, hand: hand.map((card, index) => ({ index, label: cardLabel(card) })) });
+            }
+          }
+          return;
+        }
         if (hostConnections.length >= 4 || gameStarted) { conn.send({type:"ERROR",msg:gameStarted?"The game has already started.":"Room is full (max 4 players)."}); return; }
-        const playerId = "p_" + Math.random().toString(36).slice(2,8);
+        const playerId = wantedId || ("p_" + Math.random().toString(36).slice(2,8));
         hostConnections.push({conn,id:playerId,name:String(data.name||"Player").slice(0,16)});
         conn.send({type:"WELCOME",playerId,roomCode}); updateHostPlayersUI();
       } else if (data.type === "REQUEST_DRAW") {
@@ -1007,25 +1035,44 @@
     // ==========================================
     // PLAYER PHONE LOGIC (JOINS ROOM)
     // ==========================================
-    function joinRoom() {
-      const nameInput = document.getElementById("join-name").value.trim();
-      const codeInput = document.getElementById("join-code").value.trim().toUpperCase();
+    const SESSION_KEY = "greenclicks-session";
+    function loadSession() {
+      try { const x = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); return x && Date.now() - x.t < 12 * 3600 * 1000 ? x : null; } catch (e) { return null; }
+    }
+    function saveSession() { try { localStorage.setItem(SESSION_KEY, JSON.stringify({ name: myName, code: roomCode, id: myPlayerId, t: Date.now() })); } catch (e) {} }
+    function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+    function leaveRoom() {
+      if (!confirm("Leave the game? You will not be able to come back to your hand.")) return;
+      intentionalLeave = true; clearSession();
+      try { clientConn && clientConn.close(); peer && peer.destroy(); } catch (e) {}
+      window.location.href = window.location.pathname;
+    }
+    let intentionalLeave = false, reconnectTimer = null;
+
+    function joinRoom(resume) {
+      const saved = loadSession();
+      const nameInput = resume && saved ? saved.name : document.getElementById("join-name").value.trim();
+      const codeInput = resume && saved ? saved.code : document.getElementById("join-code").value.trim().toUpperCase();
       const status = document.getElementById("join-status");
+      if (resume === true && !saved) return;
+      if (resume === true) { document.getElementById("join-name").value = nameInput; document.getElementById("join-code").value = codeInput; }
+      const wantedId = saved && saved.code === codeInput && saved.name === nameInput ? saved.id : undefined;
+      try { if (peer) peer.destroy(); } catch (e) {}
 
       if (!nameInput) return alert("Please enter your name!");
       if (codeInput.length !== 4) return alert("Please enter the 4-letter Room Code!");
 
       myName = nameInput;
-      status.textContent = "Connecting to game table...";
+      status.textContent = resume === true ? "🔄 Reconnecting to your game..." : "Connecting to game table...";
 
       peer = new Peer(undefined, PEER_OPTS);
-      peer.on("error", err => { status.textContent = err.type === "peer-unavailable" ? "❌ Room not found. Check the Room Code (and that the host table is still open)." : "❌ Connection error (" + err.type + "). Try again."; });
+      peer.on("error", err => { if (err.type === "peer-unavailable" && resume === true) { clearSession(); myPlayerId = ""; } status.textContent = err.type === "peer-unavailable" ? "❌ Room not found. Check the Room Code (and that the host table is still open)." : "❌ Connection error (" + err.type + "). Try again."; });
       peer.on("open", () => {
         clientConn = peer.connect(`greenclicks-room-${codeInput}`, { reliable: true });
         setTimeout(() => { if (!myPlayerId) status.textContent = "⏳ Still connecting… If it fails, check the code, or ask the host to reload and create a new room."; }, 12000);
 
         clientConn.on("open", () => {
-          clientConn.send({ type: "JOIN", name: myName });
+          clientConn.send({ type: "JOIN", name: myName, playerId: wantedId });
         });
 
         clientConn.on("data", data => handlePlayerData(data));
@@ -1033,7 +1080,14 @@
         clientConn.on("error", (e) => {
           status.textContent = "❌ Could not connect (" + (e && e.type ? e.type : "error") + "). Check the Room Code!";
         });
-        clientConn.on("close", () => { if (!myPlayerId) status.textContent = "❌ Connection closed before joining. Network blocks direct connection (try the same Wi-Fi as the host)."; });
+        clientConn.on("close", () => {
+          if (myPlayerId && !intentionalLeave) {
+            showPlayerAlert("🔄 Connection lost. Reconnecting...");
+            clearTimeout(reconnectTimer); reconnectTimer = setTimeout(() => joinRoom(true), 1500);
+            return;
+          }
+          if (!myPlayerId) status.textContent = "❌ Connection closed before joining. Network blocks direct connection (try the same Wi-Fi as the host)."; });
+
         // Diagnostic: show the WebRTC state on screen
         const watchIce = setInterval(() => {
           const pc = clientConn.peerConnection;
@@ -1049,9 +1103,15 @@
       else if (data.type === "WELCOME") {
         myPlayerId = data.playerId;
         roomCode = data.roomCode;
+        saveSession();
+        if (data.rejoined) showPlayerAlert("✅ Reconnected!");
         switchView("player");
         document.getElementById("p-room-badge").textContent = `Room ${roomCode}`;
         document.getElementById("p-welcome-name").textContent = `${myName}'s Private Hand`;
+      }
+      else if (data.type === "RESYNC") {
+        myHand = Array.isArray(data.hand) ? data.hand : []; myLaid = Array.isArray(data.laid) ? data.laid : [];
+        renderPlayerHand();
       }
       else if (data.type === "ROSTER") {
         otherPlayers = data.players.filter(p => p.id !== myPlayerId);
@@ -1268,6 +1328,13 @@
     }
 
     init();
+    // Resume automatically after a refresh (unless a different room is requested in the URL)
+    (function autoResume() {
+      const s = loadSession(); if (!s) return;
+      const rp = new URLSearchParams(window.location.search).get("room");
+      if (rp && rp.toUpperCase() !== s.code) return;
+      joinRoom(true);
+    })();
   </script>
 </body>
 </html>

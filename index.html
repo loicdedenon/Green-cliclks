@@ -407,6 +407,32 @@
     .modal-tabs { display: flex; gap: 0.4rem; padding: 0.6rem 1rem 0; }
     .modal-tabs button { color: var(--ink); background: #fff; border-color: #cfc9b8; }
     .modal-tabs button.on { background: var(--gold); border-color: var(--gold); }
+    .modal-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; padding-bottom: 0.2rem; }
+    .modal-tabs::-webkit-scrollbar { display: none; }
+    .modal-tabs button { white-space: nowrap; flex: 0 0 auto; font-size: 0.8rem; padding: 0.35rem 0.7rem; }
+    .help-body { background: var(--cream); }
+    .hp-intro { font-size: 0.92rem; margin: 0 0 0.7rem; }
+    .hp-lead { background: #fff; border-left: 6px solid var(--gold); border-radius: 8px; padding: 0.55rem 0.7rem; margin: 0.4rem 0 0.8rem; font-size: 0.86rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .hp-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.4rem 0 0.8rem; }
+    .hp-lvl { border-radius: 10px; padding: 0.55rem 0.65rem; color: #fff; font-size: 0.78rem; line-height: 1.35; }
+    .hp-lvl b { display: block; font-family: var(--display); font-weight: 400; font-size: 1rem; letter-spacing: 0.03em; }
+    .hp-lvl.beg { background: #336454; } .hp-lvl.adv { background: #801b5d; }
+    .hp-stats { display: flex; gap: 0.4rem; margin: 0.2rem 0 0.8rem; }
+    .hp-stat { flex: 1; background: #fff; border: 2px solid #e6e0cd; border-radius: 10px; padding: 0.4rem 0.2rem; text-align: center; font-size: 0.72rem; color: var(--muted); }
+    .hp-stat b { display: block; font-family: var(--display); font-weight: 400; font-size: 1.25rem; color: #db6215; }
+    .hp-steps { list-style: none; padding: 0 !important; counter-reset: st; margin: 0.3rem 0; }
+    .hp-steps li { counter-increment: st; position: relative; background: #fff; border-radius: 10px; padding: 0.5rem 0.65rem 0.5rem 2.5rem; margin: 0.4rem 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 0.86rem; }
+    .hp-steps li::before { content: counter(st); position: absolute; left: 0.55rem; top: 0.5rem; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--c, #e83c6b); color: #fff; font-family: var(--display); display: grid; place-items: center; font-size: 0.85rem; }
+    .hp-say { display: block; margin-top: 0.3rem; background: #fff6cf; border: 2px dashed #eecd00; border-radius: 8px; padding: 0.3rem 0.5rem; font-style: italic; font-size: 0.84rem; }
+    .hp-flow { display: grid; gap: 0.45rem; margin: 0.4rem 0; }
+    .hp-card { background: #fff; border-radius: 10px; padding: 0.5rem 0.65rem; border-left: 6px solid var(--c); box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 0.85rem; }
+    .hp-card b { font-family: var(--display); font-weight: 400; color: var(--c); font-size: 0.98rem; display: block; }
+    .hp-fx { display: grid; gap: 0.4rem; margin: 0.3rem 0 0.6rem; }
+    .hp-fx > div { border-radius: 10px; padding: 0.45rem 0.65rem; color: #fff; background: var(--c); font-size: 0.82rem; line-height: 1.35; }
+    .hp-fx > div b { display: block; font-family: var(--display); font-weight: 400; font-size: 0.98rem; letter-spacing: 0.02em; }
+    .hp-note { font-size: 0.76rem; color: var(--muted); margin: 0.2rem 0 0.4rem; }
+    .hp-spirit { margin-top: 0.8rem; background: #336454; color: #fff; border-radius: 12px; padding: 0.7rem 0.8rem; font-size: 0.82rem; }
+    .hp-spirit b { display: block; font-family: var(--display); font-weight: 400; font-size: 1.1rem; color: #eecd00; margin-top: 0.4rem; }
     .fx-row { display: grid; grid-template-columns: auto 1fr; gap: 0.1rem 0.6rem; font-size: 0.84rem; }
     .fx-row b { white-space: nowrap; }
     .help-fam { border-left: 6px solid var(--c); padding-left: 0.6rem; margin: 0.5rem 0; }
@@ -477,7 +503,7 @@
 
     <nav id="top-nav">
       <button id="nav-home" class="primary" onclick="switchView('home')">🏠 Lobby (Host / Join)</button>
-      <button id="nav-myths" onclick="switchView('myths')">❓ Myths &amp; Facts (QR)</button>
+      <button id="nav-myths" class="hidden" onclick="switchView('myths')">❓ Myths &amp; Facts (QR)</button>
       <button id="nav-families" onclick="switchView('families')">📖 7 Families</button>
       <button id="nav-help" onclick="openHelp()">❓ How to play</button>
     </nav>
@@ -648,7 +674,7 @@
          VIEW 4: MYTHS & FACTS QR CARD CHECKER
          ========================================================= -->
     <section id="view-myths" class="hidden">
-      <div id="myth-picker" class="panel">
+      <div id="myth-picker" class="panel hidden">
         <strong>Myths &amp; Facts Challenge (or scan QR ?card=1..12)</strong>
         <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(115px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
       </div>
@@ -700,9 +726,9 @@
 
   <div id="help-modal" class="modal-bg hidden">
     <div class="modal-box">
-      <div class="modal-head"><h3>How to play</h3><button class="small" onclick="closeHelp()">✕ Close</button></div>
-      <div class="modal-tabs"><button id="help-tab-rules" class="on" onclick="helpTab('rules')">📜 Rules</button><button id="help-tab-fam" onclick="helpTab('fam')">📖 The 7 families</button></div>
-      <div class="modal-body" id="help-body"></div>
+      <div class="modal-head"><h3>📖 How to play</h3><button class="small" onclick="closeHelp()">✕ Close</button></div>
+      <div class="modal-tabs" id="help-tabs"></div>
+      <div class="modal-body help-body" id="help-body"></div>
     </div>
   </div>
 
@@ -900,15 +926,23 @@
       });
     }
 
+    // The list of all Myths & Facts cards would let anybody read the answers in advance.
+    // It is only shown in teacher mode (?teacher=1). Players reach a card by scanning its QR code (?card=N)
+    // or by drawing it in a game.
+    const TEACHER_MODE = new URLSearchParams(window.location.search).get("teacher") === "1";
+
     function init() {
-      // Populate Myths buttons
-      const mGrid = document.getElementById("myth-buttons-grid");
-      MYTHS.forEach(m => {
-        const b = document.createElement("button");
-        b.textContent = `#${m.id} (${m.level})`;
-        b.onclick = () => openMythCard(m.id);
-        mGrid.appendChild(b);
-      });
+      if (TEACHER_MODE) {
+        document.getElementById("nav-myths").classList.remove("hidden");
+        document.getElementById("myth-picker").classList.remove("hidden");
+        const mGrid = document.getElementById("myth-buttons-grid");
+        MYTHS.forEach(m => {
+          const b = document.createElement("button");
+          b.textContent = `#${m.id} (${m.level})`;
+          b.onclick = () => openMythCard(m.id);
+          mGrid.appendChild(b);
+        });
+      }
 
       // Populate 7 Families Gallery
       const gallery = document.getElementById("gallery-grid");
@@ -1802,35 +1836,85 @@
     }
 
     // ---- Help modal ----
-    function openHelp() { helpTab("rules"); document.getElementById("help-modal").classList.remove("hidden"); }
+    const HELP_TABS = [
+      ["goal", "🎯 Goal"], ["turn", "🃏 Your turn"], ["myth", "🧠 Myths & Facts"], ["end", "🏁 The end"], ["fam", "📖 Families"]
+    ];
+    function openHelp(tab) { helpTab(tab || "goal"); document.getElementById("help-modal").classList.remove("hidden"); }
     function closeHelp() { document.getElementById("help-modal").classList.add("hidden"); }
     function helpTab(tab) {
-      document.getElementById("help-tab-rules").classList.toggle("on", tab === "rules");
-      document.getElementById("help-tab-fam").classList.toggle("on", tab === "fam");
+      if (!HELP_TABS.some(t => t[0] === tab)) tab = "goal";
+      document.getElementById("help-tabs").innerHTML = HELP_TABS.map(t => `<button class="${t[0] === tab ? "on" : ""}" onclick="helpTab('${t[0]}')">${t[1]}</button>`).join("");
       const body = document.getElementById("help-body");
-      if (tab === "fam") {
-        body.innerHTML = FAMILIES.map(f => `<div class="help-fam" style="--c:${f.color}"><b>${f.icon} ${f.name}</b>
+      const next = (to, label) => `<div style="text-align:center;margin-top:0.8rem;"><button class="small" onclick="helpTab('${to}')">${label} →</button></div>`;
+      let h = "";
+      if (tab === "goal") {
+        h = `<p class="hp-intro">Digital technology has an impact on the planet. Can you complete the <strong>7 families</strong> and beat the myths about digital?</p>
+        <div class="hp-stats"><div class="hp-stat"><b>2–4</b>players</div><div class="hp-stat"><b>15–30</b>minutes</div><div class="hp-stat"><b>7×6</b>family cards</div></div>
+        <h4>🎯 Aim of the game</h4>
+        <div class="hp-lead">Collect <strong>as many complete families as possible</strong>. Each family has 6 members: the <strong>Grandfather</strong> (the explanatory card), the Grandmother, the Father, the Mother, the Son and the Daughter. The bottom of each card lists its family, so you always know what you are missing.</div>
+        <h4>⚙️ Two levels, same rules</h4>
+        <div class="hp-levels">
+          <div class="hp-lvl beg"><b>Beginner</b>First games.<br>The 6 Beginner Myths &amp; Facts.<br>Everyday habits: emails, dark mode, standby…</div>
+          <div class="hp-lvl adv"><b>Advanced</b>When you know the game.<br>All 12 Myths &amp; Facts.<br>Figures and technical topics: data centers, carbon footprint…</div>
+        </div>
+        <h4>🚀 Setup</h4>
+        <ol class="hp-steps" style="--c:#336454">
+          <li>Choose the level, then the host deals <strong>6 cards</strong> to each player.</li>
+          <li>The Myths &amp; Facts of your level are shuffled into the draw pile.</li>
+          <li>Look at your cards without showing them to anyone.</li>
+          <li>The youngest player starts. Play goes <strong>clockwise</strong>.</li>
+        </ol>` + next("turn", "Your turn");
+      } else if (tab === "turn") {
+        h = `<h4>🃏 On your turn</h4>
+        <p class="hp-intro">Choose a player and ask them for <strong>one specific card</strong>, out loud in English.</p>
+        <span class="hp-say">“In the Devices family, I'd like the Father, please.”</span>
+        <div class="hp-flow" style="margin-top:0.6rem;">
+          <div class="hp-card" style="--c:#0084c0"><b>✋ What you can ask</b>Only a family you <strong>already have</strong> at least one card of. Never a card you already hold.</div>
+          <div class="hp-card" style="--c:#336454"><b>✅ They have it</b>They give it to you and <strong>you play again</strong>.</div>
+          <div class="hp-card" style="--c:#db6215"><b>❌ They don't</b>They say <strong>“Draw!”</strong> and you take a card from the pile.</div>
+          <div class="hp-card" style="--c:#eecd00"><b style="color:#9a7d00">🍀 Lucky draw!</b>If the drawn card is the one you asked for, show it, say <strong>“Lucky draw!”</strong> and play again. If not, your turn ends.</div>
+          <div class="hp-card" style="--c:#e83c6b"><b>🎉 Happy family!</b>With all 6 cards of a family, say <strong>“Happy family!”</strong>. It is laid face up on the table for you automatically.</div>
+          <div class="hp-card" style="--c:#801b5d"><b>🧠 Myths &amp; Facts card</b>If you draw one, you must take the challenge. You can never ask for one.</div>
+        </div>
+        <p class="hp-note">No cards left in your hand? You draw one at the start of your turn. Draw pile empty? The game continues without drawing.</p>
+        <h4>📱 In the app</h4>
+        <ol class="hp-steps" style="--c:#e83c6b">
+          <li>Tap the <strong>player</strong> you ask.</li>
+          <li>Tap the <strong>family</strong>, then the <strong>card</strong>.</li>
+          <li>Say your sentence out loud, then confirm.</li>
+        </ol>` + next("myth", "Myths & Facts");
+      } else if (tab === "myth") {
+        h = `<h4>🧠 The Myths &amp; Facts challenge</h4>
+        <div class="hp-lead">Bonus cards that belong to <strong>no family</strong>. They only appear when you draw them. The first time, everyone reads this section.</div>
+        <ol class="hp-steps" style="--c:#801b5d">
+          <li><strong>Read</strong> the statement out loud.</li>
+          <li>Answer <strong>“True”</strong> or <strong>“False”</strong> in English and explain why in <strong>one sentence</strong>.</li>
+          <li>The app gives the right answer, a short explanation and its source (ADEME, International Energy Agency…).</li>
+          <li><strong>Right answer</strong> → a random <span style="color:#336454;font-weight:700">bonus</span>. <strong>Wrong answer</strong> → a random <span style="color:#aa3021;font-weight:700">penalty</span>.</li>
+          <li>The card is put aside: it is out of the game.</li>
+        </ol>
+        <h4>🎁 Bonuses</h4>
+        <div class="hp-fx">${BONUSES.map(b => `<div style="--c:#336454"><b>${b.title}</b>${b.desc}</div>`).join("")}</div>
+        <h4>⚠️ Penalties</h4>
+        <div class="hp-fx">${PENALTIES.map(b => `<div style="--c:#aa3021"><b>${b.title}</b>${b.desc}</div>`).join("")}</div>
+        <p class="hp-note">If a penalty asks for a card and your hand is empty, nothing happens.</p>` + next("end", "The end of the game");
+      } else if (tab === "end") {
+        h = `<h4>🏁 End of the game</h4>
+        <div class="hp-lead">The game ends when <strong>all 7 families are complete</strong>. Myths &amp; Facts cards still in the pile are not used.</div>
+        <div class="hp-flow">
+          <div class="hp-card" style="--c:#eecd00"><b style="color:#9a7d00">🏆 Winner</b>The player with the <strong>most complete families</strong>.</div>
+          <div class="hp-card" style="--c:#db6215"><b>🤝 Tie</b>The player who <strong>completed a family first</strong> wins.</div>
+        </div>
+        <div class="hp-spirit">Green Clicks is above all a game about awareness and discovery. You learn about the impact of making devices, eco-design, the energy used by data centers and networks, the hidden costs of data, and good habits to reduce your digital footprint.
+          <b>EVERY CLICK HAS AN IMPACT — and everyone can act for a more responsible digital world!</b></div>` + next("fam", "The 7 families");
+      } else {
+        h = `<h4>📖 The 7 families</h4>` + FAMILIES.map(f => `<div class="help-fam" style="--c:${f.color}"><b>${f.icon} ${f.name}</b>
+          <div style="color:var(--ink);font-size:0.8rem;">${esc(f.theme || "")}</div>
           <div>${f.cards.slice(1).map((c, i) => `${MEMBERS[i + 1].name}: ${c.title}`).join(" · ")}</div></div>`).join("")
-          + `<p style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem;">Each family also has a Grandfather: the explanatory card.</p>`;
-        return;
+          + `<p class="hp-note">Each family also has a Grandfather: the explanatory card.</p>`;
       }
-      body.innerHTML = `
-        <h4>Goal</h4>
-        <p>Collect the most complete families. Each family has 6 cards: Grandfather (explanatory card), Grandmother, Father, Mother, Son and Daughter.</p>
-        <h4>On your turn</h4>
-        <ul>
-          <li>Ask <strong>one player</strong> for <strong>one specific card</strong>, out loud in English: <em>“In the Devices family, I'd like the Father, please.”</em></li>
-          <li>You can only ask for a family you already have a card of, and never for a card you already have.</li>
-          <li>They have it → they give it and <strong>you play again</strong>.</li>
-          <li>They don't → <strong>“Draw!”</strong>: you get a card from the pile. If it is the card you asked for: <strong>“Lucky draw!”</strong>, play again. Otherwise your turn ends.</li>
-          <li>No cards left in your hand: you draw one at the start of your turn. Pile empty: no more drawing.</li>
-          <li>All 6 cards of a family: say <strong>“Happy family!”</strong>, it is laid on the table automatically.</li>
-        </ul>
-        <h4>Myths &amp; Facts card</h4>
-        <p>If you draw one: say <strong>True</strong> or <strong>False</strong> in English and explain why in one sentence, then tap your answer. Right → random bonus. Wrong → random penalty.</p>
-        <div class="fx-row">${BONUSES.map(b => `<b style="color:#336454">🎁 ${b.title}</b><span>${b.desc}</span>`).join("")}${PENALTIES.map(b => `<b style="color:#aa3021">⚠️ ${b.title}</b><span>${b.desc}</span>`).join("")}</div>
-        <h4>End of the game</h4>
-        <p>When all 7 families are complete. The player with the most families wins. Tie: the player who completed a family first wins.</p>`;
+      body.innerHTML = h;
+      body.scrollTop = 0;
     }
 
     // ---- Ask for a card: 3 taps (player → family → card) ----
@@ -1953,7 +2037,7 @@
       cardView.classList.remove("hidden");
       cardView.classList.toggle("player-myth-overlay", mythFromGame);
       const closeButton = cardView.querySelector("button.small");
-      closeButton.textContent = "All Cards";
+      closeButton.textContent = TEACHER_MODE ? "All Cards" : "Home";
       closeButton.classList.toggle("hidden", mythFromGame); // in a game: the only way out is to answer, then continue
       document.getElementById("m-wait").classList.add("hidden");
       document.getElementById("m-continue").classList.add("hidden");
@@ -2023,7 +2107,8 @@
         return;
       }
 
-      document.getElementById("myth-picker").classList.remove("hidden");
+      if (TEACHER_MODE) document.getElementById("myth-picker").classList.remove("hidden");
+      else switchView(myPlayerId ? "player" : "home");
       if (myPlayerId) switchView("player");
     }
 

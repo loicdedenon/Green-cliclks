@@ -675,7 +675,7 @@
          ========================================================= -->
     <section id="view-myths" class="hidden">
       <div id="myth-picker" class="panel hidden">
-        <strong>Myths &amp; Facts Challenge (or scan QR ?card=1..12)</strong>
+        <strong>Myths &amp; Facts Challenge (teacher preview)</strong>
         <div id="myth-buttons-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(115px, 1fr)); gap:0.5rem; margin-top:0.75rem;"></div>
       </div>
 
@@ -829,20 +829,31 @@
     ];
     const cardNumber = mIdx => mIdx + 1; // Grandfather (explanatory card) is 1/6, as in Article 1 of the rules
 
+    // Answers, explanations and sources are stored scrambled (not readable by searching the page source).
     const MYTHS = [
-      {id:1,level:"Beginner",q:"Deleting your emails is one of the best ways to reduce your digital footprint.",ans:false,exp:"It helps a little, but keeping your phone longer has a much bigger effect.",src:"ADEME, La face cachée du numérique"},
-      {id:2,level:"Beginner",q:"Dark mode only saves energy on OLED screens.",ans:true,exp:"On OLED screens, black pixels are switched off. On LCD screens, the backlight stays on, so dark mode saves almost nothing.",src:"Purdue University study on dark mode (2021)"},
-      {id:3,level:"Beginner",q:"Closing apps running in the background saves battery.",ans:false,exp:"iOS and Android pause apps, so they use almost nothing. Closing them can even use more energy when they restart.",src:"Apple and Google (Android) user guides"},
-      {id:4,level:"Beginner",q:"A refurbished phone emits much less greenhouse gas than a new one.",ans:true,exp:"A refurbished phone emits 87% less greenhouse gas than a new one.",src:"ADEME and Arcep study (2022)"},
-      {id:5,level:"Beginner",q:"Devices on standby can make up about 10% of a household's electricity bill.",ans:true,exp:"Standby uses 300 to 500 kWh per household per year, about 10% of the electricity bill.",src:"ADEME"},
-      {id:6,level:"Beginner",q:"A French household owns about 30 electrical devices.",ans:false,exp:"French people think they own 34, but they actually own 99.",src:"ADEME"},
-      {id:7,level:"Advanced",q:"Video makes up more than half of internet traffic.",ans:true,exp:"Video streaming is about 61% of global downstream traffic.",src:"Sandvine, Global Internet Phenomena Report"},
-      {id:8,level:"Advanced",q:"Making a smartphone pollutes more than using it.",ans:true,exp:"Manufacturing is about 70% of a smartphone's carbon footprint.",src:"ADEME"},
-      {id:9,level:"Advanced",q:"Data centers use more than half of the world's electricity.",ans:false,exp:"They used about 1.5% in 2024, but it could double by 2030.",src:"International Energy Agency, Energy and AI (2025)"},
-      {id:10,level:"Advanced",q:"An average web page is heavier than the video game Doom.",ans:true,exp:"The median web page weighs about 2.6 MB, compared with 2.39 MB for Doom in 1993.",src:"HTTP Archive"},
-      {id:11,level:"Advanced",q:"Most data stored online is used regularly.",ans:false,exp:"52% of company data is never used.",src:"Veritas, Databerg Report"},
-      {id:12,level:"Advanced",q:"Digital technology is less than 1% of France's carbon footprint.",ans:false,exp:"It was 4.4% of France's carbon footprint in 2022.",src:"ADEME and Arcep study"}
+      {id:1,level:"Beginner",q:"Deleting your emails is one of the best ways to reduce your digital footprint.",_s:"HEFMXEMQDA0DAgMUBgESEldOXUdZT0UqWRJYV1pdFkMORw9ERkReUwFFARoTQ0ZXVUJfQwJDFggWXxJAWllDAEMDCA1KV0ISXkwWQw5HDlhRWBJURAIEChVDSFRWV1VZS0FDR0FeQFMQDA1HIisiLmgeEH5XDQMCDAJDTlNTWvWEAEMLEkNDR13xn18MEhoCQVA="},
+      {id:2,level:"Beginner",q:"Dark mode only saves energy on OLED screens.",_s:"HEFMXEMQDA0RERoCTw0QVUpGD19DTSgNDX18d3INFgAdAgZDQRwSVEEEAARHE0RKVV5FDQQRCkcQWltEUV5IAUMAAQUDEn9cFmEmJ08UAF9XVVxFAUUXBwJDT1NTWVpEAgsbRxBZU0lBFkILT08UDA1WUUBdDQgMCwJDXlNGV0UNBA8CCBBZEl5dQkUMDQhJQQESEkFETkdZT0UzWEBUR1MNMA0GEQZfQVlGTw0WFxoDGg1dXhJSTBcITwoMSVcQGgQdV1JGRR4="},
+      {id:3,level:"Beginner",q:"Closing apps running in the background saves battery.",_s:"HEFMXEMQDA0DAgMUBgESEldOXUdZT0UKYmEQU1hJRSIBAxFCW1QSRkwQEApHAl1CQx4WXgpDGw8GVBJFQVMNBA8CCBBZEl5dQkUMDQhJQ25eX0FfQwJDGw8GQBJTU1gNABUKCUNYQVUSW0IXBk8CDUhAV0sWWg0GAUcXRVdJEkRIFhcOFRcDEBwSFF4XAE1dQw9zQEJaSEUCAQNDal1fVVpIRUsuCQdfXVlWHw0QEAoVQ0pHWVZTXkce"},
+      {id:4,level:"Beginner",q:"A refurbished phone emits much less greenhouse gas than a new one.",_s:"HEFMXEMQDA0RERoCTw0QVUpGD19DTSZDX1dWR0RPDBAHAgcNQlhdWEhFBgIOF14SCAUTDQkGHBRDSkBVV1hFChYcAkNKU0MSQkUEDU8GQ0NXRxJZQwBNTUtDD0FCURQXRUEuIyZgdxBTWElFIh0EBl0SQ0ZDSRxDR1VTHwAZEEs="},
+      {id:5,level:"Beginner",q:"Devices on standby can make up about 10% of a household's electricity bill.",_s:"HEFMXEMQDA0RERoCTw0QVUpGD19DTTQXTFxUUE8NEBAKFEMeAgASQkJFVl9XQ0ZlWBJGSBdDBwgWXldYXVpJRRMKFUNUV1FAGg0EAQASFw0DABcWQgNDGw8GDVdcV1VZFwoMDhdUElJbWkFLQUNHQV5AUxAMDUciKyIuaBBN"},
+      {id:6,level:"Beginner",q:"A French household owns about 30 electrical devices.",_s:"HEFMXEMQDA0DAgMUBgESEldOXUdZT0UlX1deUV4NFQYAFw9IEkRaX0MOQxsPBlQSX0VYDVZXQ0cBWEYQRl5IHEMOBBdYU1xeTw0KFAFHWhQcEh4WDxYRDEVZDRBxdnNgIEES"},
+      {id:7,level:"Advanced",q:"Video makes up more than half of internet traffic.",_s:"HEFMXEMQDA0RERoCTw0QVUpGD19DTTEKSVdfEkVZFwYOCgpDVRBbRQ0EAQASFw0EARcWQgNDCAsMT1NcElJCEg0cExFIU10SQl8EBQkOAAMQHBIUXhcATV1DD2FRXFJbDA0KS0NqXl9QV0FFKgETBl9cVUYWfQ0GAQgOSFxREmRIFQwdE0FQ"},
+      {id:8,level:"Advanced",q:"Making a smartphone pollutes more than using it.",_s:"HEFMXEMQDA0RERoCTw0QVUpGD19DTSoCQ0dWU1VZEBEGCQQNW0MSV08KFhtHVB0XEF1QDQRDHAoCX0ZAWllDAEQcRwBMQFJdWA0DDAATE19bXkYYD0lDTRQRThAKEhRsISYiIkFQ"},
+      {id:9,level:"Advanced",q:"Data centers use more than half of the world's electricity.",_s:"HEFMXEMQDA0DAgMUBgESEldOXUdZT0U3RVdJEkNeAAdPBgFCR0QSBwNQRk8ODQ0AAAACAUUBGhNDREYQUVlYCQdPAwxYUFxXFk8cQ11XUB0cEh4WDxYRDEVZDRB5XEJIFw0OEwpCXFFeFmgLBh0AGg1zV1dYThxPTyINSEBXSxZMCwdPJioNGgICBBhMQRI="},
+      {id:10,level:"Advanced",q:"An average web page is heavier than the video game Doom.",_s:"HEFMXEMQDA0RERoCTw0QVUpGD19DTTMLSBJdV1JEBA1PEAZPEkBTUUhFFAoOBEVBEFNUQhAXT1VNGxJ9cBoNBgwCFwJfV1QSQUQRC09VTR4LEH90DQMMHUcnQl1dEl9DRVJWXlADEBwSFF4XAE1dQw96ZGZmDSQRDA8KW1cSTw=="},
+      {id:11,level:"Advanced",q:"Most data stored online is used regularly.",_s:"HEFMXEMQDA0DAgMUBgESEldOXUdZT0VWHxcQXVANBgwCFwJDSxBWV1kEQwYUQ0NXRldEDRAQCgNNDx4QEEVfBkFVR0F7V0JbQkwWT08jAllTUldESkUxChcMX0YSTw=="},
+      {id:12,level:"Advanced",q:"Digital technology is less than 1% of France's carbon footprint.",_s:"HEFMXEMQDA0DAgMUBgESEldOXUdZT0UqWRJHU0UNUU1bQkNCVBB0REwLAApAEA1RUUBUQgtDCQgMWUJCW1hZRQoBR1EdAAIcFAFFQRwVAA8IEBB3aSAuKkcCQ1YQc0ROABNPFBdYVkkQSw=="}
     ];
+    (function () {
+      const KEY = "gc-2026-eco";
+      const dec = str => { const x = atob(str); const u = new Uint8Array(x.length); for (let i = 0; i < x.length; i++) u[i] = x.charCodeAt(i) ^ KEY.charCodeAt(i % KEY.length); return JSON.parse(new TextDecoder().decode(u)); };
+      MYTHS.forEach(m => {
+        let cache = null; const get = () => cache || (cache = dec(m._s));
+        Object.defineProperty(m, "ans", { get: () => get().ans });
+        Object.defineProperty(m, "exp", { get: () => get().exp });
+        Object.defineProperty(m, "src", { get: () => get().src });
+      });
+    })();
 
     const BONUSES = [
       { title: "Play Again", desc: "When your turn ends, take one more turn straight away." },
@@ -955,7 +966,9 @@
       // Check URL Parameters (?room=ABCD or ?card=1)
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get("room");
-      const cardParam = parseInt(params.get("card"), 10);
+      // The QR codes belong to the physical game (separate add-on). In this digital game, Myths & Facts cards
+      // only come from the draw pile. ?card=N is a preview reserved for teacher mode.
+      const cardParam = TEACHER_MODE ? parseInt(params.get("card"), 10) : NaN;
 
       if (roomParam) {
         document.getElementById("join-code").value = roomParam.toUpperCase();

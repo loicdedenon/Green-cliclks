@@ -479,6 +479,32 @@
     .wait-last { margin-top: 0.6rem; font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 1.15rem; line-height: 1.3; color: var(--gold); }
     .wait-sub { margin-top: 0.4rem; font-size: 0.85rem; opacity: 0.85; }
 
+
+    /* ===== Animations (disabled automatically when the device asks for reduced motion) ===== */
+    @keyframes fx-pop { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
+    @keyframes fx-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+    @keyframes fx-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(238,205,0,0); } 50% { box-shadow: 0 0 0 8px rgba(238,205,0,0.55); } }
+    @keyframes fx-card-in { 0% { transform: translateY(-40px) scale(0.7) rotate(-6deg); opacity: 0; } 70% { transform: translateY(4px) scale(1.04) rotate(1deg); opacity: 1; } 100% { transform: none; } }
+    @keyframes fx-flip-in { 0% { transform: perspective(900px) rotateY(-90deg); opacity: 0; } 100% { transform: perspective(900px) rotateY(0); opacity: 1; } }
+    @keyframes fx-slide-up { 0% { transform: translateY(24px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+    @keyframes fx-toast { 0% { transform: translateY(-14px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+    @keyframes fx-confetti { 0% { transform: translate3d(0,-10vh,0) rotate(0); opacity: 1; } 100% { transform: translate3d(var(--dx), 105vh, 0) rotate(var(--rot)); opacity: 0.9; } }
+    #fx-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10020; }
+    #fx-layer i { position: absolute; top: 0; width: var(--w); height: var(--h); background: var(--c); border-radius: 2px; animation: fx-confetti var(--t) cubic-bezier(.2,.6,.4,1) forwards; }
+    .fx-turn { animation: fx-glow 0.9s ease-in-out 2; }
+    .fx-new { animation: fx-card-in 0.55s cubic-bezier(.2,.9,.3,1.2) both; }
+    .fx-pop { animation: fx-pop 0.45s ease-out both; }
+    .fx-shake { animation: fx-shake 0.5s ease-in-out both; }
+    #myth-card-view .myth-card-large { animation: fx-flip-in 0.5s ease-out both; }
+    #p-notification:not(.hidden) { animation: fx-toast 0.25s ease-out both; }
+    .rank-row { animation: fx-slide-up 0.5s ease-out both; }
+    .rank-row:nth-child(2) { animation-delay: 0.15s; } .rank-row:nth-child(3) { animation-delay: 0.3s; } .rank-row:nth-child(4) { animation-delay: 0.45s; }
+    .rank-row.first .medal { animation: fx-pop 0.7s 0.4s ease-out both; }
+    #fx-toggle.off { opacity: 0.55; }
+    @media (prefers-reduced-motion: reduce) {
+      .fx-turn, .fx-new, .fx-pop, .fx-shake, #myth-card-view .myth-card-large, #p-notification:not(.hidden), .rank-row, .rank-row.first .medal { animation: none !important; }
+      #fx-layer { display: none; }
+    }
     /* ===== PHONE: smaller cards, 2 per row ===== */
     @media (max-width: 600px) {
       body { padding: 0.6rem; }
@@ -526,6 +552,8 @@
             <button class="green" onclick="joinRoom()">Join Game →</button>
           </div>
           <div id="join-status" style="font-size:0.82rem; margin-top:0.6rem; color:var(--gold);"></div>
+          <button class="small ghost" id="net-check-btn" onclick="runNetCheck()" style="margin-top:0.6rem;">🔧 Test my connection</button>
+          <div id="net-check-result" style="font-size:0.8rem; margin-top:0.4rem; line-height:1.5;"></div>
         </div>
 
         <!-- OPTION B: HOST THE TABLE (FOR PC / TABLET / HOST PHONE) -->
@@ -637,6 +665,7 @@
           <span style="opacity:0.6;"> · </span><span id="p-welcome-name" style="font-weight:800;">Player</span>
         </div>
         <div style="display:flex; gap:0.3rem; flex-shrink:0;">
+          <button class="small" id="fx-toggle" onclick="fxToggle()" title="Sound and vibration">🔔</button>
           <button class="small" onclick="openHelp()" title="How to play">❓ Help</button>
           <button class="small" onclick="leaveRoom()" title="Leave the game">🚪</button>
         </div>
@@ -877,11 +906,52 @@
     // MULTIPLAYER PEERJS STATE
     // ==========================================
     // STUN + TURN relay servers: needed when a phone is on 4G/5G or another network than the host.
-    const PEER_OPTS = { config: { iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turn:openrelay.metered.ca:443?transport=tcp"], username: "openrelayproject", credential: "openrelayproject" }
-    ] } };
+    // ---- Network settings ----
+    // OPTIONAL: your own TURN relay (free account on metered.ca or Cloudflare). It is the most reliable way to get through a school network.
+    // Fill the three fields, e.g. urls: ["turn:xxx.metered.live:80", "turn:xxx.metered.live:443?transport=tcp", "turns:xxx.metered.live:443?transport=tcp"]
+    const TURN_CUSTOM = { urls: [], username: "", credential: "" };
+    const ICE_SERVERS = [
+      { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun.cloudflare.com:3478"] },
+      ...(TURN_CUSTOM.urls.length ? [{ urls: TURN_CUSTOM.urls, username: TURN_CUSTOM.username, credential: TURN_CUSTOM.credential }] : []),
+      // Public relay (shared, best effort). TCP/443 and TLS/443 versions go through most firewalls.
+      { urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turn:openrelay.metered.ca:80?transport=tcp", "turn:openrelay.metered.ca:443?transport=tcp", "turns:openrelay.metered.ca:443?transport=tcp"], username: "openrelayproject", credential: "openrelayproject" }
+    ];
+    const PEER_OPTS = { config: { iceServers: ICE_SERVERS, iceCandidatePoolSize: 4 } };
+
+    // ---- "Test my connection": tells the user what the network blocks ----
+    async function runNetCheck() {
+      const out = document.getElementById("net-check-result"), btn = document.getElementById("net-check-btn");
+      btn.disabled = true; out.innerHTML = "⏳ Testing… (about 8 seconds)";
+      const res = { online: navigator.onLine !== false, signaling: false, stun: false, relay: false };
+      const sig = new Promise(resolve => {
+        let done = false; const fin = v => { if (!done) { done = true; resolve(v); } };
+        try {
+          const ws = new WebSocket("wss://0.peerjs.com/peerjs?key=peerjs&id=nettest" + Math.random().toString(36).slice(2, 8) + "&token=" + Math.random().toString(36).slice(2, 8));
+          ws.onopen = () => { fin(true); try { ws.close(); } catch (e) {} };
+          ws.onerror = () => fin(false); ws.onclose = () => fin(false);
+          setTimeout(() => { fin(false); try { ws.close(); } catch (e) {} }, 7000);
+        } catch (e) { fin(false); }
+      });
+      const ice = new Promise(resolve => {
+        try {
+          const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+          pc.createDataChannel("t");
+          pc.onicecandidate = e => { if (e.candidate) { const t = e.candidate.type; if (t === "srflx") res.stun = true; if (t === "relay") res.relay = true; } };
+          pc.createOffer().then(o => pc.setLocalDescription(o)).catch(() => {});
+          setTimeout(() => { try { pc.close(); } catch (e) {} resolve(); }, 7500);
+        } catch (e) { resolve(); }
+      });
+      res.signaling = await sig; await ice;
+      const line = (ok, label) => `<div>${ok ? "✅" : "❌"} ${label}</div>`;
+      let verdict;
+      if (!res.online) verdict = "You seem offline. Check your Wi-Fi or mobile data.";
+      else if (!res.signaling) verdict = "This network blocks the meeting server. Switch to 4G/5G, or use a phone hotspot (the host screen must use it too).";
+      else if (!res.stun && !res.relay) verdict = "This network blocks direct connections. Use 4G/5G or a phone hotspot, or ask the school IT to allow WebRTC (UDP).";
+      else if (!res.relay) verdict = "Direct connection should work. If joining still fails, a relay is blocked: try 4G/5G or a hotspot.";
+      else verdict = "Everything looks good. You can join the game!";
+      out.innerHTML = line(res.signaling, "Meeting server reachable") + line(res.stun, "Direct connection possible (STUN)") + line(res.relay, "Relay available (TURN)") + `<div style="margin-top:0.4rem;font-weight:800;">${verdict}</div>`;
+      btn.disabled = false;
+    }
     let peer = null;
     let roomCode = "";
     let hostConnections = []; // { conn, id, name }
@@ -955,6 +1025,7 @@
     const TEACHER_MODE = new URLSearchParams(window.location.search).get("teacher") === "1";
 
     function init() {
+      fxRefreshButton();
       if (TEACHER_MODE) {
         document.getElementById("nav-myths").classList.remove("hidden");
         document.getElementById("myth-picker").classList.remove("hidden");
@@ -1228,7 +1299,7 @@
       if (!hostConnections.length || !gameStarted) return;
       const current = hostConnections[currentTurnIndex];
       if (!current || (hostHands[current.id] || []).length > 0) return;
-      sendTopCardToPlayer(current.id);
+      sendTopCardToPlayer(current.id, null, true);
     }
 
     function sendTopCardToPlayer(playerId, requestedCard = null, startOfTurn = false) {
@@ -1281,7 +1352,9 @@
     function updateTvBanner(over) {
       const cur = hostConnections[currentTurnIndex];
       document.getElementById("tv-label").textContent = over ? "Game over" : "Now playing";
-      document.getElementById("tv-name").textContent = over ? "🏁" : (cur ? cur.name : "—");
+      const tvn = document.getElementById("tv-name"), newName = over ? "🏁" : (cur ? cur.name : "—");
+      if (tvn.textContent !== newName) fxClass(tvn, "fx-pop", 600);
+      tvn.textContent = newName;
       const sk = document.getElementById("tv-skip"); if (sk) { sk.classList.toggle("danger", !!(cur && cur.offline && !over)); sk.classList.toggle("hidden", !!over); }
       document.getElementById("tv-sub").textContent = over ? "Every click has an impact 🌱" : `Ask for a card out loud — “Draw!” if they don't have it`;
     }
@@ -1335,6 +1408,7 @@
         <div class="end-body">${rows}${tie ? '<div class="end-note">Tie: the player who completed a family first wins.</div>' : ""}</div>
         <div class="end-actions">${actions}</div></div>`;
       el.classList.remove("hidden");
+      if (top && top.count > 0) { fxConfetti(110); fxBeep([523, 659, 784, 659, 784, 1047], 0.14); fxVibrate([100, 60, 100, 60, 300]); }
       if (isHost) { const sel = document.getElementById("host-replay-level"); const cur = document.getElementById("host-difficulty").value; if (sel) sel.value = cur; }
     }
     function hostReplay() {
@@ -1377,6 +1451,7 @@
           hostHands[player.id] = hostHands[player.id].filter(c => !c.startsWith(`${f}-`));
           hostCompleted.push({ player: player.name, pid: player.id, family: FAMILIES[f].name, familyIdx: f });
           logEvent(`🏆 ${player.name} says "Happy family!" and lays down ${FAMILIES[f].name}`);
+          if (!document.getElementById("view-host").classList.contains("hidden")) fxConfetti(60);
           player.conn.send({ type: "FAMILY_LAID", familyIdx: f, hand: hostHands[player.id] });
           player.conn.send({ type: "PLAYER_NOTICE", message: `🎉 Happy family! You completed ${FAMILIES[f].name}!` });
         }
@@ -1505,7 +1580,7 @@
         hostConnections.push({conn,id:playerId,name,token});
         conn.send({type:"WELCOME",playerId,roomCode,token,name}); updateHostPlayersUI();
       } else if (data.type === "REQUEST_DRAW") {
-        const current=hostConnections[currentTurnIndex]; if(current&&data.playerId===current.id&&!pendingMythPlayerId&&(hostHands[current.id]||[]).length===0) sendTopCardToPlayer(data.playerId);
+        const current=hostConnections[currentTurnIndex]; if(current&&data.playerId===current.id&&!pendingMythPlayerId&&(hostHands[current.id]||[]).length===0) sendTopCardToPlayer(data.playerId, null, true);
       } else if (data.type === "ASK_CARD") {
         hostAskCard(data.playerId,data.targetId,data.card);
       } else if (data.type === "EFFECT_CARD_CHOICE") {
@@ -1513,7 +1588,7 @@
         if (!pendingEffectChoice || !current || data.playerId !== current.id || pendingEffectChoice.playerId !== current.id || pendingEffectChoice.effect === "Steal a Card") return;
         const hand = hostHands[current.id] || [];
         const chosen = Number(data.cardIndex);
-        if (!Number.isInteger(chosen) || chosen < 0 || chosen >= hand.length || String(hand[chosen]).startsWith("M-")) return;
+        if (typeof data.cardIndex !== "number" || !Number.isInteger(chosen) || chosen < 0 || chosen >= hand.length || String(hand[chosen]).startsWith("M-")) return;
         const effect = pendingEffectChoice.effect;
         const card = hand.splice(chosen, 1)[0];
         if (effect === "Give a Card") {
@@ -1638,7 +1713,7 @@
         status.textContent = err.type === "peer-unavailable" ? "❌ Room not found. Check the Room Code (and that the host table is still open)." : "❌ Connection error (" + err.type + "). Try again."; });
       peer.on("open", () => {
         clientConn = peer.connect(`greenclicks-room-${codeInput}`, { reliable: true });
-        setTimeout(() => { if (!myPlayerId) status.textContent = "⏳ Still connecting… If it fails, check the code, or ask the host to reload and create a new room."; }, 12000);
+        setTimeout(() => { if (!myPlayerId) status.textContent = "⏳ Still connecting… Check the code, or tap “Test my connection”. On a school Wi-Fi, switching to 4G/5G usually fixes it."; }, 12000);
 
         clientConn.on("open", () => {
           clientConn.send({ type: "JOIN", name: myName, playerId: wantedId, token: wantedToken });
@@ -1655,7 +1730,7 @@
             clearTimeout(reconnectTimer); reconnectTimer = setTimeout(() => joinRoom(true), 1500);
             return;
           }
-          if (!myPlayerId) status.textContent = "❌ Connection closed before joining. Network blocks direct connection (try the same Wi-Fi as the host)."; });
+          if (!myPlayerId) status.textContent = "❌ Connection closed before joining. This network may block the game: try 4G/5G or a phone hotspot, and tap “Test my connection”."; });
 
         // Diagnostic: show the WebRTC state on screen
         const watchIce = setInterval(() => {
@@ -1703,7 +1778,7 @@
         const wasMine = isMyTurn;
         isMyTurn = data.currentPlayerId === myPlayerId;
         isGameOn = true; gameOverLocal = false; currentTurnName = data.currentPlayerName || ""; askSent = false;
-        if (!wasMine && isMyTurn) askSel = { player: null, family: null, card: null };
+        if (!wasMine && isMyTurn) { askSel = { player: null, family: null, card: null }; fxVibrate([180, 90, 180]); fxBeep([523, 784]); fxClass(document.getElementById("p-turn-banner"), "fx-turn", 2000); }
         updateAskControls();
         document.getElementById("p-turn-title").textContent = isMyTurn ? "🟢 YOUR TURN" : `⏳ ${data.currentPlayerName}'s turn`;
         document.getElementById("p-turn-hint").textContent = isMyTurn ? "Pick a player, a family, then the card you need. If they do not have it, you draw automatically." : "Wait until your turn to ask for a card.";
@@ -1727,7 +1802,7 @@
       else if (data.type === "GAME_STARTED") {
         document.getElementById("p-turn-title").textContent = "🎮 Game started!";
         document.getElementById("p-turn-hint").textContent = "The host has dealt the cards. Waiting for the first turn...";
-        document.getElementById("p-hand-grid").innerHTML = "";
+        document.getElementById("p-hand-grid").innerHTML = ""; renderPlayerHand.prev = null;
         myLaid = []; pendingMythLocal = false; mythFromGame = false; isGameOn = false; gameOverLocal = false; askSel = { player: null, family: null, card: null };
         document.getElementById("end-screen").classList.add("hidden");
         document.getElementById("p-notification").classList.add("hidden");
@@ -1743,7 +1818,7 @@
         myHand = Array.isArray(data.hand) ? data.hand : []; renderPlayerHand();
       }
       else if (data.type === "FAMILY_LAID") {
-        myHand = Array.isArray(data.hand) ? data.hand : []; myLaid.push(data.familyIdx); showPlayerAlert(`🎉 Happy family! ${FAMILIES[data.familyIdx].name} completed!`); renderPlayerHand();
+        myHand = Array.isArray(data.hand) ? data.hand : []; myLaid.push(data.familyIdx); fxConfetti(80); fxVibrate([80, 60, 80, 60, 200]); fxBeep([523, 659, 784, 1047], 0.13); showPlayerAlert(`🎉 Happy family! ${FAMILIES[data.familyIdx].name} completed!`); renderPlayerHand();
       }
       else if (data.type === "GAME_OVER") {
         isMyTurn = false; isGameOn = false; gameOverLocal = true; updateAskControls();
@@ -1859,6 +1934,45 @@
     function toggleFullscreen() {
       try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (e) {}
     }
+
+    // ---- Effects: sound, vibration, confetti (all optional, switch with the 🔔 button) ----
+    let fxOn = true, fxCtx = null;
+    try { fxOn = localStorage.getItem("greenclicks-fx") !== "off"; } catch (e) {}
+    const fxReduced = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+    function fxToggle() {
+      fxOn = !fxOn;
+      try { localStorage.setItem("greenclicks-fx", fxOn ? "on" : "off"); } catch (e) {}
+      fxRefreshButton();
+      if (fxOn) { fxVibrate(60); fxBeep([660]); }
+    }
+    function fxRefreshButton() { const b = document.getElementById("fx-toggle"); if (b) { b.textContent = fxOn ? "🔔" : "🔕"; b.classList.toggle("off", !fxOn); b.title = fxOn ? "Sound and vibration: on" : "Sound and vibration: off"; } }
+    function fxVibrate(pattern) { try { if (fxOn && navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} }
+    function fxBeep(freqs, len = 0.12) {
+      if (!fxOn) return;
+      try {
+        fxCtx = fxCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (fxCtx.state === "suspended") fxCtx.resume();
+        freqs.forEach((f, i) => {
+          const o = fxCtx.createOscillator(), g = fxCtx.createGain(), t = fxCtx.currentTime + i * len;
+          o.type = "sine"; o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+          o.connect(g); g.connect(fxCtx.destination); o.start(t); o.stop(t + len + 0.02);
+        });
+      } catch (e) {}
+    }
+    function fxConfetti(n = 70) {
+      if (fxReduced()) return;
+      let layer = document.getElementById("fx-layer");
+      if (!layer) { layer = document.createElement("div"); layer.id = "fx-layer"; document.body.appendChild(layer); }
+      const colors = ["#db6215", "#e83c6b", "#eecd00", "#336454", "#801b5d", "#0084c0"];
+      for (let i = 0; i < n; i++) {
+        const c = document.createElement("i");
+        c.style.cssText = `left:${Math.random() * 100}%;--c:${colors[i % colors.length]};--w:${6 + Math.random() * 6}px;--h:${8 + Math.random() * 10}px;--dx:${(Math.random() - 0.5) * 240}px;--rot:${Math.random() * 900 - 450}deg;--t:${2.2 + Math.random() * 1.8}s;animation-delay:${Math.random() * 0.5}s`;
+        layer.appendChild(c);
+        setTimeout(() => c.remove(), 4800);
+      }
+    }
+    function fxClass(el, cls, ms = 1200) { if (!el || fxReduced()) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), ms); }
 
     // ---- Help modal ----
     const HELP_TABS = [
@@ -2043,7 +2157,10 @@
         happyBanner.classList.add("hidden");
       }
 
+      const prevSet = renderPlayerHand.prev;
       grid.innerHTML = myHand.map(code => { const [f,m]=code.split("-").map(Number); return createCardHTML(f,m); }).join("");
+      if (prevSet && !fxReduced()) myHand.forEach((code, i) => { if (!prevSet.has(code) && grid.children[i]) grid.children[i].classList.add("fx-new"); });
+      renderPlayerHand.prev = new Set(myHand);
       updateAskControls();
       const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
       if (drawBtn) { drawBtn.disabled = !isMyTurn || !!pendingMythLocal || myHand.length > 0; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
@@ -2079,6 +2196,7 @@
       const b = document.getElementById("m-banner");
       b.className = "banner " + (ok ? "ok" : "ko");
       b.textContent = ok ? `✅ Correct! (${activeMyth.ans ? "TRUE" : "FALSE"})` : `❌ Wrong! (${activeMyth.ans ? "TRUE" : "FALSE"})`;
+      if (ok) { fxClass(b, "fx-pop"); fxConfetti(40); fxBeep([660, 880]); fxVibrate(120); } else { fxClass(b, "fx-shake"); fxBeep([220, 165], 0.15); fxVibrate([250]); }
       document.getElementById("m-exp").textContent = activeMyth.exp;
       document.getElementById("m-src").textContent = activeMyth.src;
       document.getElementById("m-eff-type").textContent = ok ? "🎁 RANDOM BONUS" : "⚠️ RANDOM PENALTY";

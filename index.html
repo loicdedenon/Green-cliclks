@@ -768,7 +768,7 @@
     <section id="view-families" class="hidden">
       <div class="panel">
         <strong>The 7 Families (42 Cards)</strong>
-        <p style="font-size:0.82rem; opacity:0.85;">Each family has 6 cards: Grandfather (explanatory card), Grandmother, Father, Mother, Son, Daughter.</p>
+        <p style="font-size:0.82rem; opacity:0.85;">Each family has 6 cards, including one explanatory card.</p>
       </div>
       <div id="gallery-grid" class="card-grid"></div>
     </section>
@@ -1651,7 +1651,7 @@
     function cardLabel(code) {
       if (String(code).startsWith("M-")) return "Myths & Facts";
       const [f, m] = String(code).split("-").map(Number);
-      return `${FAMILIES[f]?.name || "Family"} — ${MEMBERS[m]?.name || "Member"} (${FAMILIES[f]?.cards[m]?.title || ""})`;
+      return `${FAMILIES[f]?.name || "Family"} — ${m === 0 ? "Explanatory card" : (FAMILIES[f]?.cards[m]?.title || "")}`;
     }
 
     function syncHand(player) { if (player) player.conn.send({ type: "HAND_UPDATE", hand: hostHands[player.id] || [] }); }
@@ -1705,7 +1705,7 @@
         }
         theirs.splice(theirs.indexOf(card),1); own.push(card); syncHand(sender); syncHand(target);
         sender.conn.send({type:"PLAYER_NOTICE",message:`🎉 ${target.name} had the card. You receive it and play again!`});
-        target.conn.send({type:"PLAYER_NOTICE",message:`You gave ${MEMBERS[Number(match[2])].name} to ${sender.name}.`});
+        target.conn.send({type:"PLAYER_NOTICE",message:`You gave ${cardLabel(card)} to ${sender.name}.`});
         logEvent(`✅ ${sender.name} asked ${target.name} for ${cardLabel(card)}: got it, plays again`);
         checkPlayerFamilies(sender); advanceTurn(true);
       } else {
@@ -2050,7 +2050,7 @@
       else if (data.type === "RECEIVE_CARD") {
         if (Array.isArray(data.hand)) myHand = data.hand; else myHand.push(data.card);
         const [f, m] = data.card.split("-").map(Number);
-        showPlayerAlert(`✨ You received: ${FAMILIES[f].name} — ${MEMBERS[m].name} (${FAMILIES[f].cards[m].title}) from ${data.from}`);
+        showPlayerAlert(`✨ You received: ${FAMILIES[f].name} — ${m === 0 ? "Explanatory card" : FAMILIES[f].cards[m].title} from ${data.from}`);
         renderPlayerHand();
       }
       else if (data.type === "DREW_MYTH") {
@@ -2212,7 +2212,7 @@
         h = `<p class="hp-intro">Digital technology has an impact on the planet. Can you complete the <strong>7 families</strong> and beat the myths about digital?</p>
         <div class="hp-stats"><div class="hp-stat"><b>2–4</b>players</div><div class="hp-stat"><b>15–30</b>minutes</div><div class="hp-stat"><b>7×6</b>family cards</div></div>
         <h4>🎯 Aim of the game</h4>
-        <div class="hp-lead">Collect <strong>as many complete families as possible</strong>. Each family has 6 members: the <strong>Grandfather</strong> (the explanatory card), the Grandmother, the Father, the Mother, the Son and the Daughter. The bottom of each card lists its family, so you always know what you are missing.</div>
+        <div class="hp-lead">Collect <strong>as many complete families as possible</strong>. Each family has 6 cards, including one <strong>explanatory card</strong>. The bottom of each card lists its family, so you always know what you are missing.</div>
         <h4>⚙️ Two levels, same rules</h4>
         <div class="hp-levels">
           <div class="hp-lvl beg"><b>Beginner</b>First games.<br>The 6 Beginner Myths &amp; Facts.<br>Everyday habits: emails, dark mode, standby…</div>
@@ -2228,7 +2228,7 @@
       } else if (tab === "turn") {
         h = `<h4>🃏 On your turn</h4>
         <p class="hp-intro">Choose a player and ask them for <strong>one specific card</strong>, out loud in English.</p>
-        <span class="hp-say">“In the Devices family, I'd like the Father, please.”</span>
+        <span class="hp-say">“In the Devices family, I'd like the Computer card, please.”</span>
         <div class="hp-flow" style="margin-top:0.6rem;">
           <div class="hp-card" style="--c:#0084c0"><b>✋ What you can ask</b>Only a family you <strong>already have</strong> at least one card of. Never a card you already hold.</div>
           <div class="hp-card" style="--c:#336454"><b>✅ They have it</b>They give it to you and <strong>you play again</strong>.</div>
@@ -2271,8 +2271,8 @@
       } else {
         h = `<h4>📖 The 7 families</h4>` + FAMILIES.map(f => `<div class="help-fam" style="--c:${f.color}"><b>${f.icon} ${f.name}</b>
           <div style="color:var(--ink);font-size:0.8rem;">${esc(f.theme || "")}</div>
-          <div>${f.cards.slice(1).map((c, i) => `${MEMBERS[i + 1].name}: ${c.title}`).join(" · ")}</div></div>`).join("")
-          + `<p class="hp-note">Each family also has a Grandfather: the explanatory card.</p>`;
+          <div>${f.cards.slice(1).map((c, i) => c.title).join(" · ")}</div></div>`).join("")
+          + `<p class="hp-note">Each family also has an explanatory card.</p>`;
       }
       body.innerHTML = h;
       body.scrollTop = 0;
@@ -2325,14 +2325,14 @@
         const f = Number(askSel.family), have = new Set(myHand.filter(c => c.startsWith(`${f}-`)).map(c => Number(c.split("-")[1])));
         cards = `<div class="ask-label">3 · Which card?</div><div class="ask-cards">` + MEMBERS.map((m, i) => ({ m, i })).filter(x => !have.has(x.i)).map(x => {
           const code = `${f}-${x.i}`;
-          return `<button class="ask-card ${askSel.card === code ? "sel" : ""}" style="--c:${FAMILIES[f].color}" onclick="askPick('card','${code}')"><div class="r">${x.m.name}</div><div class="t">${x.i === 0 ? "Explanatory card" : FAMILIES[f].cards[x.i].title}</div></button>`;
+          return `<button class="ask-card ${askSel.card === code ? "sel" : ""}" style="--c:${FAMILIES[f].color}" onclick="askPick('card','${code}')"><div class="t">${x.i === 0 ? "Explanatory card" : FAMILIES[f].cards[x.i].title}</div></button>`;
         }).join("") + `</div>`;
       }
       let say = "";
       const target = otherPlayers.find(p => p.id === askSel.player);
       if (target && askSel.card) {
         const [f, m] = askSel.card.split("-").map(Number);
-        say = `<div class="ask-say"><small>🗣️ Say it out loud, then tap</small>“${esc(target.name)}, in the ${FAMILIES[f].name} family, I'd like the ${MEMBERS[m].name}, please.”</div>`;
+        say = `<div class="ask-say"><small>🗣️ Say it out loud, then tap</small>“${esc(target.name)}, in the ${FAMILIES[f].name} family, I'd like the card “${m === 0 ? "Explanatory card" : esc(FAMILIES[f].cards[m].title)}”, please.”</div>`;
       }
       const ready = !!(target && askSel.card);
       const step = !askSel.player ? 1 : askSel.family === null ? 2 : !askSel.card ? 3 : 4;

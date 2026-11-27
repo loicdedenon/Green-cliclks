@@ -494,8 +494,22 @@
     #fx-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10020; }
     #fx-layer i { position: absolute; top: 0; width: var(--w); height: var(--h); background: var(--c); border-radius: 2px; animation: fx-confetti var(--t) cubic-bezier(.2,.6,.4,1) forwards; }
     .fx-turn { animation: fx-glow 1.2s ease-in-out 1; }
-    .fx-new { animation: fx-fade 0.35s ease-out both; }
+    .fx-new { animation: fx-flip-soft 0.45s ease-out both; }
+    @keyframes fx-flip-soft { 0% { opacity: 0; transform: perspective(700px) rotateY(-55deg); } 100% { opacity: 1; transform: none; } }
     @keyframes fx-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+    .fx-fam-new { animation: fx-fade 0.7s ease-out both; }
+    @keyframes fx-tick { 0% { transform: scale(1.35); color: var(--gold); } 100% { transform: none; } }
+    .fx-tick { display: inline-block; animation: fx-tick 0.4s ease-out; }
+    .fam-count .dots { display: inline-flex; gap: 2px; margin-left: 0.35rem; vertical-align: middle; }
+    .fam-count .dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.35); display: block; }
+    .fam-count .dots i.on { background: #fff; }
+    .ask-pending { margin-top: 0.6rem; }
+    .ask-pending .bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,0.18); overflow: hidden; }
+    .ask-pending .bar i { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left; animation: ask-bar 1.5s linear forwards; }
+    @keyframes ask-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .ask-pending .cnt { text-align: center; font-weight: 800; margin: 0.4rem 0; }
+    .ask-pending .row { display: flex; gap: 0.5rem; }
+    .ask-pending .row button { flex: 1; padding: 0.75rem; font-size: 1rem; }
     .fx-pop, .fx-shake { animation: none; }
     #p-notification:not(.hidden) { animation: fx-toast 0.25s ease-out both; }
     #fx-toggle.off { opacity: 0.55; }
@@ -509,7 +523,7 @@
     .fam-count { font-size: 0.72rem; font-weight: 800; color: #fff; background: var(--c); padding: 0.18rem 0.55rem; border-radius: 99px; opacity: 0.92; }
     .fam-count.hot { box-shadow: 0 0 0 2px #fff inset; }
     @media (prefers-reduced-motion: reduce) {
-      .fx-turn, .fx-new, .fx-pop, .fx-shake, #myth-card-view .myth-card-large, #p-notification:not(.hidden), .rank-row, .rank-row.first .medal { animation: none !important; }
+      .fx-turn, .fx-new, .fx-fam-new, .fx-tick, .ask-pending .bar i, .fx-pop, .fx-shake, #myth-card-view .myth-card-large, #p-notification:not(.hidden), .rank-row, .rank-row.first .medal { animation: none !important; }
       #fx-layer { display: none; }
     }
     /* ===== PHONE: smaller cards, 2 per row ===== */
@@ -1228,6 +1242,8 @@
 
     function init() {
       fxRefreshButton();
+      const pc = document.getElementById("host-pile-count");
+      if (pc && window.MutationObserver) new MutationObserver(() => { if (!fxReduced()) fxClass(pc, "fx-tick", 450); }).observe(pc, { childList: true, characterData: true, subtree: true });
       if (TEACHER_MODE) {
         document.getElementById("nav-myths").classList.remove("hidden");
         document.getElementById("myth-picker").classList.remove("hidden");
@@ -1529,18 +1545,26 @@
     // ---- Table history + families laid down (shared by host screen and phones) ----
     let hostLog = [], hostStats = {}, hostEnd = null, hostMythsDrawn = 0, pileEmptyLogged = false, pendingMythEffect = null;
     function esc(t) { return String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    const fxFamCount = {};
+    function fxNewFamily(containerId, completed) { // fade in the family that has just been laid
+      const prev = fxFamCount[containerId]; fxFamCount[containerId] = completed.length;
+      if (prev === undefined || completed.length <= prev || fxReduced()) return;
+      const last = completed[completed.length - 1], box = document.getElementById(containerId);
+      const tile = box && box.querySelector(`.fam-tile[data-f="${last.familyIdx}"]`);
+      if (tile) tile.classList.add("fx-fam-new");
+    }
     function familiesHTML(completed) {
       if (!completed.length) return `<span class="fam-empty">No families completed yet.</span>`;
       const byPlayer = [];
       completed.forEach(c => { let e = byPlayer.find(x => x.name === c.player); if (!e) byPlayer.push(e = { name: c.player, fams: [] }); e.fams.push(c.familyIdx); });
       return byPlayer.map(e => `<div class="fam-owner">${esc(e.name)} <small>· ${e.fams.length} ${e.fams.length > 1 ? "families" : "family"}</small></div>
-        <div class="fam-tiles">${e.fams.map(f => { const fam = FAMILIES[f]; return `<div class="fam-tile" style="--c:${fam.color}"><div class="fh">${fam.icon} ${fam.name}</div><div class="fl">${fam.cards.slice(1).map(c => c.title).join(" · ")}</div></div>`; }).join("")}</div>`).join("");
+        <div class="fam-tiles">${e.fams.map(f => { const fam = FAMILIES[f]; return `<div class="fam-tile" data-f="${f}" style="--c:${fam.color}"><div class="fh">${fam.icon} ${fam.name}</div><div class="fl">${fam.cards.slice(1).map(c => c.title).join(" · ")}</div></div>`; }).join("")}</div>`).join("");
     }
     function logHTML(lines) { return lines.length ? lines.map(t => `<div class="log-line">${esc(t)}</div>`).join("") : `<div class="log-line">The game has not started yet.</div>`; }
     function renderHostTable() {
       document.getElementById("host-history").innerHTML = logHTML(hostLog);
       document.getElementById("host-comp-num").textContent = hostCompleted.length;
-      document.getElementById("host-completed-badges").innerHTML = familiesHTML(hostCompleted);
+      document.getElementById("host-completed-badges").innerHTML = familiesHTML(hostCompleted); fxNewFamily("host-completed-badges", hostCompleted);
     }
     function playersInfo() {
       return hostConnections.map((p, i) => ({ id: p.id, name: p.name, count: (hostHands[p.id] || []).length, laid: hostCompleted.filter(c => c.pid === p.id).length, current: gameStarted && i === currentTurnIndex, offline: !!p.offline }));
@@ -1955,7 +1979,7 @@
       }
       else if (data.type === "TABLE") {
         document.getElementById("p-fam-count").textContent = (data.completed || []).length;
-        document.getElementById("p-families").innerHTML = familiesHTML(data.completed || []);
+        document.getElementById("p-families").innerHTML = familiesHTML(data.completed || []); fxNewFamily("p-families", data.completed || []);
         document.getElementById("p-log").innerHTML = logHTML((data.log || []).slice(0, 12));
         if (data.players) { lastPlayersInfo = data.players; document.getElementById("p-players").innerHTML = playersStripHTML(data.players, data.pile || 0, myPlayerId); }
         lastLogLine = (data.log && data.log[0]) || lastLogLine;
@@ -1974,7 +1998,7 @@
         if (Array.isArray(data.hand)) myHand = data.hand;
         const wasMine = isMyTurn;
         isMyTurn = data.currentPlayerId === myPlayerId;
-        isGameOn = true; gameOverLocal = false; currentTurnName = data.currentPlayerName || ""; askSent = false;
+        isGameOn = true; gameOverLocal = false; currentTurnName = data.currentPlayerName || ""; askSent = false; if (askPending) { clearInterval(askPending.iv); askPending = null; }
         if (!wasMine && isMyTurn) { askSel = { player: null, family: null, card: null }; fxVibrate([180, 90, 180]); fxBeep([523, 784]); fxClass(document.getElementById("p-turn-banner"), "fx-turn", 2000); }
         updateAskControls();
         document.getElementById("p-turn-title").textContent = isMyTurn ? "🟢 YOUR TURN" : `⏳ ${data.currentPlayerName}'s turn`;
@@ -2255,11 +2279,11 @@
     }
 
     // ---- Ask for a card: 3 taps (player → family → card) ----
-    let askSel = { player: null, family: null, card: null }, askSent = false;
+    let askSel = { player: null, family: null, card: null }, askSent = false, askPending = null;
     let isGameOn = false, gameOverLocal = false, currentTurnName = "", lastLogLine = "", lastPlayersInfo = [];
 
     function askPick(kind, val) {
-      if (askSent) return;
+      if (askSent || askPending) return;
       if (kind === "player") askSel.player = val;
       else if (kind === "family") { if (askSel.family !== val) askSel.card = null; askSel.family = val; }
       else askSel.card = val;
@@ -2316,13 +2340,31 @@
       document.getElementById("ask-body").innerHTML =
         `<div class="ask-label">1 · Who do you ask?</div><div class="ask-chips">${players}</div>` +
         `<div class="ask-label">2 · Which family?</div><div class="ask-chips">${fams}</div>` + cards + say +
-        `<button class="green ask-go" ${ready && !askSent ? "" : "disabled"} onclick="playerAskCard()">${askSent ? "📨 Sent… waiting for the result" : ready ? `📨 Ask ${esc(target.name)}` : "Pick a player, a family and a card"}</button>`;
+        (askPending ? `<div class="ask-pending"><div class="bar"><i></i></div><div class="cnt" id="ask-count">Sending…</div><div class="row"><button class="danger" onclick="askCancel()">✕ Cancel</button><button class="green" onclick="askNow()">Send now ▶</button></div></div>` :
+        `<button class="green ask-go" ${ready && !askSent ? "" : "disabled"} onclick="playerAskCard()">${askSent ? "📨 Sent… waiting for the result" : ready ? `📨 Ask ${esc(target.name)}` : "Pick a player, a family and a card"}</button>`);
     }
 
+    // 1.5 seconds to change your mind before the request is really sent
     function playerAskCard() {
-      if (!clientConn || !isMyTurn || pendingMythLocal || askSent) return;
+      if (!clientConn || !isMyTurn || pendingMythLocal || askSent || askPending) return;
+      if (!askSel.player || !askSel.card) return showPlayerAlert("Choose a player, a family and a card first.");
+      const end = Date.now() + 1500;
+      askPending = { end, iv: setInterval(() => {
+        const left = askPending ? askPending.end - Date.now() : 0, c = document.getElementById("ask-count");
+        if (left <= 0) { askNow(); return; }
+        if (c) c.textContent = "Sending…";
+      }, 200) };
+      updateAskControls();
+    }
+    function askCancel() {
+      if (askPending) { clearInterval(askPending.iv); askPending = null; }
+      updateAskControls();
+    }
+    function askNow() {
+      if (!askPending) return;
+      clearInterval(askPending.iv); askPending = null;
       const targetId = askSel.player, card = askSel.card;
-      if (!targetId || !card) return showPlayerAlert("Choose a player, a family and a card first.");
+      if (!clientConn || !isMyTurn || !targetId || !card) { updateAskControls(); return; }
       clientConn.send({ type: "ASK_CARD", playerId: myPlayerId, targetId, card });
       askSent = true; updateAskControls();
       setTimeout(() => { if (askSent) { askSent = false; updateAskControls(); } }, 4000);
@@ -2359,7 +2401,7 @@
       let fc = document.getElementById("p-fam-counts");
       if (!fc) { fc = document.createElement("div"); fc.id = "p-fam-counts"; fc.className = "fam-counts"; grid.parentNode.insertBefore(fc, grid); }
       const cnt = {}; myHand.forEach(c => { const f = c.split("-")[0]; cnt[f] = (cnt[f] || 0) + 1; });
-      fc.innerHTML = Object.keys(cnt).sort().map(f => `<span class="fam-count ${cnt[f] >= 4 ? "hot" : ""}" style="--c:${FAMILIES[f].color}">${FAMILIES[f].icon} ${FAMILIES[f].name} ${cnt[f]}/6</span>`).join("");
+      fc.innerHTML = Object.keys(cnt).sort().map(f => `<span class="fam-count ${cnt[f] >= 4 ? "hot" : ""}" style="--c:${FAMILIES[f].color}">${FAMILIES[f].icon} ${FAMILIES[f].name} ${cnt[f]}/6<span class="dots">${[0,1,2,3,4,5].map(i => `<i class="${i < cnt[f] ? "on" : ""}"></i>`).join("")}</span></span>`).join("");
       const prevSet = renderPlayerHand.prev;
       grid.innerHTML = myHand.map(code => { const [f,m]=code.split("-").map(Number); return createCardHTML(f,m); }).join("");
       if (prevSet && !fxReduced()) myHand.forEach((code, i) => { if (!prevSet.has(code) && grid.children[i]) grid.children[i].classList.add("fx-new"); });

@@ -372,7 +372,7 @@
     .end-actions button.ghost { background: #fff; color: var(--ink); border-color: #cfc9b8; }
 
     /* ===== TOAST (replaces the static notification banner) ===== */
-    #p-notification { position: fixed; top: 0.6rem; left: 50%; transform: translateX(-50%); z-index: 10005; width: calc(100% - 1.2rem); max-width: 520px; margin: 0; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: center; cursor: pointer; }
+    #p-notification { position: fixed; top: max(0.6rem, env(safe-area-inset-top)); left: 0.6rem; right: 0.6rem; width: auto; max-width: 520px; margin: 0 auto; box-sizing: border-box; overflow-wrap: anywhere; line-height: 1.35; z-index: 10005; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: center; cursor: pointer; }
 
     /* ===== PLAYERS STRIP (card counts) ===== */
     .pl-strip { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.2rem 0 0.9rem; }
@@ -489,7 +489,7 @@
     @keyframes fx-card-in { 0% { transform: translateY(-40px) scale(0.7) rotate(-6deg); opacity: 0; } 70% { transform: translateY(4px) scale(1.04) rotate(1deg); opacity: 1; } 100% { transform: none; } }
     @keyframes fx-flip-in { 0% { transform: perspective(900px) rotateY(-90deg); opacity: 0; } 100% { transform: perspective(900px) rotateY(0); opacity: 1; } }
     @keyframes fx-slide-up { 0% { transform: translateY(24px); opacity: 0; } 100% { transform: none; opacity: 1; } }
-    @keyframes fx-toast { 0% { transform: translateY(-14px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+    @keyframes fx-toast { 0% { opacity: 0; } 100% { opacity: 1; } }
     @keyframes fx-confetti { 0% { transform: translate3d(0,-10vh,0) rotate(0); opacity: 1; } 100% { transform: translate3d(var(--dx), 105vh, 0) rotate(var(--rot)); opacity: 0.9; } }
     #fx-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10020; }
     #fx-layer i { position: absolute; top: 0; width: var(--w); height: var(--h); background: var(--c); border-radius: 2px; animation: fx-confetti var(--t) cubic-bezier(.2,.6,.4,1) forwards; }
@@ -499,6 +499,15 @@
     .fx-pop, .fx-shake { animation: none; }
     #p-notification:not(.hidden) { animation: fx-toast 0.25s ease-out both; }
     #fx-toggle.off { opacity: 0.55; }
+    button.danger-soft { border-color: rgba(232,60,107,0.7); color: #ffb3c6; }
+    #card-zoom { position: fixed; inset: 0; z-index: 10040; background: rgba(5,15,10,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; }
+    #card-zoom.hidden { display: none; }
+    #card-zoom img { max-width: min(92vw, 420px); max-height: 80vh; width: auto; height: auto; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+    .zoom-hint { margin-top: 0.7rem; font-size: 0.78rem; opacity: 0.7; }
+    #p-hand-grid .playing-card { cursor: zoom-in; }
+    .fam-counts { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0 0.2rem; }
+    .fam-count { font-size: 0.72rem; font-weight: 800; color: #fff; background: var(--c); padding: 0.18rem 0.55rem; border-radius: 99px; opacity: 0.92; }
+    .fam-count.hot { box-shadow: 0 0 0 2px #fff inset; }
     @media (prefers-reduced-motion: reduce) {
       .fx-turn, .fx-new, .fx-pop, .fx-shake, #myth-card-view .myth-card-large, #p-notification:not(.hidden), .rank-row, .rank-row.first .medal { animation: none !important; }
       #fx-layer { display: none; }
@@ -665,7 +674,7 @@
         <div style="display:flex; gap:0.3rem; flex-shrink:0;">
           <button class="small" id="fx-toggle" onclick="fxToggle()" title="Sound and vibration">🔔</button>
           <button class="small" onclick="openHelp()" title="How to play">❓ Help</button>
-          <button class="small" onclick="leaveRoom()" title="Leave the game">🚪</button>
+          <button class="small danger-soft" onclick="leaveRoom()" title="Leave the game">Leave</button>
         </div>
       </div>
 
@@ -752,6 +761,21 @@
   </div>
 
   <div id="end-screen" class="hidden"></div>
+
+  <div id="leave-modal" class="modal-bg hidden" style="z-index:10010;">
+    <div class="modal-box" style="max-width:380px;">
+      <div class="modal-head" style="background:var(--danger,#aa3021);"><h3>Leave the game?</h3></div>
+      <div class="modal-body" style="max-height:none;text-align:center;">
+        <p>You will lose your hand and your seat. Other players will continue without you.</p>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.9rem;">
+          <button class="green" style="font-size:1rem;padding:0.7rem;" onclick="leaveStay()">↩ Stay in the game</button>
+          <button class="danger" style="font-size:0.9rem;padding:0.55rem;" onclick="leaveConfirm()">Yes, leave</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="card-zoom" class="hidden" onclick="this.classList.add('hidden')"><img alt="Card"><div class="zoom-hint">Tap anywhere to close</div></div>
 
   <div id="help-modal" class="modal-bg hidden">
     <div class="modal-box">
@@ -1853,8 +1877,9 @@
     let myToken = "";
     function saveSession() { try { localStorage.setItem(SESSION_KEY, JSON.stringify({ name: myName, code: roomCode, id: myPlayerId, token: myToken, t: Date.now() })); } catch (e) {} }
     function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
-    function leaveRoom() {
-      if (!confirm("Leave the game? You will not be able to come back to your hand.")) return;
+    function leaveRoom() { document.getElementById("leave-modal").classList.remove("hidden"); }
+    function leaveStay() { document.getElementById("leave-modal").classList.add("hidden"); }
+    function leaveConfirm() {
       intentionalLeave = true; clearSession();
       try { clientConn && clientConn.close(); peer && peer.destroy(); } catch (e) {}
       window.location.href = window.location.pathname;
@@ -2314,6 +2339,7 @@
       myHand.sort();
       const grid = document.getElementById("p-hand-grid");
       if (myHand.length === 0) {
+        const fc0 = document.getElementById("p-fam-counts"); if (fc0) fc0.innerHTML = "";
         grid.innerHTML = `<p style="opacity:0.8; grid-column:1/-1; text-align:center; padding:1.5rem;">Your hand is empty. You will draw automatically at the start of your turn.</p>`;
         updateAskControls();
         const drawBtn = document.querySelector('#view-player button[onclick="playerRequestDraw()"]');
@@ -2330,6 +2356,10 @@
         happyBanner.classList.add("hidden");
       }
 
+      let fc = document.getElementById("p-fam-counts");
+      if (!fc) { fc = document.createElement("div"); fc.id = "p-fam-counts"; fc.className = "fam-counts"; grid.parentNode.insertBefore(fc, grid); }
+      const cnt = {}; myHand.forEach(c => { const f = c.split("-")[0]; cnt[f] = (cnt[f] || 0) + 1; });
+      fc.innerHTML = Object.keys(cnt).sort().map(f => `<span class="fam-count ${cnt[f] >= 4 ? "hot" : ""}" style="--c:${FAMILIES[f].color}">${FAMILIES[f].icon} ${FAMILIES[f].name} ${cnt[f]}/6</span>`).join("");
       const prevSet = renderPlayerHand.prev;
       grid.innerHTML = myHand.map(code => { const [f,m]=code.split("-").map(Number); return createCardHTML(f,m); }).join("");
       if (prevSet && !fxReduced()) myHand.forEach((code, i) => { if (!prevSet.has(code) && grid.children[i]) grid.children[i].classList.add("fx-new"); });
@@ -2339,6 +2369,12 @@
       if (drawBtn) { drawBtn.disabled = !isMyTurn || !!pendingMythLocal || myHand.length > 0; drawBtn.style.opacity = drawBtn.disabled ? "0.45" : "1"; }
     }
 
+    document.addEventListener("click", e => {
+      const card = e.target.closest && e.target.closest("#p-hand-grid .playing-card");
+      const img = card && card.querySelector("img");
+      if (!img) return;
+      const z = document.getElementById("card-zoom"); z.querySelector("img").src = img.src; z.classList.remove("hidden");
+    });
     function claimCompleteFamily(fIdx) { showPlayerAlert("Completed families are registered automatically by the host."); }
 
     // ==========================================
